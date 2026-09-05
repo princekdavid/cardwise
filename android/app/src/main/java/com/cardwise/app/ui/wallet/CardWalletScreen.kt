@@ -27,14 +27,13 @@ import com.cardwise.app.domain.model.Card as PaymentCard
 fun CardWalletScreen(
     viewModel: CardWalletViewModel,
     onAddCard: () -> Unit,
+    onOpenCard: (PaymentCard) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
@@ -50,21 +49,15 @@ fun CardWalletScreen(
         }
 
         when (val current = state) {
-            WalletUiState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            }
+            WalletUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             is WalletUiState.Error -> Text(current.message, color = MaterialTheme.colorScheme.error)
             is WalletUiState.Success -> {
-                if (current.cards.isEmpty()) {
-                    EmptyWallet(onAddCard)
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(current.cards, key = PaymentCard::id) { card ->
-                            CardSummary(card)
-                        }
+                if (current.cards.isEmpty()) EmptyWallet(onAddCard) else LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(current.cards, key = PaymentCard::id) { card ->
+                        CardSummary(card, onOpen = { onOpenCard(card) })
                     }
                 }
             }
@@ -88,11 +81,11 @@ private fun EmptyWallet(onAddCard: () -> Unit) {
 }
 
 @Composable
-private fun CardSummary(card: PaymentCard) {
+private fun CardSummary(card: PaymentCard, onOpen: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "${card.name} ending ${card.lastFour}" }
+        modifier = Modifier.fillMaxWidth().semantics {
+            contentDescription = "${card.name} ending ${card.lastFour}"
+        }
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(card.name, style = MaterialTheme.typography.titleMedium)
@@ -101,6 +94,7 @@ private fun CardSummary(card: PaymentCard) {
             if (card.benefits.isNotEmpty()) {
                 Text("${card.benefits.size} benefit${if (card.benefits.size == 1) "" else "s"}")
             }
+            Button(onClick = onOpen) { Text("View details") }
         }
     }
 }
