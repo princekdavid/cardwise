@@ -7,6 +7,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -23,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
-import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.theme.CardWiseMotion
@@ -34,6 +34,7 @@ import com.cardwise.app.ui.wallet.CardFormScreen
 import com.cardwise.app.ui.wallet.CardWalletScreen
 import com.cardwise.app.ui.wallet.CardWalletViewModel
 import com.cardwise.app.ui.wallet.CardWalletViewModelFactory
+import com.cardwise.app.ui.wallet.WalletUiState
 
 private enum class WalletScreen { List, Add, Detail, Edit }
 
@@ -50,7 +51,7 @@ fun CardWiseApp(repository: CardRepository? = null) {
             factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) }
         )
         val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
-        val selectedCard = (walletState as? com.cardwise.app.ui.wallet.WalletUiState.Success)
+        val selectedCard = (walletState as? WalletUiState.Success)
             ?.cards?.firstOrNull { it.id == selectedCardId }
 
         Scaffold(
@@ -81,7 +82,7 @@ fun CardWiseApp(repository: CardRepository? = null) {
                 if (currentDestination != AppDestination.Wallet) {
                     Text(
                         text = currentDestination.label,
-                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.padding(CardWiseSpacing.lg)
                     )
                 } else {
@@ -98,25 +99,29 @@ fun CardWiseApp(repository: CardRepository? = null) {
                             viewModel = walletViewModel,
                             onDone = { walletScreen = WalletScreen.List }
                         )
-                        WalletScreen.Detail -> selectedCard?.let { card ->
+                        WalletScreen.Detail -> if (selectedCard != null) {
                             CardDetailScreen(
-                                card = card,
+                                card = selectedCard,
                                 onEdit = { walletScreen = WalletScreen.Edit },
                                 onDelete = {
-                                    walletViewModel.deleteCard(card.id)
+                                    walletViewModel.deleteCard(selectedCard.id)
                                     selectedCardId = null
                                     walletScreen = WalletScreen.List
                                 },
                                 onBack = { walletScreen = WalletScreen.List }
                             )
-                        } ?: run { walletScreen = WalletScreen.List }
-                        WalletScreen.Edit -> selectedCard?.let { card ->
+                        } else {
+                            Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
+                        }
+                        WalletScreen.Edit -> if (selectedCard != null) {
                             CardFormScreen(
                                 viewModel = walletViewModel,
-                                existingCard = card,
+                                existingCard = selectedCard,
                                 onDone = { walletScreen = WalletScreen.Detail }
                             )
-                        } ?: run { walletScreen = WalletScreen.List }
+                        } else {
+                            Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
+                        }
                     }
                 }
             }
