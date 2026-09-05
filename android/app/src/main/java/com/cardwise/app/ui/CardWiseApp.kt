@@ -74,7 +74,7 @@ fun CardWiseApp(repository: CardRepository? = null) {
                 targetState = showingAddCard,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(if (showingAddCard) Modifier else Modifier.padding(paddingValues)),
+                    .padding(paddingValues),
                 transitionSpec = {
                     fadeIn(tween(CardWiseMotion.screenTransitionMillis)) togetherWith
                         fadeOut(tween(CardWiseMotion.screenTransitionMillis))
