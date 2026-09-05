@@ -24,18 +24,19 @@ import com.cardwise.app.domain.validation.CardValidator
 fun CardFormScreen(
     viewModel: CardWalletViewModel,
     onDone: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    existingCard: Card? = null
 ) {
-    var issuer by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    var lastFour by remember { mutableStateOf("") }
+    var issuer by remember(existingCard) { mutableStateOf(existingCard?.issuer.orEmpty()) }
+    var name by remember(existingCard) { mutableStateOf(existingCard?.name.orEmpty()) }
+    var lastFour by remember(existingCard) { mutableStateOf(existingCard?.lastFour.orEmpty()) }
     var error by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = modifier.padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Add card")
+        Text(if (existingCard == null) "Add card" else "Edit card")
         OutlinedTextField(
             value = issuer,
             onValueChange = { issuer = it; error = null },
@@ -66,17 +67,25 @@ fun CardFormScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onDone) { Text("Cancel") }
             Button(onClick = {
-                val card = Card(0L, issuer.trim(), name.trim(), lastFour, CardNetwork.OTHER)
+                val card = Card(
+                    id = existingCard?.id ?: 0L,
+                    issuer = issuer.trim(),
+                    name = name.trim(),
+                    lastFour = lastFour,
+                    network = existingCard?.network ?: CardNetwork.OTHER,
+                    isActive = existingCard?.isActive ?: true,
+                    benefits = existingCard?.benefits.orEmpty()
+                )
                 when (val result = CardValidator().validate(card)) {
                     CardValidationResult.Valid -> {
-                        viewModel.addCard(card)
+                        if (existingCard == null) viewModel.addCard(card) else viewModel.updateCard(card)
                         onDone()
                     }
                     is CardValidationResult.Invalid -> {
                         error = result.errors.joinToString(", ") { it.name }
                     }
                 }
-            }) { Text("Save card") }
+            }) { Text(if (existingCard == null) "Save card" else "Save changes") }
         }
     }
 }
