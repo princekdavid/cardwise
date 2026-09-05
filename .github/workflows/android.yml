@@ -33,6 +33,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10'
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -40,4 +43,4 @@ jobs:
           arch: x86_64
           profile: Pixel_2
           working-directory: android
-          script: ./gradlew connectedDebugAndroidTest
+          script: gradle connectedDebugAndroidTest
