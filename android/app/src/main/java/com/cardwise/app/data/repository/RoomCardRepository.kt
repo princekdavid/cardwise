@@ -37,15 +37,7 @@ class RoomCardRepository(
 
     override suspend fun deleteCard(cardId: Long) = database.withTransaction {
         dao.deleteBenefits(cardId)
-        dao.deleteCard(
-            CardEntity(
-                id = cardId,
-                issuer = "",
-                name = "",
-                lastFour = "",
-                network = CardNetwork.OTHER.name
-            )
-        )
+        dao.deleteCard(cardId)
     }
 
     private fun toDomain(item: com.cardwise.app.data.local.CardWithBenefits): Card =
