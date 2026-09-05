@@ -13,13 +13,13 @@
 
 ## M1 — Card Wallet
 
-- [ ] Card model
-- [ ] Card list
-- [ ] Add card flow
-- [ ] Edit/delete card
-- [ ] Card detail
-- [ ] Benefit overview
-- [ ] Empty/loading/error states
+- [x] Card model
+- [x] Card list
+- [x] Add card flow
+- [x] Edit/delete card
+- [x] Card detail
+- [x] Benefit overview
+- [x] Empty/loading/error states
 
 ## M2 — Rewards Intelligence
 
