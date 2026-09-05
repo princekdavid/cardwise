@@ -7,7 +7,7 @@ Updated: 2026-09-06
 | Milestone | Status | Notes |
 |---|---|---|
 | M0 Foundation | Complete | Merged to `main`; Android CI passed after Java/Kotlin JVM target alignment. |
-| M1 Card Wallet | In progress | Room persistence, repository, validation, ViewModel/StateFlow and initial wallet/add-card UI are implemented on `feature/m1-card-wallet`. CI must pass before completion. |
+| M1 Card Wallet | In progress | Card persistence, validation, ViewModel/StateFlow and list/add/detail/edit/delete UI are implemented on `feature/m1-card-wallet`. CI must pass before completion. |
 | M2 Rewards Intelligence | Planned | Deterministic benefit/reward modeling and eligibility rules. |
 | M3 Recommendation Engine | Planned | Merchant-aware ranking and explainable recommendations. |
 | M4 Scan | Planned | QR detection/parsing foundation. |
@@ -74,7 +74,6 @@ A milestone is not complete while required CI is red or unverified. Build warnin
 ## Current M1 Risks / Follow-ups
 
 1. Add repository and in-memory Room integration tests.
-2. Expand UI coverage for add, list and delete flows.
-3. Add card edit/detail/delete screens before M1 completion.
-4. Review Room schema export/migration testing before schema changes are introduced.
-5. Replace temporary navigation placeholders with final product surfaces incrementally.
+2. Expand automated UI coverage for add, list, detail, edit and delete flows.
+3. Review Room schema export/migration testing before schema changes are introduced.
+4. Replace temporary navigation placeholders with final product surfaces incrementally.
