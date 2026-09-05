@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +32,8 @@ fun CardFormScreen(
     var issuer by remember(existingCard) { mutableStateOf(existingCard?.issuer.orEmpty()) }
     var name by remember(existingCard) { mutableStateOf(existingCard?.name.orEmpty()) }
     var lastFour by remember(existingCard) { mutableStateOf(existingCard?.lastFour.orEmpty()) }
+    var network by remember(existingCard) { mutableStateOf(existingCard?.network ?: CardNetwork.OTHER) }
+    var networkMenuExpanded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -63,6 +67,29 @@ fun CardFormScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { networkMenuExpanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Network: ${network.label}")
+            }
+            DropdownMenu(
+                expanded = networkMenuExpanded,
+                onDismissRequest = { networkMenuExpanded = false }
+            ) {
+                CardNetwork.entries.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.label) },
+                        onClick = {
+                            network = option
+                            networkMenuExpanded = false
+                            error = null
+                        }
+                    )
+                }
+            }
+        }
         error?.let { Text(it) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onDone) { Text("Cancel") }
@@ -72,7 +99,7 @@ fun CardFormScreen(
                     issuer = issuer.trim(),
                     name = name.trim(),
                     lastFour = lastFour,
-                    network = existingCard?.network ?: CardNetwork.OTHER,
+                    network = network,
                     isActive = existingCard?.isActive ?: true,
                     benefits = existingCard?.benefits.orEmpty()
                 )
@@ -89,3 +116,6 @@ fun CardFormScreen(
         }
     }
 }
+
+private val CardNetwork.label: String
+    get() = name.lowercase().replaceFirstChar { it.uppercase() }
