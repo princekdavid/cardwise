@@ -1,0 +1,20 @@
+# Gradle
+.gradle/
+/build/
+**/build/
+
+# Android Studio
+.idea/
+*.iml
+local.properties
+.externalNativeBuild/
+.cxx/
+
+# Generated
+captures/
+.navigation/
+
+# Secrets
+*.jks
+*.keystore
+.env
