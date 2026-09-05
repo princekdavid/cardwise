@@ -1,7 +1,6 @@
 package com.cardwise.app.data.local
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -21,8 +20,8 @@ interface CardDao {
     @Update
     suspend fun updateCard(card: CardEntity)
 
-    @Delete
-    suspend fun deleteCard(card: CardEntity)
+    @Query("DELETE FROM cards WHERE id = :cardId")
+    suspend fun deleteCard(cardId: Long)
 
     @Query("DELETE FROM card_benefits WHERE cardId = :cardId")
     suspend fun deleteBenefits(cardId: Long)
