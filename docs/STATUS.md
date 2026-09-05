@@ -7,7 +7,7 @@ Updated: 2026-09-06
 | Milestone | Status | Notes |
 |---|---|---|
 | M0 Foundation | Complete | Merged to `main`; Android CI passed after Java/Kotlin JVM target alignment. |
-| M1 Card Wallet | In progress | Card persistence, validation, ViewModel/StateFlow and list/add/detail/edit/delete UI are implemented on `feature/m1-card-wallet`. CI must pass before completion. |
+| M1 Card Wallet | In progress | Card persistence, validation, ViewModel/StateFlow and list/add/detail/edit/delete UI are implemented on `feature/m1-card-wallet`. Network selection is included in the card form. CI must pass before completion. |
 | M2 Rewards Intelligence | Planned | Deterministic benefit/reward modeling and eligibility rules. |
 | M3 Recommendation Engine | Planned | Merchant-aware ranking and explainable recommendations. |
 | M4 Scan | Planned | QR detection/parsing foundation. |
@@ -63,9 +63,8 @@ Compose UI
 - Card validation tests
 - ViewModel tests with a fake repository
 - Compose navigation/UI tests
-- Room DAO tests — follow-up
-- Repository integration tests — follow-up
-- Full wallet CRUD UI coverage — follow-up
+- Room DAO and repository integration coverage is planned for the next CI expansion.
+- Full wallet CRUD UI coverage is planned for the next CI expansion.
 
 ## CI Policy
 
@@ -73,7 +72,8 @@ A milestone is not complete while required CI is red or unverified. Build warnin
 
 ## Current M1 Risks / Follow-ups
 
-1. Add repository and in-memory Room integration tests.
-2. Expand automated UI coverage for add, list, detail, edit and delete flows.
-3. Review Room schema export/migration testing before schema changes are introduced.
-4. Replace temporary navigation placeholders with final product surfaces incrementally.
+1. Expand CI to execute Android instrumentation tests on an emulator.
+2. Add repository and in-memory Room integration tests to the automated CI path.
+3. Expand automated UI coverage for add, list, detail, edit and delete flows.
+4. Review Room schema export/migration testing before schema changes are introduced.
+5. Replace temporary navigation placeholders with final product surfaces incrementally.
