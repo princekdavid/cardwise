@@ -7,7 +7,7 @@ Updated: 2026-09-06
 | Milestone | Status | Notes |
 |---|---|---|
 | M0 Foundation | Complete | Merged to `main`; Android CI passed after Java/Kotlin JVM target alignment. |
-| M1 Card Wallet | In progress | Room persistence, repository, validation, ViewModel and initial wallet/add-card UI are implemented on `feature/m1-card-wallet`. CI must pass before completion. |
+| M1 Card Wallet | In progress | Room persistence, repository, validation, ViewModel/StateFlow and initial wallet/add-card UI are implemented on `feature/m1-card-wallet`. CI must pass before completion. |
 | M2 Rewards Intelligence | Planned | Deterministic benefit/reward modeling and eligibility rules. |
 | M3 Recommendation Engine | Planned | Merchant-aware ranking and explainable recommendations. |
 | M4 Scan | Planned | QR detection/parsing foundation. |
@@ -61,11 +61,11 @@ Compose UI
 ### M1
 - Card domain model tests
 - Card validation tests
-- Room DAO tests — pending
-- Repository integration tests — pending
-- ViewModel tests — pending
-- Compose wallet CRUD tests — pending
-- Debug APK assembly through CI
+- ViewModel tests with a fake repository
+- Compose navigation/UI tests
+- Room DAO tests — follow-up
+- Repository integration tests — follow-up
+- Full wallet CRUD UI coverage — follow-up
 
 ## CI Policy
 
@@ -74,8 +74,7 @@ A milestone is not complete while required CI is red or unverified. Build warnin
 ## Current M1 Risks / Follow-ups
 
 1. Add repository and in-memory Room integration tests.
-2. Add ViewModel tests with a fake repository.
-3. Expand UI coverage for add, list and delete flows.
-4. Add card edit/detail/delete screens before M1 completion.
-5. Review Room schema export/migration testing before schema changes are introduced.
-6. Replace temporary navigation placeholders with final product surfaces incrementally.
+2. Expand UI coverage for add, list and delete flows.
+3. Add card edit/detail/delete screens before M1 completion.
+4. Review Room schema export/migration testing before schema changes are introduced.
+5. Replace temporary navigation placeholders with final product surfaces incrementally.
