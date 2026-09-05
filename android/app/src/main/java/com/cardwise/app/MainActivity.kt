@@ -17,6 +17,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,12 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-private enum class AppDestination(val label: String) {
-    Wallet("Wallet"),
-    Scan("Scan"),
-    Insights("Insights")
-}
+import com.cardwise.app.navigation.AppDestination
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,7 +80,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@androidx.compose.runtime.Composable
-private fun CardWiseTheme(content: @androidx.compose.runtime.Composable () -> Unit) {
+@Composable
+private fun CardWiseTheme(content: @Composable () -> Unit) {
     MaterialTheme(content = content)
 }
