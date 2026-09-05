@@ -1,5 +1,6 @@
 package com.cardwise.app.ui
 
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -27,7 +28,7 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("Scan").performClick()
 
         composeRule.onNodeWithText("Scan").assertIsSelected()
-        composeRule.onNodeWithText("Wallet").assertIsSelected().assertDoesNotExist()
+        composeRule.onNodeWithText("Wallet").assertIsNotSelected()
     }
 
     @Test
