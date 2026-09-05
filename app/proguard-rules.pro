@@ -1,0 +1,1 @@
+# CardWise module test rules
