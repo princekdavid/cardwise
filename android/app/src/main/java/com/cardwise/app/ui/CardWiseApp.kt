@@ -19,50 +19,49 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
-import com.cardwise.app.navigation.AppDestination
+import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.repository.CardRepository
+import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.theme.CardWiseMotion
 import com.cardwise.app.ui.theme.CardWiseSpacing
 import com.cardwise.app.ui.theme.CardWiseTheme
+import com.cardwise.app.ui.wallet.CardDetailScreen
 import com.cardwise.app.ui.wallet.CardFormScreen
 import com.cardwise.app.ui.wallet.CardWalletScreen
 import com.cardwise.app.ui.wallet.CardWalletViewModel
 import com.cardwise.app.ui.wallet.CardWalletViewModelFactory
 
+private enum class WalletScreen { List, Add, Detail, Edit }
+
 @Composable
 fun CardWiseApp(repository: CardRepository? = null) {
     CardWiseTheme {
         var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
-        var showingAddCard by rememberSaveable { mutableStateOf(false) }
+        var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
+        var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
         val destination = AppDestination.entries[selectedIndex]
         val resolvedRepository = repository ?: (LocalContext.current.applicationContext as CardWiseApplication)
             .container.cardRepository
         val walletViewModel: CardWalletViewModel = viewModel(
             factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) }
         )
+        val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
+        val selectedCard = (walletState as? com.cardwise.app.ui.wallet.WalletUiState.Success)
+            ?.cards?.firstOrNull { it.id == selectedCardId }
 
         Scaffold(
             bottomBar = {
-                if (!showingAddCard) {
+                if (walletScreen == WalletScreen.List) {
                     NavigationBar {
                         AppDestination.entries.forEachIndexed { index, item ->
                             NavigationBarItem(
                                 selected = index == selectedIndex,
                                 onClick = { selectedIndex = index },
-                                icon = {
-                                    Text(
-                                        text = item.label.take(1),
-                                        modifier = Modifier.semantics {
-                                            contentDescription = "${item.label} tab"
-                                        }
-                                    )
-                                },
+                                icon = { Text(item.label.take(1)) },
                                 label = { Text(item.label) }
                             )
                         }
@@ -71,32 +70,53 @@ fun CardWiseApp(repository: CardRepository? = null) {
             }
         ) { paddingValues ->
             AnimatedContent(
-                targetState = showingAddCard,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                targetState = walletScreen to destination,
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
                 transitionSpec = {
                     fadeIn(tween(CardWiseMotion.screenTransitionMillis)) togetherWith
                         fadeOut(tween(CardWiseMotion.screenTransitionMillis))
                 },
-                label = "wallet_form_transition"
-            ) { addingCard ->
-                if (addingCard) {
-                    CardFormScreen(
-                        viewModel = walletViewModel,
-                        onDone = { showingAddCard = false }
+                label = "wallet_screen_transition"
+            ) { (screen, currentDestination) ->
+                if (currentDestination != AppDestination.Wallet) {
+                    Text(
+                        text = currentDestination.label,
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(CardWiseSpacing.lg)
                     )
                 } else {
-                    when (destination) {
-                        AppDestination.Wallet -> CardWalletScreen(
+                    when (screen) {
+                        WalletScreen.List -> CardWalletScreen(
                             viewModel = walletViewModel,
-                            onAddCard = { showingAddCard = true }
+                            onAddCard = { walletScreen = WalletScreen.Add },
+                            onOpenCard = { card ->
+                                selectedCardId = card.id
+                                walletScreen = WalletScreen.Detail
+                            }
                         )
-                        else -> Text(
-                            text = destination.label,
-                            style = MaterialTheme.typography.headlineMedium,
-                            modifier = Modifier.padding(CardWiseSpacing.lg)
+                        WalletScreen.Add -> CardFormScreen(
+                            viewModel = walletViewModel,
+                            onDone = { walletScreen = WalletScreen.List }
                         )
+                        WalletScreen.Detail -> selectedCard?.let { card ->
+                            CardDetailScreen(
+                                card = card,
+                                onEdit = { walletScreen = WalletScreen.Edit },
+                                onDelete = {
+                                    walletViewModel.deleteCard(card.id)
+                                    selectedCardId = null
+                                    walletScreen = WalletScreen.List
+                                },
+                                onBack = { walletScreen = WalletScreen.List }
+                            )
+                        } ?: run { walletScreen = WalletScreen.List }
+                        WalletScreen.Edit -> selectedCard?.let { card ->
+                            CardFormScreen(
+                                viewModel = walletViewModel,
+                                existingCard = card,
+                                onDone = { walletScreen = WalletScreen.Detail }
+                            )
+                        } ?: run { walletScreen = WalletScreen.List }
                     }
                 }
             }
