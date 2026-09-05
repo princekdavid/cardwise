@@ -5,11 +5,11 @@
 - [x] Product specification
 - [x] Architecture direction
 - [x] UX/motion principles
-- [ ] Android project scaffold
-- [ ] Design tokens
-- [ ] Navigation shell
-- [ ] CI
-- [ ] Baseline tests
+- [x] Android project scaffold
+- [x] Design tokens
+- [x] Navigation shell
+- [x] CI
+- [x] Baseline tests
 
 ## M1 — Card Wallet
 
