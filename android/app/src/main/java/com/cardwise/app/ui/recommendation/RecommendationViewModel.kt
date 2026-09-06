@@ -6,16 +6,20 @@ import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.recommendation.PaymentContext
 import com.cardwise.app.domain.recommendation.RecommendationEngine
 import com.cardwise.app.domain.repository.CardRepository
+import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class RecommendationViewModel(
     private val repository: CardRepository,
+    private val rewardRuleRepository: RewardRuleRepository? = null,
     private val rules: Map<Long, List<RewardRule>> = emptyMap()
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<RecommendationUiState>(
@@ -24,11 +28,12 @@ class RecommendationViewModel(
     val uiState: StateFlow<RecommendationUiState> = _uiState.asStateFlow()
 
     private var latestCards = emptyList<Card>()
+    private var latestRules = rules
     private var observeJob: Job? = null
     private var input = RecommendationInput()
 
     init {
-        observeCards()
+        observeData()
     }
 
     fun setAmount(value: String) {
@@ -42,16 +47,21 @@ class RecommendationViewModel(
     }
 
     fun retry() {
-        observeCards()
+        observeData()
     }
 
-    private fun observeCards() {
+    private fun observeData() {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             _uiState.value = RecommendationUiState.Loading(input)
             try {
-                repository.observeCards().collect { cards ->
+                val rulesFlow: Flow<Map<Long, List<RewardRule>>> =
+                    rewardRuleRepository?.observeRules() ?: kotlinx.coroutines.flow.flowOf(rules)
+                combine(repository.observeCards(), rulesFlow) { cards, persistedRules ->
+                    cards to persistedRules
+                }.collect { (cards, persistedRules) ->
                     latestCards = cards
+                    latestRules = persistedRules
                     recompute()
                 }
             } catch (error: CancellationException) {
@@ -78,7 +88,7 @@ class RecommendationViewModel(
             RecommendationEngine.recommend(
                 context = PaymentContext(category = category, amount = amount),
                 cards = latestCards,
-                rules = rules
+                rules = latestRules
             )
         }.onSuccess { recommendations ->
             _uiState.value = if (recommendations.isEmpty()) {
