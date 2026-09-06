@@ -9,16 +9,16 @@ import com.cardwise.app.domain.model.BenefitCatalogEntry
 import com.cardwise.app.domain.model.BenefitCatalogSnapshot
 import com.cardwise.app.domain.repository.BenefitCatalogRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
-class RoomBenefitCatalogRepository(
-    private val database: CardDatabase
-) : BenefitCatalogRepository {
+class RoomBenefitCatalogRepository(private val database: CardDatabase) : BenefitCatalogRepository {
     private val dao: BenefitCatalogDao = database.benefitCatalogDao()
 
-    override fun observeCatalog(): Flow<BenefitCatalogSnapshot> = flow {
-        emit(readSnapshot())
-    }
+    override fun observeCatalog(): Flow<BenefitCatalogSnapshot> =
+        combine(dao.observeEntries(), dao.observeVersion()) { entries, version ->
+            BenefitCatalogSnapshot(version ?: 0L, entries.map { it.toDomain() })
+        }
 
     override suspend fun replaceCatalog(snapshot: BenefitCatalogSnapshot) {
         require(snapshot.version >= 0L)
@@ -29,14 +29,9 @@ class RoomBenefitCatalogRepository(
         }
     }
 
-    private suspend fun readSnapshot(): BenefitCatalogSnapshot {
-        val version = dao.getVersion() ?: 0L
-        return BenefitCatalogSnapshot(version, dao.getEntries().map { it.toDomain() })
-    }
-
     private fun BenefitCatalogEntry.toEntity(version: Long) = BenefitCatalogEntity(
         cardId, benefitId, title, description,
-        categories.joinToString("\u001f"), merchantHints.joinToString("\u001f"),
+        categories.sorted().joinToString("\u001f"), merchantHints.sorted().joinToString("\u001f"),
         rewardRatePercent, maxRewardAmount, minimumSpend, maximumEligibleSpend, priority, version
     )
 
