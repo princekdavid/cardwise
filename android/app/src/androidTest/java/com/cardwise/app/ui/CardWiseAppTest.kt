@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -105,7 +106,7 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("Continue").performClick()
 
         assert(launcher.launchCount == 1)
-        composeRule.onAllNodesWithText("Continue to your UPI app").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Continue to UPI app").assertCountEquals(0)
     }
 }
 
@@ -196,18 +197,6 @@ class PaymentHandoffDialogTest {
         composeRule.onNodeWithText("Continue").performClick()
 
         assert(result == UpiPaymentLaunchResult.NoUpiApp)
-    }
-
-    private class RecordingLauncher(
-        private val result: UpiPaymentLaunchResult
-    ) : UpiPaymentLauncher {
-        var launchCount = 0
-            private set
-
-        override fun launch(payment: UpiPaymentRequest): UpiPaymentLaunchResult {
-            launchCount += 1
-            return result
-        }
     }
 }
 
