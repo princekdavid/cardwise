@@ -2,10 +2,12 @@ package com.cardwise.app.ui.recommendation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.recommendation.PaymentContext
 import com.cardwise.app.domain.recommendation.RecommendationEngine
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.rewards.RewardRule
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +18,12 @@ class RecommendationViewModel(
     private val repository: CardRepository,
     private val rules: Map<Long, List<RewardRule>> = emptyMap()
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<RecommendationUiState>(RecommendationUiState.Loading)
+    private val _uiState = MutableStateFlow<RecommendationUiState>(
+        RecommendationUiState.Loading(RecommendationInput())
+    )
     val uiState: StateFlow<RecommendationUiState> = _uiState.asStateFlow()
 
-    private var latestCards = emptyList<com.cardwise.app.domain.model.Card>()
+    private var latestCards = emptyList<Card>()
     private var observeJob: Job? = null
     private var input = RecommendationInput()
 
@@ -44,13 +48,15 @@ class RecommendationViewModel(
     private fun observeCards() {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
-            _uiState.value = RecommendationUiState.Loading
-            runCatching {
+            _uiState.value = RecommendationUiState.Loading(input)
+            try {
                 repository.observeCards().collect { cards ->
                     latestCards = cards
                     recompute()
                 }
-            }.onFailure { error ->
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
                 _uiState.value = RecommendationUiState.Error(
                     input = input,
                     message = error.message ?: "We couldn't load your cards."
