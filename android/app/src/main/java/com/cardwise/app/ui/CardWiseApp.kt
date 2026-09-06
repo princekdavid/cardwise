@@ -1,9 +1,5 @@
 package com.cardwise.app.ui
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -11,12 +7,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -32,7 +26,6 @@ import com.cardwise.app.CardWiseApplication
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
-import com.cardwise.app.domain.scan.UpiPaymentHandoff
 import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.recommendation.RecommendationScreen
@@ -59,6 +52,9 @@ fun CardWiseApp(
 ) {
     CardWiseTheme {
         val context = LocalContext.current
+        val paymentLauncher = remember(context.applicationContext) {
+            AndroidUpiPaymentLauncher(context.applicationContext)
+        }
         var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -179,32 +175,11 @@ fun CardWiseApp(
 
         val payment = pendingPayment
         if (showHandoffConfirmation && payment != null) {
-            AlertDialog(
-                onDismissRequest = { showHandoffConfirmation = false },
-                title = { Text("Continue to your UPI app?") },
-                text = {
-                    Text("CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.")
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showHandoffConfirmation = false
-                        val uri = runCatching { UpiPaymentHandoff.buildUri(payment) }.getOrNull()
-                        pendingPayment = null
-                        if (uri == null) {
-                            Toast.makeText(context, "This payment can't be handed off safely.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-                            try {
-                                context.startActivity(Intent.createChooser(intent, "Choose UPI app"))
-                            } catch (_: ActivityNotFoundException) {
-                                Toast.makeText(context, "No UPI app is available on this device.", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                    }) { Text("Continue") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showHandoffConfirmation = false }) { Text("Cancel") }
-                }
+            PaymentHandoffDialog(
+                payment = payment,
+                launcher = paymentLauncher,
+                onDismiss = { showHandoffConfirmation = false },
+                onHandoffAttempted = { pendingPayment = null }
             )
         }
     }
