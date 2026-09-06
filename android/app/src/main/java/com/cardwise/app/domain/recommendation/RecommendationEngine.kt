@@ -3,6 +3,7 @@ package com.cardwise.app.domain.recommendation
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.rewards.RewardCalculator
 import com.cardwise.app.domain.rewards.RewardRule
+import java.util.Locale
 
 /** Pure, deterministic ranking of cards for a payment context. */
 object RecommendationEngine {
@@ -25,13 +26,19 @@ object RecommendationEngine {
                 if (matchingRules.isEmpty()) return@mapNotNull null
 
                 // Multiple rules can exist for the same category. Choose the rule that
-                // produces the highest actual reward for this transaction, rather than
-                // relying on list order.
+                // produces the highest actual reward, with stable secondary ordering so
+                // equivalent reward outcomes never depend on source-list order.
                 val bestRule = matchingRules.maxWithOrNull(
                     compareBy<RewardRule> {
                         RewardCalculator.estimate(context.amount, it).estimatedReward
                     }.thenBy {
                         RewardCalculator.estimate(context.amount, it).eligibleSpend
+                    }.thenBy {
+                        it.rewardRatePercent
+                    }.thenBy {
+                        it.maximumEligibleSpend ?: Double.POSITIVE_INFINITY
+                    }.thenBy {
+                        it.maxRewardAmount ?: Double.POSITIVE_INFINITY
                     }
                 ) ?: return@mapNotNull null
 
@@ -73,6 +80,6 @@ object RecommendationEngine {
         if (estimate.capped) append(" (cap applied)")
     }
 
-    private fun Double.formatCurrency(): String = String.format("%.2f", this)
-    private fun Double.formatRate(): String = String.format("%.2f", this)
+    private fun Double.formatCurrency(): String = String.format(Locale.ROOT, "%.2f", this)
+    private fun Double.formatRate(): String = String.format(Locale.ROOT, "%.2f", this)
 }
