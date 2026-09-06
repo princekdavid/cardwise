@@ -71,7 +71,7 @@ fun ScanScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasPermission = granted
-        if (!granted) state = ScanState.CameraError
+        state = if (granted) ScanState.Scanning else ScanState.CameraError
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -129,10 +129,12 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
         )
     }
     val handled = remember { AtomicBoolean(false) }
+    val disposed = remember { AtomicBoolean(false) }
     val cameraProvider = remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
     DisposableEffect(Unit) {
         onDispose {
+            disposed.set(true)
             cameraProvider.value?.unbindAll()
             scanner.close()
             executor.shutdown()
@@ -145,25 +147,34 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
             val previewView = PreviewView(viewContext)
             val providerFuture = ProcessCameraProvider.getInstance(viewContext)
             providerFuture.addListener({
+                if (disposed.get()) return@addListener
                 runCatching {
                     val provider = providerFuture.get()
+                    if (disposed.get()) {
+                        provider.unbindAll()
+                        return@runCatching
+                    }
                     cameraProvider.value = provider
                     val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
                     val analysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
                     analysis.setAnalyzer(executor) { imageProxy ->
+                        if (disposed.get() || handled.get()) {
+                            imageProxy.close()
+                            return@setAnalyzer
+                        }
                         val mediaImage = imageProxy.image
-                        if (mediaImage == null || handled.get()) {
+                        if (mediaImage == null) {
                             imageProxy.close()
                             return@setAnalyzer
                         }
                         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                         scanner.process(image)
                             .addOnSuccessListener { barcodes ->
-                                if (handled.get()) return@addOnSuccessListener
+                                if (disposed.get() || handled.get()) return@addOnSuccessListener
                                 val raw = barcodes.firstOrNull()?.rawValue ?: return@addOnSuccessListener
-                                handled.set(true)
+                                if (!handled.compareAndSet(false, true)) return@addOnSuccessListener
                                 when (val parsed = UpiQrParser.parse(raw)) {
                                     is UpiQrParseResult.Success -> onResult(ScanState.Detected(parsed.payment))
                                     UpiQrParseResult.NotUpi -> onResult(ScanState.Invalid(InvalidScanReason.NOT_UPI))
@@ -171,13 +182,22 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
                                 }
                             }
                             .addOnFailureListener {
-                                if (handled.compareAndSet(false, true)) onResult(ScanState.Invalid(InvalidScanReason.MALFORMED))
+                                if (!disposed.get() && handled.compareAndSet(false, true)) {
+                                    onResult(ScanState.Invalid(InvalidScanReason.MALFORMED))
+                                }
                             }
                             .addOnCompleteListener { imageProxy.close() }
                     }
+                    if (disposed.get()) {
+                        analysis.clearAnalyzer()
+                        provider.unbindAll()
+                        return@runCatching
+                    }
                     provider.unbindAll()
                     provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
-                }.onFailure { onResult(ScanState.CameraError) }
+                }.onFailure {
+                    if (!disposed.get()) onResult(ScanState.CameraError)
+                }
             }, ContextCompat.getMainExecutor(viewContext))
             previewView
         },
