@@ -11,10 +11,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -60,6 +62,8 @@ fun CardWiseApp(
         var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
+        var pendingPayment by remember { mutableStateOf<UpiPaymentRequest?>(null) }
+        var showHandoffConfirmation by remember { mutableStateOf(false) }
         val destination = AppDestination.entries[selectedIndex]
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
@@ -83,6 +87,11 @@ fun CardWiseApp(
             }
         )
 
+        fun requestPaymentHandoff(payment: UpiPaymentRequest) {
+            pendingPayment = payment
+            showHandoffConfirmation = true
+        }
+
         Scaffold(
             bottomBar = {
                 if (walletScreen == WalletScreen.List) {
@@ -90,7 +99,10 @@ fun CardWiseApp(
                         AppDestination.entries.forEachIndexed { index, item ->
                             NavigationBarItem(
                                 selected = index == selectedIndex,
-                                onClick = { selectedIndex = index },
+                                onClick = {
+                                    selectedIndex = index
+                                    if (item != AppDestination.Insights) pendingPayment = null
+                                },
                                 icon = { Text(item.label.take(1)) },
                                 label = { Text(item.label) }
                             )
@@ -109,25 +121,20 @@ fun CardWiseApp(
                 label = "app_screen_transition"
             ) { (screen, currentDestination) ->
                 when (currentDestination) {
-                    AppDestination.Insights -> RecommendationScreen(viewModel = recommendationViewModel)
+                    AppDestination.Insights -> RecommendationScreen(
+                        viewModel = recommendationViewModel,
+                        payment = pendingPayment,
+                        onContinueToPayment = pendingPayment?.let { payment ->
+                            { requestPaymentHandoff(payment) }
+                        }
+                    )
                     AppDestination.Scan -> ScanScreen(
                         onPaymentDetected = { payment: UpiPaymentRequest ->
+                            pendingPayment = payment
                             recommendationViewModel.prefillFromUpi(payment)
                             selectedIndex = AppDestination.entries.indexOf(AppDestination.Insights)
                         },
-                        onPaymentHandoffRequested = { payment: UpiPaymentRequest ->
-                            val uri = runCatching { UpiPaymentHandoff.buildUri(payment) }.getOrNull()
-                            if (uri == null) {
-                                Toast.makeText(context, "This payment can't be handed off safely.", Toast.LENGTH_SHORT).show()
-                            } else {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-                                try {
-                                    context.startActivity(Intent.createChooser(intent, "Choose UPI app"))
-                                } catch (_: ActivityNotFoundException) {
-                                    Toast.makeText(context, "No UPI app is available on this device.", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
+                        onPaymentHandoffRequested = ::requestPaymentHandoff
                     )
                     AppDestination.Wallet -> when (screen) {
                         WalletScreen.List -> CardWalletScreen(
@@ -168,6 +175,37 @@ fun CardWiseApp(
                     }
                 }
             }
+        }
+
+        val payment = pendingPayment
+        if (showHandoffConfirmation && payment != null) {
+            AlertDialog(
+                onDismissRequest = { showHandoffConfirmation = false },
+                title = { Text("Continue to your UPI app?") },
+                text = {
+                    Text("CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.")
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showHandoffConfirmation = false
+                        val uri = runCatching { UpiPaymentHandoff.buildUri(payment) }.getOrNull()
+                        pendingPayment = null
+                        if (uri == null) {
+                            Toast.makeText(context, "This payment can't be handed off safely.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+                            try {
+                                context.startActivity(Intent.createChooser(intent, "Choose UPI app"))
+                            } catch (_: ActivityNotFoundException) {
+                                Toast.makeText(context, "No UPI app is available on this device.", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }) { Text("Continue") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showHandoffConfirmation = false }) { Text("Cancel") }
+                }
+            )
         }
     }
 }
