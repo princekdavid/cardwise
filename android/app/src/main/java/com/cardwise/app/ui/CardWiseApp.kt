@@ -27,6 +27,7 @@ import com.cardwise.app.CardWiseApplication
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
+import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.recommendation.RecommendationScreen
 import com.cardwise.app.ui.recommendation.RecommendationViewModel
@@ -54,6 +55,7 @@ fun CardWiseApp(
         var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
+        var pendingPayment by remember { mutableStateOf<UpiPaymentRequest?>(null) }
         val destination = AppDestination.entries[selectedIndex]
         val application = LocalContext.current.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
@@ -104,7 +106,13 @@ fun CardWiseApp(
             ) { (screen, currentDestination) ->
                 when (currentDestination) {
                     AppDestination.Insights -> RecommendationScreen(viewModel = recommendationViewModel)
-                    AppDestination.Scan -> ScanScreen()
+                    AppDestination.Scan -> ScanScreen(
+                        onPaymentDetected = { payment ->
+                            pendingPayment = payment
+                            recommendationViewModel.prefillFromUpi(payment)
+                            selectedIndex = AppDestination.entries.indexOf(AppDestination.Insights)
+                        }
+                    )
                     AppDestination.Wallet -> when (screen) {
                         WalletScreen.List -> CardWalletScreen(
                             viewModel = walletViewModel,
