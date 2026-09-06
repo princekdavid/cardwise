@@ -8,7 +8,7 @@ data class PaymentContext(
 ) {
     init {
         require(category.isNotBlank()) { "Category must not be blank" }
-        require(amount >= 0.0) { "Amount must not be negative" }
+        require(amount.isFinite() && amount >= 0.0) { "Amount must be a finite, non-negative value" }
         require(currency.isNotBlank()) { "Currency must not be blank" }
     }
 }
