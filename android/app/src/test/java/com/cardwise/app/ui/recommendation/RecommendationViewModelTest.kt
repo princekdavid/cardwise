@@ -3,6 +3,7 @@ package com.cardwise.app.ui.recommendation
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
 import com.cardwise.app.domain.repository.CardRepository
+import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
 import com.cardwise.app.ui.wallet.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,11 +25,13 @@ class RecommendationViewModelTest {
     @Test
     fun matchingCards_areRankedAndExposedAsReady() = runTest {
         val repository = FakeRecommendationRepository(card(1L), card(2L))
-        val rules = mapOf(
-            1L to listOf(RewardRule("Dining", 5.0)),
-            2L to listOf(RewardRule("Dining", 2.0))
+        val ruleRepository = FakeRewardRuleRepository(
+            mapOf(
+                1L to listOf(RewardRule("Dining", 5.0)),
+                2L to listOf(RewardRule("Dining", 2.0))
+            )
         )
-        val viewModel = RecommendationViewModel(repository, rules)
+        val viewModel = RecommendationViewModel(repository, rewardRuleRepository = ruleRepository)
 
         viewModel.setAmount("1000")
         viewModel.setCategory(" dining ")
@@ -43,7 +46,8 @@ class RecommendationViewModelTest {
     @Test
     fun missingRules_produceNoEligibleCardState() = runTest {
         val repository = FakeRecommendationRepository(card(1L))
-        val viewModel = RecommendationViewModel(repository)
+        val ruleRepository = FakeRewardRuleRepository()
+        val viewModel = RecommendationViewModel(repository, rewardRuleRepository = ruleRepository)
 
         viewModel.setAmount("500")
         viewModel.setCategory("Travel")
@@ -55,8 +59,10 @@ class RecommendationViewModelTest {
     @Test
     fun incompleteInput_doesNotCalculate() = runTest {
         val repository = FakeRecommendationRepository(card(1L))
-        val rules = mapOf(1L to listOf(RewardRule("Dining", 5.0)))
-        val viewModel = RecommendationViewModel(repository, rules)
+        val ruleRepository = FakeRewardRuleRepository(
+            mapOf(1L to listOf(RewardRule("Dining", 5.0)))
+        )
+        val viewModel = RecommendationViewModel(repository, rewardRuleRepository = ruleRepository)
 
         viewModel.setAmount("100")
         advanceUntilIdle()
@@ -84,4 +90,20 @@ private class FakeRecommendationRepository(vararg initialCards: Card) : CardRepo
     override suspend fun addCard(card: Card): Long = error("Not needed")
     override suspend fun updateCard(card: Card) = error("Not needed")
     override suspend fun deleteCard(cardId: Long) = error("Not needed")
+}
+
+private class FakeRewardRuleRepository(
+    initialRules: Map<Long, List<RewardRule>> = emptyMap()
+) : RewardRuleRepository {
+    private val rules = MutableStateFlow(initialRules)
+
+    override fun observeRules(): Flow<Map<Long, List<RewardRule>>> = rules
+
+    override suspend fun getRules(cardId: Long): List<RewardRule> = rules.value[cardId].orEmpty()
+
+    override suspend fun replaceRules(cardId: Long, rules: List<RewardRule>) {
+        this.rules.value = this.rules.value.toMutableMap().apply {
+            if (rules.isEmpty()) remove(cardId) else put(cardId, rules)
+        }
+    }
 }
