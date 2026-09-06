@@ -1,6 +1,7 @@
 package com.cardwise.app.domain.scan
 
 import java.math.BigDecimal
+import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -44,20 +45,15 @@ object UpiQrParser {
         }
 
         val payload = rawPayload.trim()
-        val schemeEnd = payload.indexOf(":")
-        if (schemeEnd <= 0 || !payload.substring(0, schemeEnd).equals("upi", ignoreCase = true)) {
-            return UpiQrParseResult.NotUpi
-        }
-        if (!payload.startsWith("upi://pay", ignoreCase = true)) {
+        val uri = runCatching { URI(payload) }.getOrNull() ?: return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MALFORMED_URI)
+        if (!uri.scheme.equals("upi", ignoreCase = true)) return UpiQrParseResult.NotUpi
+        if (!uri.host.equals("pay", ignoreCase = true) || !uri.path.isNullOrEmpty() || uri.fragment != null) {
             return UpiQrParseResult.NotUpi
         }
 
-        val queryStart = payload.indexOf('?')
-        if (queryStart < 0 || queryStart == payload.lastIndex) {
-            return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_VPA)
-        }
+        val rawQuery = uri.rawQuery ?: return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_VPA)
+        if (rawQuery.isBlank()) return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_VPA)
 
-        val rawQuery = payload.substring(queryStart + 1)
         val parameters = linkedMapOf<String, String>()
         for (component in rawQuery.split('&')) {
             if (component.isEmpty()) continue
