@@ -26,7 +26,10 @@ class AndroidUpiPaymentLauncher(
 
         return try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-            context.startActivity(Intent.createChooser(intent, "Choose UPI app"))
+            val chooser = Intent.createChooser(intent, "Choose UPI app").apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(chooser)
             UpiPaymentLaunchResult.Launched
         } catch (_: ActivityNotFoundException) {
             UpiPaymentLaunchResult.NoUpiApp
