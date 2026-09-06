@@ -82,7 +82,7 @@ class RecommendationViewModelTest {
         val viewModel = RecommendationViewModel(repository)
 
         viewModel.prefillFromUpi(
-            UpI_PAYMENT.copy(amount = BigDecimal("125.50"))
+            SCANNED_UPI_PAYMENT.copy(amount = BigDecimal("125.50"))
         )
         advanceUntilIdle()
 
@@ -97,7 +97,7 @@ class RecommendationViewModelTest {
         val repository = FakeRecommendationRepository(card(1L))
         val viewModel = RecommendationViewModel(repository)
 
-        viewModel.prefillFromUpi(UpI_PAYMENT.copy(amount = null))
+        viewModel.prefillFromUpi(SCANNED_UPI_PAYMENT.copy(amount = null))
         advanceUntilIdle()
 
         val state = viewModel.uiState.first()
@@ -110,7 +110,7 @@ class RecommendationViewModelTest {
         val viewModel = RecommendationViewModel(FakeRecommendationRepository(card(1L)))
 
         assertFailsWith<IllegalArgumentException> {
-            viewModel.prefillFromUpi(UpI_PAYMENT.copy(currency = "USD"))
+            viewModel.prefillFromUpi(SCANNED_UPI_PAYMENT.copy(currency = "USD"))
         }
     }
 
@@ -123,7 +123,7 @@ class RecommendationViewModelTest {
     )
 }
 
-private val UpI_PAYMENT = UpiPaymentRequest(
+private val SCANNED_UPI_PAYMENT = UpiPaymentRequest(
     vpa = "merchant@upi",
     merchantName = "Shop",
     amount = BigDecimal("100.00"),
