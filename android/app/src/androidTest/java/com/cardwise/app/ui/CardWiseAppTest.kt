@@ -33,6 +33,16 @@ class CardWiseAppTest {
     }
 
     @Test
+    fun selectingScan_withoutPermission_showsPrivacyFirstCameraPrompt() {
+        composeRule.setContent { CardWiseApp() }
+
+        composeRule.onNodeWithText("Scan").performClick()
+
+        composeRule.onNodeWithText("Camera access needed").assertExists()
+        composeRule.onNodeWithText("The QR payload is processed locally and is not stored.").assertExists()
+    }
+
+    @Test
     fun selectingInsights_updatesSelectedDestination() {
         composeRule.setContent { CardWiseApp() }
 
