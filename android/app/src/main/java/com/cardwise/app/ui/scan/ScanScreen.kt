@@ -26,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,19 +64,13 @@ fun ScanScreen(
     var hasPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
-    var permissionRequested by remember { mutableStateOf(false) }
     var state by remember { mutableStateOf<ScanState>(ScanState.Scanning) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasPermission = granted
-        permissionRequested = true
         if (!granted) state = ScanState.CameraError
-    }
-
-    LaunchedEffect(Unit) {
-        if (!hasPermission && !permissionRequested) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
