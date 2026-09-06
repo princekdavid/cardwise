@@ -1,10 +1,10 @@
 package com.cardwise.app.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +25,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
 import com.cardwise.app.domain.repository.CardRepository
+import com.cardwise.app.domain.rewards.RewardRule
 import com.cardwise.app.navigation.AppDestination
+import com.cardwise.app.ui.recommendation.RecommendationScreen
+import com.cardwise.app.ui.recommendation.RecommendationViewModel
+import com.cardwise.app.ui.recommendation.RecommendationViewModelFactory
 import com.cardwise.app.ui.theme.CardWiseMotion
 import com.cardwise.app.ui.theme.CardWiseSpacing
 import com.cardwise.app.ui.theme.CardWiseTheme
@@ -39,7 +43,10 @@ import com.cardwise.app.ui.wallet.WalletUiState
 private enum class WalletScreen { List, Add, Detail, Edit }
 
 @Composable
-fun CardWiseApp(repository: CardRepository? = null) {
+fun CardWiseApp(
+    repository: CardRepository? = null,
+    recommendationRules: Map<Long, List<RewardRule>> = emptyMap()
+) {
     CardWiseTheme {
         var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
@@ -47,12 +54,20 @@ fun CardWiseApp(repository: CardRepository? = null) {
         val destination = AppDestination.entries[selectedIndex]
         val resolvedRepository = repository ?: (LocalContext.current.applicationContext as CardWiseApplication)
             .container.cardRepository
+
         val walletViewModel: CardWalletViewModel = viewModel(
             factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) }
         )
         val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
         val selectedCard = (walletState as? WalletUiState.Success)
             ?.cards?.firstOrNull { it.id == selectedCardId }
+
+        val recommendationViewModel: RecommendationViewModel = viewModel(
+            key = "recommendation",
+            factory = remember(resolvedRepository, recommendationRules) {
+                RecommendationViewModelFactory(resolvedRepository, recommendationRules)
+            }
+        )
 
         Scaffold(
             bottomBar = {
@@ -77,9 +92,11 @@ fun CardWiseApp(repository: CardRepository? = null) {
                     fadeIn(tween(CardWiseMotion.screenTransitionMillis)) togetherWith
                         fadeOut(tween(CardWiseMotion.screenTransitionMillis))
                 },
-                label = "wallet_screen_transition"
+                label = "app_screen_transition"
             ) { (screen, currentDestination) ->
-                if (currentDestination != AppDestination.Wallet) {
+                if (currentDestination == AppDestination.Insights) {
+                    RecommendationScreen(viewModel = recommendationViewModel)
+                } else if (currentDestination != AppDestination.Wallet) {
                     Text(
                         text = currentDestination.label,
                         style = MaterialTheme.typography.headlineMedium,
