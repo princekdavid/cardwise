@@ -129,9 +129,11 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
         )
     }
     val handled = remember { AtomicBoolean(false) }
+    val cameraProvider = remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
     DisposableEffect(Unit) {
         onDispose {
+            cameraProvider.value?.unbindAll()
             scanner.close()
             executor.shutdown()
         }
@@ -145,6 +147,7 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
             providerFuture.addListener({
                 runCatching {
                     val provider = providerFuture.get()
+                    cameraProvider.value = provider
                     val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
                     val analysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
