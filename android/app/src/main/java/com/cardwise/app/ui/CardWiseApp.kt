@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +24,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
@@ -48,18 +55,28 @@ private enum class WalletScreen { List, Add, Detail, Edit }
 fun CardWiseApp(
     repository: CardRepository? = null,
     rewardRuleRepository: RewardRuleRepository? = null,
-    recommendationRules: Map<Long, List<RewardRule>> = emptyMap()
+    recommendationRules: Map<Long, List<RewardRule>> = emptyMap(),
+    paymentLauncher: UpiPaymentLauncher? = null,
+    initialPayment: UpiPaymentRequest? = null
 ) {
     CardWiseTheme {
         val context = LocalContext.current
-        val paymentLauncher = remember(context.applicationContext) {
+        val lifecycleOwner = LocalLifecycleOwner.current
+        val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) {
             AndroidUpiPaymentLauncher(context.applicationContext)
         }
-        var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
+        val snackbarHostState = remember { SnackbarHostState() }
+        var selectedIndex by rememberSaveable {
+            mutableIntStateOf(
+                if (initialPayment != null) AppDestination.entries.indexOf(AppDestination.Insights) else 0
+            )
+        }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
-        var pendingPayment by remember { mutableStateOf<UpiPaymentRequest?>(null) }
+        var pendingPayment by remember { mutableStateOf(initialPayment) }
         var showHandoffConfirmation by remember { mutableStateOf(false) }
+        var awaitingPaymentReturn by remember { mutableStateOf(false) }
+        var showPaymentReturnNotice by remember { mutableStateOf(false) }
         val destination = AppDestination.entries[selectedIndex]
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
@@ -83,12 +100,35 @@ fun CardWiseApp(
             }
         )
 
+        DisposableEffect(lifecycleOwner) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME && awaitingPaymentReturn) {
+                    awaitingPaymentReturn = false
+                    showHandoffConfirmation = false
+                    showPaymentReturnNotice = true
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+
+        LaunchedEffect(showPaymentReturnNotice) {
+            if (!showPaymentReturnNotice) return@LaunchedEffect
+            showPaymentReturnNotice = false
+            snackbarHostState.showSnackbar(
+                "Back from UPI app. Payment status is managed by your UPI app."
+            )
+        }
+
         fun requestPaymentHandoff(payment: UpiPaymentRequest) {
-            pendingPayment = payment
-            showHandoffConfirmation = true
+            if (!awaitingPaymentReturn) {
+                pendingPayment = payment
+                showHandoffConfirmation = true
+            }
         }
 
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (walletScreen == WalletScreen.List) {
                     NavigationBar {
@@ -174,12 +214,23 @@ fun CardWiseApp(
         }
 
         val payment = pendingPayment
-        if (showHandoffConfirmation && payment != null) {
+        if (showHandoffConfirmation && payment != null && !awaitingPaymentReturn) {
             PaymentHandoffDialog(
                 payment = payment,
-                launcher = paymentLauncher,
+                launcher = resolvedPaymentLauncher,
                 onDismiss = { showHandoffConfirmation = false },
-                onHandoffAttempted = { pendingPayment = null }
+                onHandoffCompleted = { result ->
+                    when (result) {
+                        UpiPaymentLaunchResult.Launched -> {
+                            pendingPayment = null
+                            awaitingPaymentReturn = true
+                        }
+                        UpiPaymentLaunchResult.NoUpiApp,
+                        UpiPaymentLaunchResult.UnsafePayment -> {
+                            showHandoffConfirmation = false
+                        }
+                    }
+                }
             )
         }
     }

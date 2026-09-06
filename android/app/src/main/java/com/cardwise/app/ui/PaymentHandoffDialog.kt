@@ -13,7 +13,7 @@ fun PaymentHandoffDialog(
     payment: UpiPaymentRequest,
     launcher: UpiPaymentLauncher,
     onDismiss: () -> Unit,
-    onHandoffAttempted: () -> Unit
+    onHandoffCompleted: (UpiPaymentLaunchResult) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -26,8 +26,9 @@ fun PaymentHandoffDialog(
         confirmButton = {
             TextButton(onClick = {
                 onDismiss()
-                onHandoffAttempted()
-                when (launcher.launch(payment)) {
+                val result = launcher.launch(payment)
+                onHandoffCompleted(result)
+                when (result) {
                     UpiPaymentLaunchResult.Launched -> Unit
                     UpiPaymentLaunchResult.UnsafePayment ->
                         Toast.makeText(
