@@ -20,10 +20,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -58,7 +60,8 @@ private enum class InvalidScanReason { NOT_UPI, MALFORMED }
 
 @Composable
 fun ScanScreen(
-    onPaymentDetected: (UpiPaymentRequest) -> Unit = {}
+    onPaymentDetected: (UpiPaymentRequest) -> Unit = {},
+    onPaymentHandoffRequested: (UpiPaymentRequest) -> Unit = {}
 ) {
     val context = LocalContext.current
     var hasPermission by remember {
@@ -84,7 +87,8 @@ fun ScanScreen(
                 scanState is ScanState.Scanning -> CameraPreview { state = it }
                 scanState is ScanState.Detected -> DetectedContent(
                     payment = scanState.payment,
-                    onContinue = { onPaymentDetected(scanState.payment) },
+                    onContinueToPayment = { onPaymentHandoffRequested(scanState.payment) },
+                    onFindBestCard = { onPaymentDetected(scanState.payment) },
                     onScanAgain = { state = ScanState.Scanning }
                 )
                 scanState is ScanState.Invalid -> InvalidContent(
@@ -181,7 +185,14 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
 }
 
 @Composable
-private fun DetectedContent(payment: UpiPaymentRequest, onContinue: () -> Unit, onScanAgain: () -> Unit) {
+private fun DetectedContent(
+    payment: UpiPaymentRequest,
+    onContinueToPayment: () -> Unit,
+    onFindBestCard: () -> Unit,
+    onScanAgain: () -> Unit
+) {
+    var showConfirmation by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -192,8 +203,36 @@ private fun DetectedContent(payment: UpiPaymentRequest, onContinue: () -> Unit, 
                 payment.note?.let { Text(it, modifier = Modifier.padding(top = 8.dp)) }
             }
         }
-        Button(onClick = onContinue, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text("Find best card") }
-        Button(onClick = onScanAgain, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentPadding = PaddingValues(12.dp)) { Text("Scan again") }
+        Button(onClick = onFindBestCard, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+            Text("Find best card")
+        }
+        Button(onClick = { showConfirmation = true }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Text("Continue to payment")
+        }
+        Button(onClick = onScanAgain, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentPadding = PaddingValues(12.dp)) {
+            Text("Scan again")
+        }
+    }
+
+    if (showConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showConfirmation = false },
+            title = { Text("Continue to your UPI app?") },
+            text = {
+                Text(
+                    "CardWise will pass only the sanitized payment details to a UPI app. You will choose the app and complete payment there."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showConfirmation = false
+                    onContinueToPayment()
+                }) { Text("Continue") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmation = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
