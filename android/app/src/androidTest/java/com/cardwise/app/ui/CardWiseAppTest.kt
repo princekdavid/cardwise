@@ -76,13 +76,13 @@ class PaymentHandoffDialogTest {
 
     @Test
     fun cancel_doesNotLaunchPayment() {
-        val launcher = RecordingLauncher()
+        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
         composeRule.setContent {
             PaymentHandoffDialog(
                 payment = payment,
                 launcher = launcher,
                 onDismiss = {},
-                onHandoffAttempted = {}
+                onHandoffCompleted = {}
             )
         }
 
@@ -94,7 +94,7 @@ class PaymentHandoffDialogTest {
 
     @Test
     fun continue_launchesExactlyOnceAndDismisses() {
-        val launcher = RecordingLauncher()
+        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
         composeRule.setContent {
             var visible by remember { mutableStateOf(true) }
             if (visible) {
@@ -102,7 +102,7 @@ class PaymentHandoffDialogTest {
                     payment = payment,
                     launcher = launcher,
                     onDismiss = { visible = false },
-                    onHandoffAttempted = {}
+                    onHandoffCompleted = {}
                 )
             }
         }
@@ -113,13 +113,51 @@ class PaymentHandoffDialogTest {
         composeRule.onAllNodesWithText("Continue to your UPI app?").assertCountEquals(0)
     }
 
-    private class RecordingLauncher : UpiPaymentLauncher {
+    @Test
+    fun launched_reportsOutcome() {
+        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
+        var result: UpiPaymentLaunchResult? = null
+        composeRule.setContent {
+            PaymentHandoffDialog(
+                payment = payment,
+                launcher = launcher,
+                onDismiss = {},
+                onHandoffCompleted = { result = it }
+            )
+        }
+
+        composeRule.onNodeWithText("Continue").performClick()
+
+        assert(result == UpiPaymentLaunchResult.Launched)
+    }
+
+    @Test
+    fun noUpiApp_reportsOutcome() {
+        val launcher = RecordingLauncher(UpiPaymentLaunchResult.NoUpiApp)
+        var result: UpiPaymentLaunchResult? = null
+        composeRule.setContent {
+            PaymentHandoffDialog(
+                payment = payment,
+                launcher = launcher,
+                onDismiss = {},
+                onHandoffCompleted = { result = it }
+            )
+        }
+
+        composeRule.onNodeWithText("Continue").performClick()
+
+        assert(result == UpiPaymentLaunchResult.NoUpiApp)
+    }
+
+    private class RecordingLauncher(
+        private val result: UpiPaymentLaunchResult
+    ) : UpiPaymentLauncher {
         var launchCount = 0
             private set
 
         override fun launch(payment: UpiPaymentRequest): UpiPaymentLaunchResult {
             launchCount += 1
-            return UpiPaymentLaunchResult.Launched
+            return result
         }
     }
 }
