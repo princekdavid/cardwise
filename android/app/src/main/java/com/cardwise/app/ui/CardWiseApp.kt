@@ -1,5 +1,9 @@
 package com.cardwise.app.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -26,6 +30,7 @@ import com.cardwise.app.CardWiseApplication
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
+import com.cardwise.app.domain.scan.UpiPaymentHandoff
 import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.recommendation.RecommendationScreen
@@ -51,11 +56,12 @@ fun CardWiseApp(
     recommendationRules: Map<Long, List<RewardRule>> = emptyMap()
 ) {
     CardWiseTheme {
+        val context = LocalContext.current
         var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
         val destination = AppDestination.entries[selectedIndex]
-        val application = LocalContext.current.applicationContext as CardWiseApplication
+        val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
         val resolvedRewardRuleRepository = rewardRuleRepository ?: application.container.rewardRuleRepository
 
@@ -108,6 +114,19 @@ fun CardWiseApp(
                         onPaymentDetected = { payment: UpiPaymentRequest ->
                             recommendationViewModel.prefillFromUpi(payment)
                             selectedIndex = AppDestination.entries.indexOf(AppDestination.Insights)
+                        },
+                        onPaymentHandoffRequested = { payment: UpiPaymentRequest ->
+                            val uri = runCatching { UpiPaymentHandoff.buildUri(payment) }.getOrNull()
+                            if (uri == null) {
+                                Toast.makeText(context, "This payment can't be handed off safely.", Toast.LENGTH_SHORT).show()
+                            } else {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+                                try {
+                                    context.startActivity(Intent.createChooser(intent, "Choose UPI app"))
+                                } catch (_: ActivityNotFoundException) {
+                                    Toast.makeText(context, "No UPI app is available on this device.", Toast.LENGTH_LONG).show()
+                                }
+                            }
                         }
                     )
                     AppDestination.Wallet -> when (screen) {
