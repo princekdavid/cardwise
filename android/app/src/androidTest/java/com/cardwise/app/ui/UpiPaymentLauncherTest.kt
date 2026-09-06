@@ -47,7 +47,7 @@ class UpiPaymentLauncherTest {
 
     @Test
     fun launch_whenNoActivityAvailable_returnsNoUpiApp() {
-        val context = ThrowingContext(InstrumentationRegistry.getInstrumentation().targetContext)
+        val context = ThrowingContext(ApplicationProvider.getApplicationContext())
 
         val result = AndroidUpiPaymentLauncher(context).launch(payment)
 
