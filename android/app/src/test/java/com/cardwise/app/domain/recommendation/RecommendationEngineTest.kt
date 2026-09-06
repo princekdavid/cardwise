@@ -125,4 +125,33 @@ class RecommendationEngineTest {
         )
         assertEquals(listOf(1L), result.map { it.card.id })
     }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNegativePaymentAmount() {
+        PaymentContext("Dining", -1.0)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsInfinitePaymentAmount() {
+        PaymentContext("Dining", Double.POSITIVE_INFINITY)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNaNPaymentAmount() {
+        PaymentContext("Dining", Double.NaN)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsBlankCategory() {
+        PaymentContext("   ", 1_000.0)
+    }
+
+    @Test fun categoryMatchingIsCaseAndWhitespaceInsensitive() {
+        val result = RecommendationEngine.recommend(
+            PaymentContext("  dInInG  ", 1_000.0),
+            listOf(card(1)),
+            mapOf(1L to listOf(RewardRule(" DINING ", 5.0)))
+        )
+        assertEquals(50.0, result.single().reward.estimatedReward, 0.001)
+    }
 }
