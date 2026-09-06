@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
 import com.cardwise.app.domain.repository.CardRepository
+import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
 import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.recommendation.RecommendationScreen
@@ -45,6 +46,7 @@ private enum class WalletScreen { List, Add, Detail, Edit }
 @Composable
 fun CardWiseApp(
     repository: CardRepository? = null,
+    rewardRuleRepository: RewardRuleRepository? = null,
     recommendationRules: Map<Long, List<RewardRule>> = emptyMap()
 ) {
     CardWiseTheme {
@@ -52,8 +54,9 @@ fun CardWiseApp(
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
         val destination = AppDestination.entries[selectedIndex]
-        val resolvedRepository = repository ?: (LocalContext.current.applicationContext as CardWiseApplication)
-            .container.cardRepository
+        val application = LocalContext.current.applicationContext as CardWiseApplication
+        val resolvedRepository = repository ?: application.container.cardRepository
+        val resolvedRewardRuleRepository = rewardRuleRepository ?: application.container.rewardRuleRepository
 
         val walletViewModel: CardWalletViewModel = viewModel(
             factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) }
@@ -64,8 +67,12 @@ fun CardWiseApp(
 
         val recommendationViewModel: RecommendationViewModel = viewModel(
             key = "recommendation",
-            factory = remember(resolvedRepository, recommendationRules) {
-                RecommendationViewModelFactory(resolvedRepository, recommendationRules)
+            factory = remember(resolvedRepository, resolvedRewardRuleRepository, recommendationRules) {
+                RecommendationViewModelFactory(
+                    repository = resolvedRepository,
+                    rewardRuleRepository = resolvedRewardRuleRepository,
+                    rules = recommendationRules
+                )
             }
         )
 
