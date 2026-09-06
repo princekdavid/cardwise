@@ -13,22 +13,22 @@
 
 ## M1 — Card Wallet
 
-- [ ] Card model
-- [ ] Card list
-- [ ] Add card flow
-- [ ] Edit/delete card
-- [ ] Card detail
-- [ ] Benefit overview
-- [ ] Empty/loading/error states
+- [x] Card model
+- [x] Card list
+- [x] Add card flow
+- [x] Edit/delete card
+- [x] Card detail
+- [x] Benefit overview
+- [x] Empty/loading/error states
 
 ## M2 — Rewards Intelligence
 
-- [ ] Reward rules
-- [ ] Categories
-- [ ] Caps/thresholds
-- [ ] Benefit tracking
-- [ ] Renewal/expiry reminders
-- [ ] Reward estimation
+- [x] Reward rules
+- [x] Categories
+- [x] Caps/thresholds
+- [x] Benefit tracking
+- [x] Renewal/expiry reminders
+- [x] Reward estimation
 
 ## M3 — Recommendations
 

@@ -4,8 +4,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.cardwise.app.domain.scan.UpiPaymentRequest
 import java.math.BigDecimal
 import org.junit.Assert.assertEquals
@@ -27,13 +27,14 @@ class UpiPaymentLauncherTest {
 
     @Test
     fun launch_usesChooserWithSanitizedUpiViewIntent() {
-        val context = RecordingContext(InstrumentationRegistry.getInstrumentation().targetContext)
+        val context = RecordingContext(ApplicationProvider.getApplicationContext())
         val result = AndroidUpiPaymentLauncher(context).launch(payment)
 
         assertEquals(UpiPaymentLaunchResult.Launched, result)
         val chooser = context.startedIntent
         assertNotNull(chooser)
         assertEquals(Intent.ACTION_CHOOSER, chooser!!.action)
+        assertTrue(chooser.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
 
         val target = chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
         assertNotNull(target)
@@ -46,7 +47,7 @@ class UpiPaymentLauncherTest {
 
     @Test
     fun launch_whenNoActivityAvailable_returnsNoUpiApp() {
-        val context = ThrowingContext(InstrumentationRegistry.getInstrumentation().targetContext)
+        val context = ThrowingContext(ApplicationProvider.getApplicationContext())
 
         val result = AndroidUpiPaymentLauncher(context).launch(payment)
 
@@ -55,7 +56,7 @@ class UpiPaymentLauncherTest {
 
     @Test
     fun launch_withUnsafePayment_doesNotStartActivity() {
-        val context = RecordingContext(InstrumentationRegistry.getInstrumentation().targetContext)
+        val context = RecordingContext(ApplicationProvider.getApplicationContext())
         val unsafe = payment.copy(note = "bad\nvalue")
 
         val result = AndroidUpiPaymentLauncher(context).launch(unsafe)
