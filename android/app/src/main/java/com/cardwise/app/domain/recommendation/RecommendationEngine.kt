@@ -11,18 +11,37 @@ object RecommendationEngine {
         cards: List<Card>,
         rules: Map<Long, List<RewardRule>>
     ): List<CardRecommendation> {
+        if (context.amount == 0.0) return emptyList()
+
+        val normalizedCategory = context.category.trim()
+
         val candidates = cards.asSequence()
             .filter { it.isActive }
+            .distinctBy { it.id }
             .mapNotNull { card ->
-                val rule = rules[card.id]
-                    ?.firstOrNull { it.enabled && it.category.equals(context.category, ignoreCase = true) }
-                    ?: return@mapNotNull null
-                val estimate = RewardCalculator.estimate(context.amount, rule)
-                if (estimate.estimatedReward <= 0.0 && context.amount > 0.0) return@mapNotNull null
+                val matchingRules = rules[card.id].orEmpty()
+                    .filter { it.enabled && it.category.trim().equals(normalizedCategory, ignoreCase = true) }
+
+                if (matchingRules.isEmpty()) return@mapNotNull null
+
+                // Multiple rules can exist for the same category. Choose the rule that
+                // produces the highest actual reward for this transaction, rather than
+                // relying on list order.
+                val bestRule = matchingRules.maxWithOrNull(
+                    compareBy<RewardRule> {
+                        RewardCalculator.estimate(context.amount, it).estimatedReward
+                    }.thenBy {
+                        RewardCalculator.estimate(context.amount, it).eligibleSpend
+                    }
+                ) ?: return@mapNotNull null
+
+                val estimate = RewardCalculator.estimate(context.amount, bestRule)
+                if (estimate.estimatedReward <= 0.0) return@mapNotNull null
+
                 CardRecommendation(
                     card = card,
                     reward = estimate,
-                    reason = reasonFor(context, estimate, rule),
+                    reason = reasonFor(context, estimate, bestRule),
                     rank = 0
                 )
             }
@@ -46,7 +65,7 @@ object RecommendationEngine {
         append("Earn approximately ")
         append(estimate.estimatedReward.formatCurrency())
         append(" on ")
-        append(context.category)
+        append(context.category.trim())
         append(".")
         if (rule.rewardRatePercent > 0) {
             append(" ${rule.rewardRatePercent.formatRate()}% rewards")
