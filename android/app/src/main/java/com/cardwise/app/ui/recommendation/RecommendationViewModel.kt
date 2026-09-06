@@ -3,11 +3,12 @@ package com.cardwise.app.ui.recommendation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cardwise.app.domain.model.Card
-import com.cardwise.app.domain.recommendation.PaymentContext
-import com.cardwise.app.domain.recommendation.RecommendationEngine
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
+import com.cardwise.app.domain.recommendation.PaymentContext
+import com.cardwise.app.domain.recommendation.RecommendationEngine
 import com.cardwise.app.domain.rewards.RewardRule
+import com.cardwise.app.domain.scan.UpiPaymentRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +44,13 @@ class RecommendationViewModel(
 
     fun setCategory(value: String) {
         input = input.copy(category = value)
+        recompute()
+    }
+
+    /** Prefills only user-visible, non-sensitive payment fields from a scanned UPI QR. */
+    fun prefillFromUpi(payment: UpiPaymentRequest) {
+        require(payment.currency.equals("INR", ignoreCase = true)) { "Only INR payments are supported" }
+        input = input.copy(amount = payment.amount?.toPlainString().orEmpty())
         recompute()
     }
 
