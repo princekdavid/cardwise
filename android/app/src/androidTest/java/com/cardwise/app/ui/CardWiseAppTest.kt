@@ -12,7 +12,13 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.cardwise.app.domain.model.Card
+import com.cardwise.app.domain.model.CardNetwork
+import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.scan.UpiPaymentRequest
+import com.cardwise.app.domain.rewards.RewardRule
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.math.BigDecimal
 import org.junit.Rule
 import org.junit.Test
@@ -57,6 +63,49 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("Insights").performClick()
 
         composeRule.onNodeWithText("Insights").assertIsSelected()
+    }
+
+    @Test
+    fun scannedPayment_flowsThroughRecommendationToHandoff() {
+        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
+        val card = Card(
+            id = 1L,
+            issuer = "CardWise Bank",
+            name = "Everyday Rewards",
+            lastFour = "1234",
+            network = CardNetwork.VISA
+        )
+        val payment = UpiPaymentRequest(
+            vpa = "merchant@upi",
+            merchantName = "CardWise Shop",
+            amount = BigDecimal("125.00"),
+            currency = "INR",
+            transactionReference = "ref-123",
+            note = "Order 42"
+        )
+
+        composeRule.setContent {
+            CardWiseApp(
+                repository = FakeCardRepository(listOf(card)),
+                recommendationRules = mapOf(
+                    card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))
+                ),
+                paymentLauncher = launcher,
+                initialPayment = payment
+            )
+        }
+
+        composeRule.onNodeWithText("CardWise Shop").assertExists()
+        composeRule.onNodeWithText("₹125.00").assertExists()
+        composeRule.onNodeWithText("Category").performClick()
+        composeRule.onNodeWithText("Category").performTextInput("dining")
+        composeRule.onNodeWithText("Continue to UPI app").performClick()
+
+        composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
+        composeRule.onNodeWithText("Continue").performClick()
+
+        assert(launcher.launchCount == 1)
+        composeRule.onAllNodesWithText("Continue to your UPI app").assertCountEquals(0)
     }
 }
 
@@ -159,5 +208,36 @@ class PaymentHandoffDialogTest {
             launchCount += 1
             return result
         }
+    }
+}
+
+private class FakeCardRepository(initialCards: List<Card>) : CardRepository {
+    private val cards = MutableStateFlow(initialCards)
+
+    override fun observeCards(): Flow<List<Card>> = cards
+
+    override suspend fun addCard(card: Card): Long {
+        cards.value = cards.value + card
+        return card.id
+    }
+
+    override suspend fun updateCard(card: Card) {
+        cards.value = cards.value.map { if (it.id == card.id) card else it }
+    }
+
+    override suspend fun deleteCard(cardId: Long) {
+        cards.value = cards.value.filterNot { it.id == cardId }
+    }
+}
+
+private class RecordingLauncher(
+    private val result: UpiPaymentLaunchResult
+) : UpiPaymentLauncher {
+    var launchCount = 0
+        private set
+
+    override fun launch(payment: UpiPaymentRequest): UpiPaymentLaunchResult {
+        launchCount += 1
+        return result
     }
 }
