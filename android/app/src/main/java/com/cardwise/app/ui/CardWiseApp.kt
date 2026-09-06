@@ -31,6 +31,7 @@ import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.recommendation.RecommendationScreen
 import com.cardwise.app.ui.recommendation.RecommendationViewModel
 import com.cardwise.app.ui.recommendation.RecommendationViewModelFactory
+import com.cardwise.app.ui.scan.ScanScreen
 import com.cardwise.app.ui.theme.CardWiseMotion
 import com.cardwise.app.ui.theme.CardWiseSpacing
 import com.cardwise.app.ui.theme.CardWiseTheme
@@ -101,16 +102,10 @@ fun CardWiseApp(
                 },
                 label = "app_screen_transition"
             ) { (screen, currentDestination) ->
-                if (currentDestination == AppDestination.Insights) {
-                    RecommendationScreen(viewModel = recommendationViewModel)
-                } else if (currentDestination != AppDestination.Wallet) {
-                    Text(
-                        text = currentDestination.label,
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(CardWiseSpacing.lg)
-                    )
-                } else {
-                    when (screen) {
+                when (currentDestination) {
+                    AppDestination.Insights -> RecommendationScreen(viewModel = recommendationViewModel)
+                    AppDestination.Scan -> ScanScreen()
+                    AppDestination.Wallet -> when (screen) {
                         WalletScreen.List -> CardWalletScreen(
                             viewModel = walletViewModel,
                             onAddCard = { walletScreen = WalletScreen.Add },
