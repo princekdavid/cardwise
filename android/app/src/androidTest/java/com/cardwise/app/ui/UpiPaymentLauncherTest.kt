@@ -34,6 +34,7 @@ class UpiPaymentLauncherTest {
         val chooser = context.startedIntent
         assertNotNull(chooser)
         assertEquals(Intent.ACTION_CHOOSER, chooser!!.action)
+        assertTrue(chooser.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
 
         val target = chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
         assertNotNull(target)
