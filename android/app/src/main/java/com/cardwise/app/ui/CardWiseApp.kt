@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
+import com.cardwise.app.domain.repository.BenefitCatalogRepository
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
@@ -55,6 +56,7 @@ private enum class WalletScreen { List, Add, Detail, Edit }
 fun CardWiseApp(
     repository: CardRepository? = null,
     rewardRuleRepository: RewardRuleRepository? = null,
+    benefitCatalogRepository: BenefitCatalogRepository? = null,
     recommendationRules: Map<Long, List<RewardRule>> = emptyMap(),
     paymentLauncher: UpiPaymentLauncher? = null,
     initialPayment: UpiPaymentRequest? = null
@@ -81,6 +83,7 @@ fun CardWiseApp(
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
         val resolvedRewardRuleRepository = rewardRuleRepository ?: application.container.rewardRuleRepository
+        val resolvedBenefitCatalogRepository = benefitCatalogRepository ?: application.container.benefitCatalogRepository
 
         val walletViewModel: CardWalletViewModel = viewModel(
             factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) }
@@ -91,10 +94,11 @@ fun CardWiseApp(
 
         val recommendationViewModel: RecommendationViewModel = viewModel(
             key = "recommendation",
-            factory = remember(resolvedRepository, resolvedRewardRuleRepository, recommendationRules) {
+            factory = remember(resolvedRepository, resolvedRewardRuleRepository, resolvedBenefitCatalogRepository, recommendationRules) {
                 RecommendationViewModelFactory(
                     repository = resolvedRepository,
                     rewardRuleRepository = resolvedRewardRuleRepository,
+                    benefitCatalogRepository = resolvedBenefitCatalogRepository,
                     rules = recommendationRules
                 )
             }
