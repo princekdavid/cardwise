@@ -14,6 +14,9 @@ interface BenefitCatalogDao {
     @Query("SELECT version FROM benefit_catalog_metadata WHERE id = 1")
     fun observeVersion(): Flow<Long?>
 
+    @Query("SELECT version FROM benefit_catalog_metadata WHERE id = 1")
+    suspend fun getVersion(): Long?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEntries(entries: List<BenefitCatalogEntity>)
 
