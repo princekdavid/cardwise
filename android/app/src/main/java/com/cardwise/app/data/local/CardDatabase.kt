@@ -27,7 +27,8 @@ abstract class CardDatabase : RoomDatabase() {
                         maxRewardAmount REAL,
                         minimumSpend REAL NOT NULL,
                         maximumEligibleSpend REAL,
-                        enabled INTEGER NOT NULL
+                        enabled INTEGER NOT NULL,
+                        FOREIGN KEY(cardId) REFERENCES cards(id) ON UPDATE NO ACTION ON DELETE CASCADE
                     )
                     """.trimIndent()
                 )
