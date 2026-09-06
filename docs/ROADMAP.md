@@ -26,8 +26,8 @@
 - [x] Reward rules
 - [x] Categories
 - [x] Caps/thresholds
-- [ ] Benefit tracking
-- [ ] Renewal/expiry reminders
+- [x] Benefit tracking
+- [x] Renewal/expiry reminders
 - [x] Reward estimation
 
 ## M3 — Recommendations
