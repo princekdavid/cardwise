@@ -60,4 +60,43 @@ class RoomBenefitCatalogRepositoryTest {
         assertEquals(2L, snapshot.version)
         assertEquals(listOf(second), snapshot.entries)
     }
+
+    @Test
+    fun replaceCatalog_ignoresStaleSnapshot() = runBlocking {
+        val current = BenefitCatalogEntry(1L, "current", "Current", "Current benefit")
+        val stale = BenefitCatalogEntry(1L, "stale", "Stale", "Stale benefit")
+
+        repository.replaceCatalog(BenefitCatalogSnapshot(5L, listOf(current)))
+        repository.replaceCatalog(BenefitCatalogSnapshot(4L, listOf(stale)))
+
+        val snapshot = repository.observeCatalog().first()
+        assertEquals(5L, snapshot.version)
+        assertEquals(listOf(current), snapshot.entries)
+    }
+
+    @Test
+    fun replaceCatalog_ignoresEqualVersionSnapshot() = runBlocking {
+        val current = BenefitCatalogEntry(1L, "current", "Current", "Current benefit")
+        val replacement = BenefitCatalogEntry(1L, "replacement", "Replacement", "Replacement benefit")
+
+        repository.replaceCatalog(BenefitCatalogSnapshot(5L, listOf(current)))
+        repository.replaceCatalog(BenefitCatalogSnapshot(5L, listOf(replacement)))
+
+        val snapshot = repository.observeCatalog().first()
+        assertEquals(5L, snapshot.version)
+        assertEquals(listOf(current), snapshot.entries)
+    }
+
+    @Test
+    fun replaceCatalog_acceptsNewerSnapshot() = runBlocking {
+        val current = BenefitCatalogEntry(1L, "current", "Current", "Current benefit")
+        val newer = BenefitCatalogEntry(1L, "newer", "Newer", "Newer benefit")
+
+        repository.replaceCatalog(BenefitCatalogSnapshot(5L, listOf(current)))
+        repository.replaceCatalog(BenefitCatalogSnapshot(6L, listOf(newer)))
+
+        val snapshot = repository.observeCatalog().first()
+        assertEquals(6L, snapshot.version)
+        assertEquals(listOf(newer), snapshot.entries)
+    }
 }
