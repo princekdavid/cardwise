@@ -1,5 +1,9 @@
 package com.cardwise.app.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -90,14 +94,13 @@ class PaymentHandoffDialogTest {
     @Test
     fun continue_launchesExactlyOnceAndDismisses() {
         val launcher = RecordingLauncher()
-        var dismissed = false
         composeRule.setContent {
-            var visible = true
+            var visible by remember { mutableStateOf(true) }
             if (visible) {
                 PaymentHandoffDialog(
                     payment = payment,
                     launcher = launcher,
-                    onDismiss = { dismissed = true; visible = false },
+                    onDismiss = { visible = false },
                     onHandoffAttempted = {}
                 )
             }
@@ -106,7 +109,6 @@ class PaymentHandoffDialogTest {
         composeRule.onNodeWithText("Continue").performClick()
 
         assert(launcher.launchCount == 1)
-        assert(dismissed)
         composeRule.onNodeWithText("Continue to your UPI app?").assertDoesNotExist()
     }
 
