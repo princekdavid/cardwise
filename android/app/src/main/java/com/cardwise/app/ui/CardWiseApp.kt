@@ -55,19 +55,25 @@ private enum class WalletScreen { List, Add, Detail, Edit }
 fun CardWiseApp(
     repository: CardRepository? = null,
     rewardRuleRepository: RewardRuleRepository? = null,
-    recommendationRules: Map<Long, List<RewardRule>> = emptyMap()
+    recommendationRules: Map<Long, List<RewardRule>> = emptyMap(),
+    paymentLauncher: UpiPaymentLauncher? = null,
+    initialPayment: UpiPaymentRequest? = null
 ) {
     CardWiseTheme {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
-        val paymentLauncher = remember(context.applicationContext) {
+        val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) {
             AndroidUpiPaymentLauncher(context.applicationContext)
         }
         val snackbarHostState = remember { SnackbarHostState() }
-        var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
+        var selectedIndex by rememberSaveable {
+            mutableIntStateOf(
+                if (initialPayment != null) AppDestination.entries.indexOf(AppDestination.Insights) else 0
+            )
+        }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
-        var pendingPayment by remember { mutableStateOf<UpiPaymentRequest?>(null) }
+        var pendingPayment by remember { mutableStateOf(initialPayment) }
         var showHandoffConfirmation by remember { mutableStateOf(false) }
         var awaitingPaymentReturn by remember { mutableStateOf(false) }
         var showPaymentReturnNotice by remember { mutableStateOf(false) }
@@ -211,7 +217,7 @@ fun CardWiseApp(
         if (showHandoffConfirmation && payment != null && !awaitingPaymentReturn) {
             PaymentHandoffDialog(
                 payment = payment,
-                launcher = paymentLauncher,
+                launcher = resolvedPaymentLauncher,
                 onDismiss = { showHandoffConfirmation = false },
                 onHandoffCompleted = { result ->
                     when (result) {
