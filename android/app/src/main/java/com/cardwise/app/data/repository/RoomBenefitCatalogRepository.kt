@@ -10,7 +10,6 @@ import com.cardwise.app.domain.model.BenefitCatalogSnapshot
 import com.cardwise.app.domain.repository.BenefitCatalogRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 
 class RoomBenefitCatalogRepository(private val database: CardDatabase) : BenefitCatalogRepository {
     private val dao: BenefitCatalogDao = database.benefitCatalogDao()
@@ -23,6 +22,9 @@ class RoomBenefitCatalogRepository(private val database: CardDatabase) : Benefit
     override suspend fun replaceCatalog(snapshot: BenefitCatalogSnapshot) {
         require(snapshot.version >= 0L)
         database.withTransaction {
+            val currentVersion = dao.getVersion()
+            if (currentVersion != null && snapshot.version <= currentVersion) return@withTransaction
+
             dao.clearEntries()
             dao.insertEntries(snapshot.entries.map { it.toEntity(snapshot.version) })
             dao.insertMetadata(BenefitCatalogMetadataEntity(version = snapshot.version))
