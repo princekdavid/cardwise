@@ -27,12 +27,50 @@ class UpiPaymentHandoffTest {
     }
 
     @Test
-    fun omitsOptionalFieldsWhenMissing() {
+    fun normalizesWhitespaceAndAmountScale() {
         val uri = UpiPaymentHandoff.buildUri(
-            UpiPaymentRequest("merchant@upi", null, null, "INR", null, null)
+            UpiPaymentRequest(
+                vpa = " merchant@upi ",
+                merchantName = " Merchant ",
+                amount = BigDecimal("100.0000"),
+                currency = "inr",
+                transactionReference = " ref ",
+                note = " note "
+            )
+        )
+
+        assertEquals(
+            "upi://pay?pa=merchant%40upi&pn=Merchant&am=100&cu=INR&tr=ref&tn=note",
+            uri
+        )
+    }
+
+    @Test
+    fun omitsOptionalFieldsWhenMissingOrBlank() {
+        val uri = UpiPaymentHandoff.buildUri(
+            UpiPaymentRequest("merchant@upi", " ", null, "INR", "", "  ")
         )
 
         assertEquals("upi://pay?pa=merchant%40upi&cu=INR", uri)
+    }
+
+    @Test
+    fun encodesReservedCharactersWithoutCreatingNewParameters() {
+        val uri = UpiPaymentHandoff.buildUri(
+            UpiPaymentRequest(
+                vpa = "merchant@upi",
+                merchantName = "Shop & Cafe?",
+                amount = BigDecimal("10.00"),
+                currency = "INR",
+                transactionReference = "a=b&c",
+                note = "hello?x=1&y=2"
+            )
+        )
+
+        assertEquals(
+            "upi://pay?pa=merchant%40upi&pn=Shop+%26+Cafe%3F&am=10&cu=INR&tr=a%3Db%26c&tn=hello%3Fx%3D1%26y%3D2",
+            uri
+        )
     }
 
     @Test
@@ -49,6 +87,7 @@ class UpiPaymentHandoffTest {
 
         assertFalse(uri.contains("evil"))
         assertFalse(uri.contains("rawPayload"))
+        assertFalse(uri.contains("foo="))
         assertTrue(uri.startsWith("upi://pay?"))
     }
 
@@ -73,6 +112,51 @@ class UpiPaymentHandoffTest {
             throw AssertionError("Expected non-positive amount to be rejected")
         } catch (expected: IllegalArgumentException) {
             assertTrue(expected.message!!.contains("positive"))
+        }
+    }
+
+    @Test
+    fun rejectsMalformedVpa() {
+        val invalidVpas = listOf("merchant", "@upi", "merchant@upi@extra", "merchant @upi")
+
+        invalidVpas.forEach { vpa ->
+            try {
+                UpiPaymentHandoff.buildUri(UpiPaymentRequest(vpa, null, null, "INR", null, null))
+                throw AssertionError("Expected malformed VPA to be rejected: $vpa")
+            } catch (expected: IllegalArgumentException) {
+                assertTrue(expected.message!!.contains("VPA"))
+            }
+        }
+    }
+
+    @Test
+    fun rejectsControlCharactersInOptionalFields() {
+        val invalidPayments = listOf(
+            UpiPaymentRequest("merchant@upi", "Shop\nName", null, "INR", null, null),
+            UpiPaymentRequest("merchant@upi", null, null, "INR", "ref\u0000", null),
+            UpiPaymentRequest("merchant@upi", null, null, "INR", null, "note\r")
+        )
+
+        invalidPayments.forEach { payment ->
+            try {
+                UpiPaymentHandoff.buildUri(payment)
+                throw AssertionError("Expected control character to be rejected")
+            } catch (expected: IllegalArgumentException) {
+                assertTrue(expected.message!!.contains("invalid"))
+            }
+        }
+    }
+
+    @Test
+    fun rejectsOversizedOptionalFields() {
+        val oversized = "x".repeat(2049)
+        val payment = UpiPaymentRequest("merchant@upi", oversized, null, "INR", null, null)
+
+        try {
+            UpiPaymentHandoff.buildUri(payment)
+            throw AssertionError("Expected oversized merchant name to be rejected")
+        } catch (expected: IllegalArgumentException) {
+            assertTrue(expected.message!!.contains("invalid"))
         }
     }
 }
