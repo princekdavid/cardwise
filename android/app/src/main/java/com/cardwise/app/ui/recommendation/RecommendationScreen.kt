@@ -2,15 +2,14 @@ package com.cardwise.app.ui.recommendation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.recommendation.CardRecommendation
 import com.cardwise.app.ui.theme.CardWiseSpacing
@@ -37,10 +35,16 @@ fun RecommendationScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val input = when (state) {
+        is RecommendationUiState.Loading -> (state as RecommendationUiState.Loading).input
+        is RecommendationUiState.Ready -> (state as RecommendationUiState.Ready).input
+        is RecommendationUiState.Empty -> (state as RecommendationUiState.Empty).input
+        is RecommendationUiState.Error -> (state as RecommendationUiState.Error).input
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(CardWiseSpacing.lg),
+        contentPadding = PaddingValues(CardWiseSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.md)
     ) {
         item {
@@ -56,19 +60,14 @@ fun RecommendationScreen(
 
         item {
             InputSection(
-                input = when (state) {
-                    RecommendationUiState.Loading -> RecommendationInput()
-                    is RecommendationUiState.Ready -> (state as RecommendationUiState.Ready).input
-                    is RecommendationUiState.Empty -> (state as RecommendationUiState.Empty).input
-                    is RecommendationUiState.Error -> (state as RecommendationUiState.Error).input
-                },
+                input = input,
                 onAmountChange = viewModel::setAmount,
                 onCategoryChange = viewModel::setCategory
             )
         }
 
         when (state) {
-            RecommendationUiState.Loading -> item { LoadingState() }
+            is RecommendationUiState.Loading -> item { LoadingState() }
             is RecommendationUiState.Ready -> {
                 val ready = state as RecommendationUiState.Ready
                 item { SectionHeader(ready.recommendations.size) }
@@ -106,7 +105,7 @@ private fun InputSection(
             OutlinedTextField(
                 value = input.amount,
                 onValueChange = { value ->
-                    if (value.length <= 12 && value.all { it.isDigit() || it == '.' }) {
+                    if (value.length <= 12 && value.count { it == '.' } <= 1 && value.all { it.isDigit() || it == '.' }) {
                         onAmountChange(value)
                     }
                 },
@@ -181,10 +180,7 @@ private fun RecommendationCard(recommendation: CardRecommendation) {
                     Text("estimated benefit", style = MaterialTheme.typography.labelSmall)
                 }
             }
-            Text(
-                recommendation.reason,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(recommendation.reason, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
