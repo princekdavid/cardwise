@@ -1,7 +1,10 @@
 package com.cardwise.app.ui.recommendation
 
+import com.cardwise.app.domain.model.BenefitCatalogEntry
+import com.cardwise.app.domain.model.BenefitCatalogSnapshot
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
+import com.cardwise.app.domain.repository.BenefitCatalogRepository
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
@@ -44,6 +47,67 @@ class RecommendationViewModelTest {
         assertIs<RecommendationUiState.Ready>(state)
         assertEquals(1L, state.recommendations.first().card.id)
         assertEquals(50.0, state.recommendations.first().reward.estimatedReward)
+    }
+
+    @Test
+    fun catalogBenefits_driveRecommendationsWithoutUserRules() = runTest {
+        val repository = FakeRecommendationRepository(card(1L))
+        val catalogRepository = FakeBenefitCatalogRepository(
+            BenefitCatalogSnapshot(
+                version = 7L,
+                entries = listOf(
+                    BenefitCatalogEntry(
+                        cardId = 1L,
+                        benefitId = "dining-5",
+                        title = "Dining rewards",
+                        description = "Earn 5 percent on dining.",
+                        categories = setOf("Dining"),
+                        rewardRatePercent = 5.0
+                    )
+                )
+            )
+        )
+        val viewModel = RecommendationViewModel(
+            repository = repository,
+            benefitCatalogRepository = catalogRepository
+        )
+
+        viewModel.setAmount("1000")
+        viewModel.setCategory("dining")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.first()
+        assertIs<RecommendationUiState.Ready>(state)
+        assertEquals(50.0, state.recommendations.single().reward.estimatedReward)
+    }
+
+    @Test
+    fun explicitUserRule_overridesCatalogRuleForSameCategory() = runTest {
+        val repository = FakeRecommendationRepository(card(1L))
+        val ruleRepository = FakeRewardRuleRepository(
+            mapOf(1L to listOf(RewardRule("Dining", 2.0)))
+        )
+        val catalogRepository = FakeBenefitCatalogRepository(
+            BenefitCatalogSnapshot(
+                version = 8L,
+                entries = listOf(
+                    BenefitCatalogEntry(1L, "dining-5", "Dining", "Catalog", setOf("Dining"), rewardRatePercent = 5.0)
+                )
+            )
+        )
+        val viewModel = RecommendationViewModel(
+            repository = repository,
+            rewardRuleRepository = ruleRepository,
+            benefitCatalogRepository = catalogRepository
+        )
+
+        viewModel.setAmount("1000")
+        viewModel.setCategory("Dining")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.first()
+        assertIs<RecommendationUiState.Ready>(state)
+        assertEquals(20.0, state.recommendations.single().reward.estimatedReward)
     }
 
     @Test
@@ -155,5 +219,17 @@ private class FakeRewardRuleRepository(
         this.rules.value = this.rules.value.toMutableMap().apply {
             if (rules.isEmpty()) remove(cardId) else put(cardId, rules)
         }
+    }
+}
+
+private class FakeBenefitCatalogRepository(
+    initialSnapshot: BenefitCatalogSnapshot
+) : BenefitCatalogRepository {
+    private val snapshot = MutableStateFlow(initialSnapshot)
+
+    override fun observeCatalog(): Flow<BenefitCatalogSnapshot> = snapshot
+
+    override suspend fun replaceCatalog(snapshot: BenefitCatalogSnapshot) {
+        this.snapshot.value = snapshot
     }
 }
