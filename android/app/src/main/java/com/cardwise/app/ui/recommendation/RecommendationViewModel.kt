@@ -3,6 +3,8 @@ package com.cardwise.app.ui.recommendation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cardwise.app.domain.model.Card
+import com.cardwise.app.domain.recommendation.BenefitCatalogRuleMapper
+import com.cardwise.app.domain.repository.BenefitCatalogRepository
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.recommendation.PaymentContext
@@ -21,6 +23,7 @@ import kotlinx.coroutines.launch
 class RecommendationViewModel(
     private val repository: CardRepository,
     private val rewardRuleRepository: RewardRuleRepository? = null,
+    private val benefitCatalogRepository: BenefitCatalogRepository? = null,
     private val rules: Map<Long, List<RewardRule>> = emptyMap()
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<RecommendationUiState>(
@@ -65,11 +68,16 @@ class RecommendationViewModel(
             try {
                 val rulesFlow: Flow<Map<Long, List<RewardRule>>> =
                     rewardRuleRepository?.observeRules() ?: kotlinx.coroutines.flow.flowOf(rules)
-                combine(repository.observeCards(), rulesFlow) { cards, persistedRules ->
-                    cards to persistedRules
-                }.collect { (cards, persistedRules) ->
+                val catalogFlow = benefitCatalogRepository?.observeCatalog()
+                    ?: kotlinx.coroutines.flow.flowOf(null)
+                combine(repository.observeCards(), rulesFlow, catalogFlow) { cards, persistedRules, catalog ->
+                    Triple(cards, persistedRules, catalog)
+                }.collect { (cards, persistedRules, catalog) ->
                     latestCards = cards
-                    latestRules = persistedRules
+                    latestRules = BenefitCatalogRuleMapper.merge(
+                        catalogueRules = catalog?.let(BenefitCatalogRuleMapper::toRewardRules).orEmpty(),
+                        explicitRules = persistedRules
+                    )
                     recompute()
                 }
             } catch (error: CancellationException) {
