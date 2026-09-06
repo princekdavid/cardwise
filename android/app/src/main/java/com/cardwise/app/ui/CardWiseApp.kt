@@ -70,6 +70,7 @@ fun CardWiseApp(
         var pendingPayment by remember { mutableStateOf<UpiPaymentRequest?>(null) }
         var showHandoffConfirmation by remember { mutableStateOf(false) }
         var awaitingPaymentReturn by remember { mutableStateOf(false) }
+        var showPaymentReturnNotice by remember { mutableStateOf(false) }
         val destination = AppDestination.entries[selectedIndex]
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
@@ -98,14 +99,16 @@ fun CardWiseApp(
                 if (event == Lifecycle.Event.ON_RESUME && awaitingPaymentReturn) {
                     awaitingPaymentReturn = false
                     showHandoffConfirmation = false
+                    showPaymentReturnNotice = true
                 }
             }
             lifecycleOwner.lifecycle.addObserver(observer)
             onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
         }
 
-        LaunchedEffect(awaitingPaymentReturn) {
-            if (!awaitingPaymentReturn) return@LaunchedEffect
+        LaunchedEffect(showPaymentReturnNotice) {
+            if (!showPaymentReturnNotice) return@LaunchedEffect
+            showPaymentReturnNotice = false
             snackbarHostState.showSnackbar(
                 "Back from UPI app. Payment status is managed by your UPI app."
             )
