@@ -77,4 +77,63 @@ class RewardCalculatorTest {
 
         assertEquals(0.0, result.estimatedReward, 0.001)
     }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNegativeSpend() {
+        RewardCalculator.estimate(
+            spend = -1.0,
+            rule = RewardRule(category = "Dining", rewardRatePercent = 5.0)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsInfiniteSpend() {
+        RewardCalculator.estimate(
+            spend = Double.POSITIVE_INFINITY,
+            rule = RewardRule(category = "Dining", rewardRatePercent = 5.0)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNaNSpend() {
+        RewardCalculator.estimate(
+            spend = Double.NaN,
+            rule = RewardRule(category = "Dining", rewardRatePercent = 5.0)
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNonFiniteRewardRate() {
+        RewardRule(category = "Dining", rewardRatePercent = Double.POSITIVE_INFINITY)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNonFiniteRewardCap() {
+        RewardRule(
+            category = "Dining",
+            rewardRatePercent = 5.0,
+            maxRewardAmount = Double.POSITIVE_INFINITY
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNonFiniteMaximumEligibleSpend() {
+        RewardRule(
+            category = "Dining",
+            rewardRatePercent = 5.0,
+            maximumEligibleSpend = Double.POSITIVE_INFINITY
+        )
+    }
+
+    @Test
+    fun zeroSpendProducesZeroReward() {
+        val result = RewardCalculator.estimate(
+            spend = 0.0,
+            rule = RewardRule(category = "Dining", rewardRatePercent = 5.0)
+        )
+
+        assertEquals(0.0, result.estimatedReward, 0.0)
+        assertEquals(0.0, result.eligibleSpend, 0.0)
+        assertFalse(result.capped)
+    }
 }
