@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -55,7 +54,6 @@ fun CardWiseApp(
         var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
-        var pendingPayment by remember { mutableStateOf<UpiPaymentRequest?>(null) }
         val destination = AppDestination.entries[selectedIndex]
         val application = LocalContext.current.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
@@ -107,8 +105,7 @@ fun CardWiseApp(
                 when (currentDestination) {
                     AppDestination.Insights -> RecommendationScreen(viewModel = recommendationViewModel)
                     AppDestination.Scan -> ScanScreen(
-                        onPaymentDetected = { payment ->
-                            pendingPayment = payment
+                        onPaymentDetected = { payment: UpiPaymentRequest ->
                             recommendationViewModel.prefillFromUpi(payment)
                             selectedIndex = AppDestination.entries.indexOf(AppDestination.Insights)
                         }
