@@ -18,18 +18,15 @@ object UpiPaymentHandoff {
 
         val parameters = buildList {
             add("pa" to vpa)
-            payment.merchantName?.trim()?.takeIf(String::isNotBlank)?.let {
-                require(isSafeField(it)) { "Merchant name is invalid" }
+            sanitizedOptionalField(payment.merchantName, "Merchant name")?.let {
                 add("pn" to it)
             }
             payment.amount?.let { add("am" to it.stripTrailingZeros().toPlainString()) }
             add("cu" to "INR")
-            payment.transactionReference?.trim()?.takeIf(String::isNotBlank)?.let {
-                require(isSafeField(it)) { "Transaction reference is invalid" }
+            sanitizedOptionalField(payment.transactionReference, "Transaction reference")?.let {
                 add("tr" to it)
             }
-            payment.note?.trim()?.takeIf(String::isNotBlank)?.let {
-                require(isSafeField(it)) { "Note is invalid" }
+            sanitizedOptionalField(payment.note, "Note")?.let {
                 add("tn" to it)
             }
         }
@@ -43,6 +40,12 @@ object UpiPaymentHandoff {
         if (vpa.length !in 3..256 || vpa.any { it.isWhitespace() || it.isISOControl() }) return false
         val at = vpa.indexOf('@')
         return at in 1 until vpa.lastIndex && vpa.lastIndexOf('@') == at
+    }
+
+    private fun sanitizedOptionalField(value: String?, fieldName: String): String? {
+        if (value == null) return null
+        require(isSafeField(value)) { "$fieldName is invalid" }
+        return value.trim().takeIf(String::isNotBlank)
     }
 
     private fun isSafeField(value: String): Boolean =
