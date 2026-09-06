@@ -23,12 +23,12 @@
 
 ## M2 — Rewards Intelligence
 
-- [ ] Reward rules
-- [ ] Categories
-- [ ] Caps/thresholds
+- [x] Reward rules
+- [x] Categories
+- [x] Caps/thresholds
 - [ ] Benefit tracking
 - [ ] Renewal/expiry reminders
-- [ ] Reward estimation
+- [x] Reward estimation
 
 ## M3 — Recommendations
 
