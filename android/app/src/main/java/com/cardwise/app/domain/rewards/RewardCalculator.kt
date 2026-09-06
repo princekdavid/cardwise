@@ -11,7 +11,9 @@ data class RewardEstimate(
 /** Pure, deterministic reward estimation. It never mutates card or rule state. */
 object RewardCalculator {
     fun estimate(spend: Double, rule: RewardRule): RewardEstimate {
-        require(spend >= 0.0) { "Spend must not be negative" }
+        require(spend.isFinite() && spend >= 0.0) {
+            "Spend must be a finite, non-negative value"
+        }
 
         if (!rule.enabled || spend < rule.minimumSpend) {
             return RewardEstimate(
