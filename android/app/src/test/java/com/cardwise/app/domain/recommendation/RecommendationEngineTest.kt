@@ -4,6 +4,7 @@ import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
 import com.cardwise.app.domain.rewards.RewardRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RecommendationEngineTest {
@@ -55,7 +56,7 @@ class RecommendationEngineTest {
             mapOf(1L to listOf(RewardRule("Dining", 5.0, maxRewardAmount = 200.0)))
         )
         assertEquals(200.0, result.single().reward.estimatedReward, 0.001)
-        assertEquals(true, result.single().reward.capped)
+        assertTrue(result.single().reward.capped)
     }
 
     @Test fun isDeterministicForTies() {
@@ -65,5 +66,47 @@ class RecommendationEngineTest {
             mapOf(1L to listOf(RewardRule("Dining", 2.0)), 2L to listOf(RewardRule("Dining", 2.0)))
         )
         assertEquals(listOf(1L, 2L), result.map { it.card.id })
+    }
+
+    @Test fun ignoresZeroRewardAndZeroAmountRecommendations() {
+        val result = RecommendationEngine.recommend(
+            PaymentContext("Dining", 0.0),
+            listOf(card(1)),
+            mapOf(1L to listOf(RewardRule("Dining", 10.0)))
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test fun respectsMinimumAndMaximumEligibleSpend() {
+        val result = RecommendationEngine.recommend(
+            PaymentContext("Dining", 2_000.0),
+            listOf(card(1)),
+            mapOf(1L to listOf(RewardRule("Dining", 10.0, minimumSpend = 1_000.0, maximumEligibleSpend = 1_500.0)))
+        )
+        assertEquals(1_500.0, result.single().reward.eligibleSpend, 0.001)
+        assertEquals(150.0, result.single().reward.estimatedReward, 0.001)
+    }
+
+    @Test fun choosesBestRuleWhenMultipleRulesMatchCategory() {
+        val result = RecommendationEngine.recommend(
+            PaymentContext(" Dining ", 1_000.0),
+            listOf(card(1)),
+            mapOf(1L to listOf(
+                RewardRule("Dining", 1.0),
+                RewardRule(" dining ", 5.0),
+                RewardRule("Travel", 20.0)
+            ))
+        )
+        assertEquals(50.0, result.single().reward.estimatedReward, 0.001)
+        assertTrue(result.single().reason.contains("5.00% rewards"))
+    }
+
+    @Test fun ignoresDuplicateCardIdsDeterministically() {
+        val result = RecommendationEngine.recommend(
+            PaymentContext("Dining", 1_000.0),
+            listOf(card(1), card(1)),
+            mapOf(1L to listOf(RewardRule("Dining", 5.0)))
+        )
+        assertEquals(listOf(1L), result.map { it.card.id })
     }
 }
