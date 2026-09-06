@@ -8,7 +8,9 @@ data class RecommendationInput(
 )
 
 sealed interface RecommendationUiState {
-    data object Loading : RecommendationUiState
+    data class Loading(
+        val input: RecommendationInput
+    ) : RecommendationUiState
 
     data class Ready(
         val input: RecommendationInput,
