@@ -101,6 +101,22 @@ class RecommendationEngineTest {
         assertTrue(result.single().reason.contains("5.00% rewards"))
     }
 
+    @Test fun equivalentRewardRulesHaveStableExplanationRegardlessOfOrder() {
+        val first = RecommendationEngine.recommend(
+            PaymentContext("Dining", 1_000.0),
+            listOf(card(1)),
+            mapOf(1L to listOf(RewardRule("Dining", 2.0), RewardRule("Dining", 4.0, maxRewardAmount = 40.0)))
+        ).single()
+        val second = RecommendationEngine.recommend(
+            PaymentContext("Dining", 1_000.0),
+            listOf(card(1)),
+            mapOf(1L to listOf(RewardRule("Dining", 4.0, maxRewardAmount = 40.0), RewardRule("Dining", 2.0)))
+        ).single()
+
+        assertEquals(first.reward, second.reward)
+        assertEquals(first.reason, second.reason)
+    }
+
     @Test fun ignoresDuplicateCardIdsDeterministically() {
         val result = RecommendationEngine.recommend(
             PaymentContext("Dining", 1_000.0),
