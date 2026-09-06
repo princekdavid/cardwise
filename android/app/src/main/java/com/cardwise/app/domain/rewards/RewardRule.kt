@@ -14,11 +14,19 @@ data class RewardRule(
 ) {
     init {
         require(category.isNotBlank()) { "Category must not be blank" }
-        require(rewardRatePercent >= 0.0) { "Reward rate must not be negative" }
-        require(maxRewardAmount == null || maxRewardAmount >= 0.0) { "Reward cap must not be negative" }
-        require(minimumSpend >= 0.0) { "Minimum spend must not be negative" }
-        require(maximumEligibleSpend == null || maximumEligibleSpend >= minimumSpend) {
-            "Maximum eligible spend must be at least the minimum spend"
+        require(rewardRatePercent.isFinite() && rewardRatePercent >= 0.0) {
+            "Reward rate must be a finite, non-negative value"
+        }
+        require(maxRewardAmount == null || (maxRewardAmount.isFinite() && maxRewardAmount >= 0.0)) {
+            "Reward cap must be a finite, non-negative value"
+        }
+        require(minimumSpend.isFinite() && minimumSpend >= 0.0) {
+            "Minimum spend must be a finite, non-negative value"
+        }
+        require(maximumEligibleSpend == null ||
+            (maximumEligibleSpend.isFinite() && maximumEligibleSpend >= minimumSpend)
+        ) {
+            "Maximum eligible spend must be finite and at least the minimum spend"
         }
     }
 }
