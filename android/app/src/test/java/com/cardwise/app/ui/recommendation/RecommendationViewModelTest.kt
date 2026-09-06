@@ -4,6 +4,7 @@ import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.rewards.RewardRule
+import com.cardwise.app.ui.wallet.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
