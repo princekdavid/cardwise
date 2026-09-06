@@ -64,7 +64,7 @@ jobs:
           cores: 4
           ram-size: 4096M
           heap-size: 512M
-          disk-size: 8G
+          disk-size: 14G
           working-directory: android
           avd-name: test
           force-avd-creation: true
