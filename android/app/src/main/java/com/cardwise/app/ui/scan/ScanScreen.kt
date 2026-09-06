@@ -12,6 +12,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +46,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 private sealed interface ScanState {
     data object Scanning : ScanState
@@ -76,9 +77,7 @@ fun ScanScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (!hasPermission && !permissionRequested) {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
-        }
+        if (!hasPermission && !permissionRequested) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -88,12 +87,8 @@ fun ScanScreen(
             label = "scan_state"
         ) { (permissionGranted, scanState) ->
             when {
-                !permissionGranted -> PermissionContent(
-                    onGrant = { permissionLauncher.launch(Manifest.permission.CAMERA) }
-                )
-                scanState is ScanState.Scanning -> CameraPreview(
-                    onResult = { result -> state = result }
-                )
+                !permissionGranted -> PermissionContent { permissionLauncher.launch(Manifest.permission.CAMERA) }
+                scanState is ScanState.Scanning -> CameraPreview { state = it }
                 scanState is ScanState.Detected -> DetectedContent(
                     payment = scanState.payment,
                     onContinue = { onPaymentDetected(scanState.payment) },
@@ -131,16 +126,14 @@ private fun PermissionContent(onGrant: () -> Unit) {
 
 @Composable
 private fun CameraPreview(onResult: (ScanState) -> Unit) {
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor = remember { Executors.newSingleThreadExecutor() }
     val scanner = remember {
         BarcodeScanning.getClient(
-            BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build()
+            BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
         )
     }
+    val handled = remember { AtomicBoolean(false) }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -157,27 +150,30 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
             providerFuture.addListener({
                 runCatching {
                     val provider = providerFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.surfaceProvider = previewView.surfaceProvider
-                    }
+                    val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
                     val analysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
                     analysis.setAnalyzer(executor) { imageProxy ->
                         val mediaImage = imageProxy.image
-                        if (mediaImage == null) {
+                        if (mediaImage == null || handled.get()) {
                             imageProxy.close()
                             return@setAnalyzer
                         }
                         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                         scanner.process(image)
                             .addOnSuccessListener { barcodes ->
+                                if (handled.get()) return@addOnSuccessListener
                                 val raw = barcodes.firstOrNull()?.rawValue ?: return@addOnSuccessListener
+                                handled.set(true)
                                 when (val parsed = UpiQrParser.parse(raw)) {
                                     is UpiQrParseResult.Success -> onResult(ScanState.Detected(parsed.payment))
                                     UpiQrParseResult.NotUpi -> onResult(ScanState.Invalid(InvalidScanReason.NOT_UPI))
                                     is UpiQrParseResult.Invalid -> onResult(ScanState.Invalid(InvalidScanReason.MALFORMED))
                                 }
+                            }
+                            .addOnFailureListener {
+                                if (handled.compareAndSet(false, true)) onResult(ScanState.Invalid(InvalidScanReason.MALFORMED))
                             }
                             .addOnCompleteListener { imageProxy.close() }
                     }
@@ -192,15 +188,8 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
 }
 
 @Composable
-private fun DetectedContent(
-    payment: UpiPaymentRequest,
-    onContinue: () -> Unit,
-    onScanAgain: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
+private fun DetectedContent(payment: UpiPaymentRequest, onContinue: () -> Unit, onScanAgain: () -> Unit) {
+    Column(modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text("UPI payment found", style = MaterialTheme.typography.headlineSmall)
@@ -210,12 +199,8 @@ private fun DetectedContent(
                 payment.note?.let { Text(it, modifier = Modifier.padding(top = 8.dp)) }
             }
         }
-        Button(onClick = onContinue, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            Text("Find best card")
-        }
-        Button(onClick = onScanAgain, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentPadding = PaddingValues(12.dp)) {
-            Text("Scan again")
-        }
+        Button(onClick = onContinue, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text("Find best card") }
+        Button(onClick = onScanAgain, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentPadding = PaddingValues(12.dp)) { Text("Scan again") }
     }
 }
 
