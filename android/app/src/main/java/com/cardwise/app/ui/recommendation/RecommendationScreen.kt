@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,12 +27,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.recommendation.CardRecommendation
+import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.ui.theme.CardWiseSpacing
 import java.util.Locale
 
 @Composable
 fun RecommendationScreen(
     viewModel: RecommendationViewModel,
+    payment: UpiPaymentRequest? = null,
+    onContinueToPayment: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -51,7 +55,8 @@ fun RecommendationScreen(
             Column(verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
                 Text("Smart payment", style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    "Enter the purchase and CardWise will rank your configured cards by estimated reward.",
+                    if (payment != null) "We found your payment QR. Choose the best configured card, then continue to your UPI app."
+                    else "Enter the purchase and CardWise will rank your configured cards by estimated reward.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -73,6 +78,16 @@ fun RecommendationScreen(
                 item { SectionHeader(ready.recommendations.size) }
                 items(ready.recommendations, key = { it.card.id }) { recommendation ->
                     RecommendationCard(recommendation)
+                }
+                if (payment != null && onContinueToPayment != null) {
+                    item {
+                        Button(
+                            onClick = onContinueToPayment,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Continue to UPI app")
+                        }
+                    }
                 }
             }
             is RecommendationUiState.Empty -> item {
