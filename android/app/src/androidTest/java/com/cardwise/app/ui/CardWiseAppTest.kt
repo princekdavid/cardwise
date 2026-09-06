@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -109,7 +110,7 @@ class PaymentHandoffDialogTest {
         composeRule.onNodeWithText("Continue").performClick()
 
         assert(launcher.launchCount == 1)
-        composeRule.onNodeWithText("Continue to your UPI app?").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Continue to your UPI app?").assertCountEquals(0)
     }
 
     private class RecordingLauncher : UpiPaymentLauncher {
