@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -109,7 +109,7 @@ class PaymentHandoffDialogTest {
         composeRule.onNodeWithText("Continue").performClick()
 
         assert(launcher.launchCount == 1)
-        composeRule.onNodeWithText("Continue to your UPI app?").assertDoesNotExist()
+        composeRule.onNodeWithText("Continue to your UPI app?").assertCountEquals(0)
     }
 
     private class RecordingLauncher : UpiPaymentLauncher {
