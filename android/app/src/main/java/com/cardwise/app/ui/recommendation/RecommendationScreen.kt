@@ -89,7 +89,11 @@ fun RecommendationScreen(
             is RecommendationUiState.Ready -> {
                 val ready = state as RecommendationUiState.Ready
                 item { SectionHeader(ready.recommendations.size) }
-                items(ready.recommendations, key = { it.card.id }) { recommendation ->
+                items(
+                    ready.recommendations,
+                    key = { it.card.id },
+                    contentType = { "recommendation" }
+                ) { recommendation ->
                     RecommendationCard(recommendation)
                 }
                 if (payment != null && onContinueToPayment != null) {
