@@ -2,9 +2,15 @@ package com.cardwise.app.ui.recommendation
 
 import com.cardwise.app.domain.recommendation.CardRecommendation
 
+enum class CategorySource {
+    Manual,
+    MerchantMatch
+}
+
 data class RecommendationInput(
     val amount: String = "",
-    val category: String = ""
+    val category: String = "",
+    val categorySource: CategorySource = CategorySource.Manual
 )
 
 sealed interface RecommendationUiState {
