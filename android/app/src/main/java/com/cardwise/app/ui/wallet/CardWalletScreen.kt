@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AddCard
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -63,7 +63,7 @@ fun CardWalletScreen(
                 onClick = onAddCard,
                 modifier = Modifier.semantics { contentDescription = "Add card" }
             ) {
-                Icon(Icons.Outlined.AddCard, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Text("Add", modifier = Modifier.padding(start = 6.dp))
             }
         }
