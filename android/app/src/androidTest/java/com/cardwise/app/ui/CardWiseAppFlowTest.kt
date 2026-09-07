@@ -19,11 +19,18 @@ class CardWiseAppFlowTest {
 
     @Test
     fun cardCreation_thenScannedPayment_flowsThroughRecommendationToHandoff() {
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("Your cards").fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithText("No cards yet").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithText("Your cards").assertExists()
         composeRule.onNodeWithText("No cards yet").assertExists()
         captureScreenshot("01-wallet-empty")
 
         composeRule.onNodeWithText("Add your first card").performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("card_issuer").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag("card_issuer").performTextInput("CardWise Bank")
         composeRule.onNodeWithTag("card_name").performTextInput("Everyday Rewards")
         composeRule.onNodeWithTag("card_last_four").performTextInput("1234")
@@ -39,6 +46,9 @@ class CardWiseAppFlowTest {
         captureScreenshot("03-card-saved")
 
         composeRule.onNodeWithText("Scan").performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("Scan").fetchSemanticsNodes().size > 0
+        }
         captureScreenshot("04-scan-screen")
 
         composeRule.activity.showScannedPayment()
