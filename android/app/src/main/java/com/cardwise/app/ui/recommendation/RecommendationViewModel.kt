@@ -49,26 +49,31 @@ class RecommendationViewModel(
     }
 
     fun setCategory(value: String) {
-        input = input.copy(category = value)
+        input = input.copy(
+            category = value,
+            categorySource = CategorySource.Manual
+        )
         recompute()
     }
 
     /** Prefills user-visible payment fields and derives a category from trusted catalogue hints. */
     fun prefillFromUpi(payment: UpiPaymentRequest) {
         require(payment.currency.equals("INR", ignoreCase = true)) { "Only INR payments are supported" }
-        val matchedCategory = MerchantBenefitMatcher.match(
+        val match = MerchantBenefitMatcher.match(
             entries = latestCatalogEntries,
             merchantName = payment.merchantName,
             vpa = payment.vpa
-        ).asSequence()
-            .flatMap { it.benefit.categories.asSequence() }
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-            .firstOrNull()
+        ).firstOrNull()
+        val matchedCategory = match?.benefit?.categories
+            ?.asSequence()
+            ?.map(String::trim)
+            ?.filter(String::isNotEmpty)
+            ?.firstOrNull()
 
         input = input.copy(
             amount = payment.amount?.toPlainString().orEmpty(),
-            category = matchedCategory.orEmpty()
+            category = matchedCategory.orEmpty(),
+            categorySource = if (matchedCategory != null) CategorySource.MerchantMatch else CategorySource.Manual
         )
         recompute()
     }
