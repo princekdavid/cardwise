@@ -58,7 +58,7 @@ fun RecommendationScreen(
             Column(verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
                 Text("Smart payment", style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    if (payment != null) "We found your payment QR. CardWise ranks your configured cards locally, then you choose the UPI app." 
+                    if (payment != null) "We found your payment QR. CardWise ranks your configured cards locally, then you choose the UPI app."
                     else "Enter the purchase and CardWise will rank your configured cards by estimated reward.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -68,6 +68,22 @@ fun RecommendationScreen(
 
         if (payment != null) {
             item { PaymentSummary(payment) }
+        }
+
+        if (payment != null && input.categorySource == CategorySource.MerchantMatch) {
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        "Category detected from the scanned merchant. You can change it if it looks wrong.",
+                        modifier = Modifier.padding(CardWiseSpacing.md),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         }
 
         item {
@@ -98,7 +114,10 @@ fun RecommendationScreen(
                 }
             }
             is RecommendationUiState.Empty -> item {
-                EmptyState((state as RecommendationUiState.Empty).input)
+                EmptyState(
+                    input = (state as RecommendationUiState.Empty).input,
+                    hasScannedPayment = payment != null
+                )
             }
             is RecommendationUiState.Error -> item {
                 ErrorState(
@@ -123,11 +142,18 @@ private fun PaymentSummary(payment: UpiPaymentRequest) {
             Text("Scanned payment", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             Text(payment.merchantName ?: "UPI merchant", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(payment.vpa, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            payment.amount?.let {
+            if (payment.amount != null) {
                 Text(
-                    "₹${it.toPlainString()}",
+                    "₹${payment.amount.toPlainString()}",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = CardWiseSpacing.xs)
+                )
+            } else {
+                Text(
+                    "Amount not provided by this QR",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = CardWiseSpacing.xs)
                 )
             }
@@ -162,6 +188,9 @@ private fun InputSection(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Amount") },
                 prefix = { Text("₹ ") },
+                supportingText = if (input.amount.isBlank()) {
+                    { Text("Enter the amount shown on your bill for a static QR.") }
+                } else null,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
@@ -171,6 +200,9 @@ private fun InputSection(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Category") },
                 placeholder = { Text("Dining, travel, groceries…") },
+                supportingText = if (input.category.isBlank()) {
+                    { Text("CardWise couldn't identify a category from this QR yet.") }
+                } else null,
                 singleLine = true
             )
         }
@@ -266,8 +298,9 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun EmptyState(input: RecommendationInput) {
-    val needsInput = input.amount.isBlank() || input.category.isBlank()
+private fun EmptyState(input: RecommendationInput, hasScannedPayment: Boolean) {
+    val needsAmount = input.amount.isBlank()
+    val needsCategory = input.category.isBlank()
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -278,15 +311,17 @@ private fun EmptyState(input: RecommendationInput) {
             verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)
         ) {
             Text(
-                if (needsInput) "Add purchase details" else "No eligible card yet",
+                if (needsAmount || needsCategory) "Complete purchase details" else "No eligible card yet",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                if (needsInput) {
-                    "Enter a positive amount and a merchant category to get a recommendation."
-                } else {
-                    "None of your active cards has a matching reward rule for this purchase."
+                when {
+                    hasScannedPayment && needsAmount && needsCategory -> "This QR does not include an amount, and CardWise couldn't identify its category. Enter the bill amount and choose a category to compare rewards."
+                    hasScannedPayment && needsAmount -> "This QR does not include an amount. Enter the bill amount to compare your card rewards."
+                    hasScannedPayment && needsCategory -> "CardWise couldn't identify a category from this QR. Choose a category to compare your card rewards."
+                    needsAmount || needsCategory -> "Enter a positive amount and a merchant category to get a recommendation."
+                    else -> "None of your active cards has a matching reward rule for this purchase."
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
