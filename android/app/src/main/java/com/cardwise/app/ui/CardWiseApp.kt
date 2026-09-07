@@ -124,8 +124,9 @@ fun CardWiseApp(
                             NavigationBarItem(
                                 selected = destination == item,
                                 onClick = { destination = item },
-                                icon = { Text(item.label.take(1), modifier = Modifier.semantics { contentDescription = item.label }) },
-                                label = { Text(item.label) }
+                                icon = { Text(item.label.take(1)) },
+                                label = { Text(item.label) },
+                                modifier = Modifier.semantics { contentDescription = item.label }
                             )
                         }
                     }
