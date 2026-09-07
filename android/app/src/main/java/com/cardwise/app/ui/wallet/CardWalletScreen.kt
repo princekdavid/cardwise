@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -78,7 +77,7 @@ fun CardWalletScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Outlined.CreditCard, contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                 Column(Modifier.weight(1f)) {
                     Text("Ready for smarter routing", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                     Text("CardWise uses your enrolled cards to compare rewards.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -157,7 +156,7 @@ private fun EmptyWallet(onAddCard: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Outlined.CreditCard, contentDescription = null, modifier = Modifier.size(42.dp))
+        Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(42.dp))
         Text("No cards in your deck", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
         Text(
             "Build your deck from the catalogue. CardWise only needs safe card metadata, never PAN, CVV or PIN.",
