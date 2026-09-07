@@ -2,6 +2,6 @@
     <application>
         <activity
             android:name="com.cardwise.app.ui.CardWiseFlowActivity"
-            android:exported="false" />
+            android:exported="true" />
     </application>
 </manifest>
