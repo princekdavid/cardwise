@@ -76,21 +76,24 @@ fun RecommendationScreen(viewModel: RecommendationViewModel, payment: UpiPayment
         Text("SCANNED PAYMENT", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
         Text(payment.merchantName ?: "UPI merchant", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text(payment.vpa, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        payment.amount?.let { Text("₹$it", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CardWisePalette.Emerald, modifier = Modifier.padding(top = 8.dp)) }
-        payment.note?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+        payment.amount?.let { amount -> Text("₹$amount", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = CardWisePalette.Emerald, modifier = Modifier.padding(top = 8.dp)) }
+        payment.note?.takeIf(String::isNotBlank)?.let { note -> Text(note, style = MaterialTheme.typography.bodySmall) }
     } }
 }
 
 @Composable private fun InputSection(input: RecommendationInput, onAmountChange: (String) -> Unit, onCategoryChange: (String) -> Unit) {
     GlassCard { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(value = input.amount, onValueChange = { value -> if (value.length <= 12 && value.count { it == '.' } <= 1 && value.all { it.isDigit() || it == '.' }) onAmountChange(value) }, modifier = Modifier.fillMaxWidth(), label = { Text("Amount") }, prefix = { Text("₹ ") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
-        OutlinedTextField(value = input.category, onValueChange = onCategoryChange, modifier = Modifier.fillMaxWidth(), label = { Text("Category") }, placeholder = { Text("Dining, travel, groceries…") }, singleLine = true)
+        OutlinedTextField(value = input.amount, onValueChange = { newValue ->
+            val validAmount = newValue.length <= 12 && newValue.count { character -> character == '.' } <= 1 && newValue.all { character -> character.isDigit() || character == '.' }
+            if (validAmount) onAmountChange(newValue)
+        }, modifier = Modifier.fillMaxWidth(), label = { Text("Amount") }, prefix = { Text("₹ ") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+        OutlinedTextField(value = input.category, onValueChange = { newValue -> onCategoryChange(newValue) }, modifier = Modifier.fillMaxWidth(), label = { Text("Category") }, placeholder = { Text("Dining, travel, groceries…") }, singleLine = true)
     } }
 }
 
 @Composable private fun DecisionLoader() {
     val transition = rememberInfiniteTransition(label = "recommendation_loader")
-    val pulseAlpha by transition.animateFloat(0.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "loader_alpha")
+    val pulseAlpha = transition.animateFloat(0.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "loader_alpha").value
     GlassCard(elevated = true) { Row(Modifier.padding(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
         CircularProgressIndicator(modifier = Modifier.graphicsLayer { alpha = pulseAlpha }, strokeWidth = 3.dp)
         Column { Text("Routing payment matrix…", fontWeight = FontWeight.Bold); Text("Checking benefits, caps and active rules locally.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
