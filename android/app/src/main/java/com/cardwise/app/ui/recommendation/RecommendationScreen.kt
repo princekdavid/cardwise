@@ -90,9 +90,9 @@ fun RecommendationScreen(viewModel: RecommendationViewModel, payment: UpiPayment
 
 @Composable private fun DecisionLoader() {
     val transition = rememberInfiniteTransition(label = "recommendation_loader")
-    val alpha by transition.animateFloat(0.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "loader_alpha")
+    val pulseAlpha by transition.animateFloat(0.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "loader_alpha")
     GlassCard(elevated = true) { Row(Modifier.padding(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-        CircularProgressIndicator(modifier = Modifier.graphicsLayer { alpha = alpha }, strokeWidth = 3.dp)
+        CircularProgressIndicator(modifier = Modifier.graphicsLayer { alpha = pulseAlpha }, strokeWidth = 3.dp)
         Column { Text("Routing payment matrix…", fontWeight = FontWeight.Bold); Text("Checking benefits, caps and active rules locally.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     } }
 }
