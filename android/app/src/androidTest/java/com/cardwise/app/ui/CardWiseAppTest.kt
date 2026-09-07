@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.waitUntil
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
