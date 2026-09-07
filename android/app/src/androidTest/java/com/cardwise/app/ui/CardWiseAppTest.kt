@@ -140,12 +140,14 @@ class CardWiseAppTest {
 private fun captureScreenshot(name: String) {
     val instrumentation = InstrumentationRegistry.getInstrumentation()
     val screenshotDirectory = File(
-        instrumentation.context.getExternalFilesDir(null),
+        instrumentation.targetContext.getExternalFilesDir(null),
         "ui-screenshots"
     ).apply { mkdirs() }
     val screenshot = instrumentation.uiAutomation.takeScreenshot()
     FileOutputStream(File(screenshotDirectory, "$name.png")).use { output ->
-        screenshot.compress(Bitmap.CompressFormat.PNG, 100, output)
+        check(screenshot.compress(Bitmap.CompressFormat.PNG, 100, output)) {
+            "Failed to encode screenshot: $name"
+        }
     }
     screenshot.recycle()
 }
