@@ -116,6 +116,18 @@ class UpiPaymentHandoffTest {
     }
 
     @Test
+    fun rejectsMoreThanTwoDecimalPlaces() {
+        val payment = UpiPaymentRequest("merchant@upi", null, BigDecimal("10.123"), "INR", null, null)
+
+        try {
+            UpiPaymentHandoff.buildUri(payment)
+            throw AssertionError("Expected amount precision to be rejected")
+        } catch (expected: IllegalArgumentException) {
+            assertTrue(expected.message!!.contains("two decimal places"))
+        }
+    }
+
+    @Test
     fun rejectsMalformedVpa() {
         val invalidVpas = listOf("merchant", "@upi", "merchant@upi@extra", "merchant @upi")
 
