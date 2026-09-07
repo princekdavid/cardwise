@@ -1,79 +1,49 @@
 # CardWise Project Status
 
-Updated: 2026-09-06
+Updated: 2026-09-07
+
+## Current state
+
+`main` contains the verified M0 foundation through the production-hardened Scan & Pay flow. The latest merged M6 commit is `7591de9ae4a25ee03e6a4448f13a54f15b43884f`.
+
+The latest Android CI verification for that exact commit completed successfully (workflow run #151). The repository is now ready to move from feature construction into beta hardening rather than continuing to develop the already-merged historical feature branches.
 
 ## Milestones
 
 | Milestone | Status | Notes |
 |---|---|---|
-| M0 Foundation | Complete | Merged to `main`; Android CI passed after Java/Kotlin JVM target alignment. |
-| M1 Card Wallet | In progress | Card persistence, validation, ViewModel/StateFlow and list/add/detail/edit/delete UI are implemented on `feature/m1-card-wallet`. Network selection is included in the card form. CI must pass before completion. |
-| M2 Rewards Intelligence | Planned | Deterministic benefit/reward modeling and eligibility rules. |
-| M3 Recommendation Engine | Planned | Merchant-aware ranking and explainable recommendations. |
-| M4 Scan | Planned | QR detection/parsing foundation. |
-| M5 Scan & Pay | Planned | Payment-app discovery, recommendation and handoff without a second QR scan where platform capabilities allow. |
-| M6 Beta Hardening | Planned | Security, performance, accessibility, release readiness and regression coverage. |
+| M0 Foundation | Complete | Android/Compose foundation, design system, navigation and CI are merged. |
+| M1 Card Wallet | Complete | Card domain, validation, Room persistence, wallet CRUD/detail UI and tests are merged. |
+| M2 Rewards & Benefit Intelligence | Complete | Reward rules, deterministic calculation, benefit tracking/reminder policy, persistence and tests are merged. |
+| M3 Recommendation Engine | Complete | Payment context, eligibility, deterministic ranking, explanations, UI/ViewModel and tests are merged. |
+| M4 Scan | Complete | CameraX/ML Kit scanner, local UPI parsing, invalid handling and lifecycle hardening are merged. |
+| M5 Scan & Pay | Complete | Recommendation prefill, sanitized UPI handoff, confirmation and end-to-end validation are merged. |
+| M6 Scan & Pay Production Hardening | Complete | Privacy, lifecycle, deterministic behavior, handoff safety, testability and CI verification are complete. |
+| M7 Beta Hardening | Next | Accessibility, performance, security/privacy, regression depth and release readiness. |
 
-## Architecture Direction
+## Verified engineering baseline
 
-```text
-Compose UI
-   -> ViewModel / StateFlow
-      -> Domain validation + business rules
-         -> Repository contract
-            -> Local data source (Room)
-```
+- UI remains separated from domain/business rules.
+- Card credentials such as PAN/CVV/PIN are not persisted.
+- QR payment payloads are handled locally and kept ephemeral.
+- Recommendation ranking is deterministic and explainable.
+- External payment handoff requires explicit user confirmation.
+- Android CI runs unit/build verification followed by emulator instrumentation tests.
+- The latest verified M6 CI run passed both build/unit and instrumentation stages.
 
-- UI does not own persistence or business rules.
-- Structured data is persisted locally for offline-first behavior.
-- Card storage is limited to safe display metadata; never store PAN, CVV, PIN or full track data.
-- Database access stays behind repository interfaces.
-- Expensive work must remain off the main thread.
-- Lists use stable keys and immutable UI state where practical.
-- Animations must remain lightweight and avoid per-frame allocations.
+## M7 execution order
 
-## Performance Standards
+1. **Accessibility audit:** semantics, content descriptions, touch targets, font scaling and navigation behavior.
+2. **Regression coverage:** wallet CRUD, Scan & Pay states, cancellation/retry and lifecycle return paths.
+3. **Performance:** startup, Compose recomposition, scanner processing and database access.
+4. **Security/privacy:** permission review, exported components, logging, backup behavior and sensitive-data handling.
+5. **Persistence hardening:** Room schema export/migration verification and upgrade-path tests.
+6. **Release readiness:** crash/error strategy, release configuration, documentation and beta checklist.
 
-- Lazy initialization for database/application dependencies.
-- No blocking database work on the main thread.
-- Stable Compose models and minimal unnecessary recomposition.
-- `LazyColumn` with stable item keys for card lists.
-- QR frame processing will be throttled and cancellation-aware.
-- Recommendation calculations will be deterministic and optimized for in-memory execution.
-- Release hardening will include R8/resource shrinking, startup profiling and baseline profiles where measurements justify them.
+## CI policy
 
-## Security & Privacy Standards
+A milestone is not complete while required CI is red, blocked, or unverified. Build warnings may be tracked separately from failures. Known non-blocking warnings must remain documented rather than silently ignored.
 
-- Never persist full card numbers, CVV, PIN or track data.
-- Validate card metadata before persistence.
-- Keep secrets and credentials out of source control.
-- Request only permissions required for a feature.
-- QR scanning must avoid retaining raw payment payloads beyond the minimum processing lifetime unless explicitly required by product behavior.
+## Branch hygiene
 
-## Test Matrix
-
-### M0
-- JVM unit tests
-- Compose navigation smoke tests
-- Debug APK assembly
-- GitHub Actions CI
-
-### M1
-- Card domain model tests
-- Card validation tests
-- ViewModel tests with a fake repository
-- Compose navigation/UI tests
-- Room DAO and repository integration coverage is planned for the next CI expansion.
-- Full wallet CRUD UI coverage is planned for the next CI expansion.
-
-## CI Policy
-
-A milestone is not complete while required CI is red or unverified. Build warnings may be tracked separately from failures. Current known workflow warnings include GitHub Actions Node/runtime deprecation notices and an Android native-library strip warning; neither is currently treated as a build failure.
-
-## Current M1 Risks / Follow-ups
-
-1. Expand CI to execute Android instrumentation tests on an emulator.
-2. Add repository and in-memory Room integration tests to the automated CI path.
-3. Expand automated UI coverage for add, list, detail, edit and delete flows.
-4. Review Room schema export/migration testing before schema changes are introduced.
-5. Replace temporary navigation placeholders with final product surfaces incrementally.
+Several historical `feature/m2-*`, `feature/m3-*`, and `feature/m7-*` branches remain in the repository. They should not be treated as active work when they are identical to `main` or contain obsolete pre-merge history. New work should branch from the current `main` baseline.
