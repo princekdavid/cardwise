@@ -10,3 +10,8 @@ object CardWiseSpacing {
     val xl = 32.dp
     val xxl = 48.dp
 }
+
+object CardWiseMotion {
+    const val screenTransitionMillis = 220
+    const val cardEnterMillis = 420
+}
