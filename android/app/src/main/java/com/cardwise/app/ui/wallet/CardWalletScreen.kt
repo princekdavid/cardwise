@@ -1,7 +1,11 @@
 package com.cardwise.app.ui.wallet
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,19 +13,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.model.Card as PaymentCard
+import com.cardwise.app.ui.theme.CardWisePalette
+import com.cardwise.app.ui.theme.GlassCard
+import com.cardwise.app.ui.theme.PhysicalCard
+import com.cardwise.app.ui.theme.SectionTitle
 
 @Composable
 fun CardWalletScreen(
@@ -31,33 +44,41 @@ fun CardWalletScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var showActiveOnly by rememberSaveable { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text("Your cards", style = MaterialTheme.typography.headlineMedium)
-                Text("Keep your payment options ready", style = MaterialTheme.typography.bodyMedium)
-            }
-            Button(onClick = onAddCard) { Text("Add") }
+    Column(modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            SectionTitle("My Physical Deck", "Your enrolled cards")
+            Button(onClick = onAddCard) { Text("+ Add") }
+        }
+        Row(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = !showActiveOnly, onClick = { showActiveOnly = false }, label = { Text("All") })
+            FilterChip(selected = showActiveOnly, onClick = { showActiveOnly = true }, label = { Text("Active") })
         }
 
         when (val current = state) {
-            WalletUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            is WalletUiState.Error -> Text(current.message, color = MaterialTheme.colorScheme.error)
+            WalletUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 40.dp))
+            is WalletUiState.Error -> Text(current.message, modifier = Modifier.padding(20.dp), color = MaterialTheme.colorScheme.error)
             is WalletUiState.Success -> {
-                if (current.cards.isEmpty()) EmptyWallet(onAddCard) else LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(current.cards, key = PaymentCard::id) { card ->
-                        CardSummary(card, onOpen = { onOpenCard(card) })
+                val cards = current.cards.filter { !showActiveOnly || it.isActive }
+                if (cards.isEmpty()) EmptyWallet(onAddCard)
+                else LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    items(cards, key = PaymentCard::id) { card ->
+                        AnimatedVisibility(true, enter = fadeIn() + slideInVertically { it / 6 }) {
+                            GlassCard(elevated = true, modifier = Modifier.semantics { contentDescription = "${card.name} ending ${card.lastFour}" }) {
+                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    PhysicalCard(card)
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(card.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                            Text("${card.issuer} • ${card.network.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            if (card.benefits.isNotEmpty()) Text("${card.benefits.size} benefit${if (card.benefits.size == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald)
+                                        }
+                                        TextButton(onClick = { onOpenCard(card) }) { Text("Details") }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -67,34 +88,9 @@ fun CardWalletScreen(
 
 @Composable
 private fun EmptyWallet(onAddCard: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("No cards yet", style = MaterialTheme.typography.titleLarge)
-        Text("Add your first card to start getting payment recommendations.")
-        Button(onClick = onAddCard, modifier = Modifier.padding(top = 12.dp)) {
-            Text("Add your first card")
-        }
-    }
-}
-
-@Composable
-private fun CardSummary(card: PaymentCard, onOpen: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().semantics {
-            contentDescription = "${card.name} ending ${card.lastFour}"
-        }
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(card.name, style = MaterialTheme.typography.titleMedium)
-            Text("${card.issuer} •••• ${card.lastFour}")
-            Text(card.network.name, style = MaterialTheme.typography.labelMedium)
-            if (card.benefits.isNotEmpty()) {
-                Text("${card.benefits.size} benefit${if (card.benefits.size == 1) "" else "s"}")
-            }
-            Button(onClick = onOpen) { Text("View details") }
-        }
+    Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text("No cards in your deck", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text("Build your deck from the catalogue. CardWise only needs safe card metadata, never PAN, CVV or PIN.", modifier = Modifier.padding(top = 6.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Button(onClick = onAddCard, modifier = Modifier.padding(top = 14.dp)) { Text("Browse card catalogue") }
     }
 }
