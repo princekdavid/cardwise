@@ -2,6 +2,7 @@ package com.cardwise.app.ui
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -53,6 +54,28 @@ class CardWiseAppPaymentFlowTest {
     }
 
     @Test
+    fun handoffDialogExplainsChooserAndFinalPaymentMethodControl() {
+        val payment = testPayment()
+        val launcher = FakePaymentLauncher()
+
+        composeRule.setContent {
+            CardWiseApp(
+                repository = FakeCardRepository(listOf(testCard())),
+                rewardRuleRepository = FakeRewardRuleRepository(emptyMap()),
+                benefitCatalogRepository = FakeBenefitCatalogRepository(BenefitCatalogSnapshot(1L, emptyList())),
+                paymentLauncher = launcher,
+                initialPayment = payment
+            )
+        }
+
+        composeRule.onNodeWithText("Continue to UPI app").performClick()
+        composeRule.onNodeWithText("Choose a UPI app").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "CardWise will pass only sanitized payment details. If multiple UPI apps are installed, Android will let you choose one. CardWise's recommended card or payment method is a suggestion; the selected UPI app controls the final card or payment method."
+        ).assertIsDisplayed()
+    }
+
+    @Test
     fun continueToUpiAppUsesTheSameScannedPayment() {
         val payment = testPayment()
         val card = testCard()
@@ -71,12 +94,52 @@ class CardWiseAppPaymentFlowTest {
         }
 
         composeRule.onNodeWithText("Continue to UPI app").performClick()
-        composeRule.onNodeWithText("Continue to your UPI app?").assertIsDisplayed()
-        composeRule.onNodeWithText("Continue", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithText("Choose a UPI app").assertIsDisplayed()
+        composeRule.onNodeWithText("Choose app", useUnmergedTree = true).performClick()
 
         composeRule.runOnIdle {
             assertEquals(payment, launcher.lastPayment)
         }
+    }
+
+    @Test
+    fun noUpiAppResultClosesDialogWithoutStartingPayment() {
+        val launcher = FakePaymentLauncher(UpiPaymentLaunchResult.NoUpiApp)
+
+        composeRule.setContent {
+            CardWiseApp(
+                repository = FakeCardRepository(emptyList()),
+                rewardRuleRepository = FakeRewardRuleRepository(emptyMap()),
+                benefitCatalogRepository = FakeBenefitCatalogRepository(BenefitCatalogSnapshot(1L, emptyList())),
+                paymentLauncher = launcher,
+                initialPayment = testPayment()
+            )
+        }
+
+        composeRule.onNodeWithText("Continue to UPI app").performClick()
+        composeRule.onNodeWithText("Choose app", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithText("Choose a UPI app").assertDoesNotExist()
+        composeRule.runOnIdle { assertEquals(testPayment(), launcher.lastPayment) }
+    }
+
+    @Test
+    fun unsafePaymentResultClosesDialogWithoutStartingPayment() {
+        val launcher = FakePaymentLauncher(UpiPaymentLaunchResult.UnsafePayment)
+
+        composeRule.setContent {
+            CardWiseApp(
+                repository = FakeCardRepository(emptyList()),
+                rewardRuleRepository = FakeRewardRuleRepository(emptyMap()),
+                benefitCatalogRepository = FakeBenefitCatalogRepository(BenefitCatalogSnapshot(1L, emptyList())),
+                paymentLauncher = launcher,
+                initialPayment = testPayment()
+            )
+        }
+
+        composeRule.onNodeWithText("Continue to UPI app").performClick()
+        composeRule.onNodeWithText("Choose app", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithText("Choose a UPI app").assertDoesNotExist()
+        composeRule.runOnIdle { assertEquals(testPayment(), launcher.lastPayment) }
     }
 
     private fun testPayment() = UpiPaymentRequest(
@@ -139,13 +202,15 @@ class CardWiseAppPaymentFlowTest {
         }
     }
 
-    private class FakePaymentLauncher : UpiPaymentLauncher {
+    private class FakePaymentLauncher(
+        private val result: UpiPaymentLaunchResult = UpiPaymentLaunchResult.Launched
+    ) : UpiPaymentLauncher {
         var lastPayment: UpiPaymentRequest? = null
             private set
 
         override fun launch(payment: UpiPaymentRequest): UpiPaymentLaunchResult {
             lastPayment = payment
-            return UpiPaymentLaunchResult.Launched
+            return result
         }
     }
 }
