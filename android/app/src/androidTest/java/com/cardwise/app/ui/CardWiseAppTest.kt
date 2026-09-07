@@ -1,11 +1,13 @@
 package com.cardwise.app.ui
 
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -27,9 +29,36 @@ class CardWiseAppTest {
 
     @Test fun selectingCards_updatesSelectedDestination() {
         composeRule.setContent { CardWiseApp() }
-        composeRule.onNodeWithText("Cards").performClick()
+        composeRule.onNodeWithContentDescription("Cards").performClick()
         composeRule.onNodeWithText("Cards").assertIsSelected()
         composeRule.onNodeWithText("My Physical Deck").assertExists()
+    }
+
+    @Test fun emptyDeck_showsCatalogueEntryPoint() {
+        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(emptyList())) }
+        composeRule.onNodeWithContentDescription("Cards").performClick()
+        composeRule.onNodeWithText("No cards in your deck").assertExists()
+        composeRule.onNodeWithText("Browse card catalogue").assertExists()
+    }
+
+    @Test fun populatedDeck_showsCardAndDetailsEntryPoint() {
+        val card = Card(7L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
+        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card))) }
+        composeRule.onNodeWithContentDescription("Cards").performClick()
+        composeRule.onNodeWithText("Everyday Rewards").assertExists()
+        composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
+        composeRule.onNodeWithText("Details").performClick()
+        composeRule.onNodeWithText("Everyday Rewards").assertExists()
+    }
+
+    @Test fun activeFilter_hidesInactiveCards() {
+        val active = Card(1L, "CardWise Bank", "Active Card", "1111", CardNetwork.VISA, isActive = true)
+        val inactive = Card(2L, "CardWise Bank", "Paused Card", "2222", CardNetwork.MASTERCARD, isActive = false)
+        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive))) }
+        composeRule.onNodeWithContentDescription("Cards").performClick()
+        composeRule.onNodeWithText("Active").performClick()
+        composeRule.onNodeWithText("Active Card").assertExists()
+        composeRule.onNodeWithText("Paused Card").assertDoesNotExist()
     }
 
     @Test fun selectingOffers_showsOfferSurface() {
