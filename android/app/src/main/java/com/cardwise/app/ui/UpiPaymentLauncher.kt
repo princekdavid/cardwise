@@ -25,7 +25,9 @@ class AndroidUpiPaymentLauncher(
             ?: return UpiPaymentLaunchResult.UnsafePayment
 
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-        val handlers = context.packageManager.queryIntentActivities(intent, 0)
+        val handlers = runCatching {
+            context.packageManager.queryIntentActivities(intent, 0)
+        }.getOrElse { return UpiPaymentLaunchResult.NoUpiApp }
         if (handlers.isEmpty()) return UpiPaymentLaunchResult.NoUpiApp
 
         return try {
@@ -35,6 +37,8 @@ class AndroidUpiPaymentLauncher(
             context.startActivity(chooser)
             UpiPaymentLaunchResult.Launched
         } catch (_: ActivityNotFoundException) {
+            UpiPaymentLaunchResult.NoUpiApp
+        } catch (_: SecurityException) {
             UpiPaymentLaunchResult.NoUpiApp
         }
     }
