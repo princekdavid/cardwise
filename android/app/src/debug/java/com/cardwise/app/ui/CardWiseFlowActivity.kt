@@ -18,46 +18,65 @@ class CardWiseFlowActivity : ComponentActivity() {
             private set
     }
 
+    private lateinit var repository: TestCardRepository
+    private lateinit var card: Card
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         launcher = TestPaymentLauncher()
-        val card = Card(
+        card = Card(
             id = 1L,
             issuer = "CardWise Bank",
             name = "Everyday Rewards",
             lastFour = "1234",
             network = CardNetwork.VISA
         )
+        repository = TestCardRepository(emptyList())
+        setContent { renderCardWiseApp() }
+    }
+
+    fun showScannedPayment() {
+        runOnUiThread { renderCardWiseApp(initialPayment = paymentFixture()) }
+    }
+
+    private fun renderCardWiseApp(initialPayment: UpiPaymentRequest? = null) {
         setContent {
             CardWiseApp(
-                repository = TestCardRepository(listOf(card)),
+                repository = repository,
                 recommendationRules = mapOf(
                     card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))
                 ),
                 paymentLauncher = launcher,
-                initialPayment = UpiPaymentRequest(
-                    vpa = "merchant@upi",
-                    merchantName = "CardWise Shop",
-                    amount = BigDecimal("125.00"),
-                    currency = "INR",
-                    transactionReference = "ref-123",
-                    note = "Order 42"
-                )
+                initialPayment = initialPayment
             )
         }
     }
+
+    private fun paymentFixture() = UpiPaymentRequest(
+        vpa = "merchant@upi",
+        merchantName = "CardWise Shop",
+        amount = BigDecimal("125.00"),
+        currency = "INR",
+        transactionReference = "ref-123",
+        note = "Order 42"
+    )
 }
 
 private class TestCardRepository(initialCards: List<Card>) : CardRepository {
     private val cards = MutableStateFlow(initialCards)
+
     override fun observeCards(): Flow<List<Card>> = cards
+
     override suspend fun addCard(card: Card): Long {
-        cards.value = cards.value + card
-        return card.id
+        val savedCard = card.copy(id = if (card.id == 0L) 1L else card.id)
+        cards.value = cards.value + savedCard
+        return savedCard.id
     }
+
     override suspend fun updateCard(card: Card) {
         cards.value = cards.value.map { if (it.id == card.id) card else it }
     }
+
     override suspend fun deleteCard(cardId: Long) {
         cards.value = cards.value.filterNot { it.id == cardId }
     }
