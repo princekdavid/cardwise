@@ -63,8 +63,8 @@ jobs:
           disable-animations: true
           disable-linux-hw-accel: false
           script: |
-            bash -c 'set -o pipefail; gradle connectedDebugAndroidTest --no-daemon 2>&1 | tee instrumentation.log; test_status=${PIPESTATUS[0]}; mkdir -p "$GITHUB_WORKSPACE/ui-screenshots"; if [ "$test_status" -ne 0 ]; then adb -s emulator-5554 shell "screenrecord --time-limit 60 /sdcard/cardwise-flow.mp4" >/dev/null 2>&1 & record_pid=$!; sleep 1; gradle connectedDebugAndroidTest --no-daemon --tests com.cardwise.app.ui.CardWiseAppTest.scannedPayment_flowsThroughRecommendationToHandoff >/dev/null 2>&1 || true; wait "$record_pid" || true; adb -s emulator-5554 pull /sdcard/cardwise-flow.mp4 "$GITHUB_WORKSPACE/ui-screenshots/cardwise-flow.mp4" || true; fi; adb -s emulator-5554 shell "find /sdcard/Android/data/com.cardwise.app /sdcard/Android/data/com.cardwise.app.test -type f -name \"*.png\" -print" || true; adb -s emulator-5554 pull /sdcard/Android/data/com.cardwise.app/files/ui-screenshots "$GITHUB_WORKSPACE/ui-screenshots" || true; adb -s emulator-5554 pull /sdcard/Android/data/com.cardwise.app.test/files/ui-screenshots "$GITHUB_WORKSPACE/ui-screenshots" || true; adb -s emulator-5554 exec-out screencap -p > "$GITHUB_WORKSPACE/ui-screenshots/99-final-screen.png" || true; if grep -Eq "Starting 0 tests|Finished 0 tests" instrumentation.log; then echo "ERROR: instrumentation completed without executing any Android tests."; test_status=1; fi; exit "$test_status"'
-      - name: Upload UI diagnostic screenshots and video
+            bash -c 'set -o pipefail; mkdir -p "$GITHUB_WORKSPACE/ui-screenshots"; gradle assembleDebug assembleDebugAndroidTest --no-daemon; adb -s emulator-5554 shell am force-stop com.cardwise.app; adb -s emulator-5554 shell monkey -p com.cardwise.app -c android.intent.category.LAUNCHER 1; sleep 3; adb -s emulator-5554 exec-out screencap -p > "$GITHUB_WORKSPACE/ui-screenshots/00-main-activity.png"; adb -s emulator-5554 shell "dumpsys activity activities | grep -m1 mResumedActivity" | tee "$GITHUB_WORKSPACE/ui-screenshots/00-main-activity.txt" || true; adb -s emulator-5554 shell "screenrecord --time-limit 120 /sdcard/cardwise-instrumentation.mp4" >/dev/null 2>&1 & record_pid=$!; gradle connectedDebugAndroidTest --no-daemon 2>&1 | tee instrumentation.log; test_status=${PIPESTATUS[0]}; wait "$record_pid" || true; adb -s emulator-5554 pull /sdcard/cardwise-instrumentation.mp4 "$GITHUB_WORKSPACE/ui-screenshots/cardwise-instrumentation.mp4" || true; adb -s emulator-5554 shell "find /sdcard/Android/data/com.cardwise.app /sdcard/Android/data/com.cardwise.app.test -type f -name \"*.png\" -print" || true; adb -s emulator-5554 pull /sdcard/Android/data/com.cardwise.app/files/ui-screenshots "$GITHUB_WORKSPACE/ui-screenshots" || true; adb -s emulator-5554 pull /sdcard/Android/data/com.cardwise.app.test/files/ui-screenshots "$GITHUB_WORKSPACE/ui-screenshots" || true; adb -s emulator-5554 exec-out screencap -p > "$GITHUB_WORKSPACE/ui-screenshots/99-final-screen.png" || true; if grep -Eq "Starting 0 tests|Finished 0 tests" instrumentation.log; then echo "ERROR: instrumentation completed without executing any Android tests."; test_status=1; fi; exit "$test_status"'
+      - name: Upload UI diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -72,5 +72,6 @@ jobs:
           path: |
             ui-screenshots/*.png
             ui-screenshots/*.mp4
+            ui-screenshots/*.txt
           if-no-files-found: error
           retention-days: 7
