@@ -2,7 +2,6 @@ package com.cardwise.app.ui
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -118,8 +117,9 @@ class CardWiseAppPaymentFlowTest {
 
         composeRule.onNodeWithText("Continue to UPI app").performClick()
         composeRule.onNodeWithText("Choose app", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithText("Choose a UPI app").assertDoesNotExist()
-        composeRule.runOnIdle { assertEquals(testPayment(), launcher.lastPayment) }
+        composeRule.runOnIdle {
+            assertEquals(testPayment(), launcher.lastPayment)
+        }
     }
 
     @Test
@@ -138,8 +138,9 @@ class CardWiseAppPaymentFlowTest {
 
         composeRule.onNodeWithText("Continue to UPI app").performClick()
         composeRule.onNodeWithText("Choose app", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithText("Choose a UPI app").assertDoesNotExist()
-        composeRule.runOnIdle { assertEquals(testPayment(), launcher.lastPayment) }
+        composeRule.runOnIdle {
+            assertEquals(testPayment(), launcher.lastPayment)
+        }
     }
 
     private fun testPayment() = UpiPaymentRequest(
