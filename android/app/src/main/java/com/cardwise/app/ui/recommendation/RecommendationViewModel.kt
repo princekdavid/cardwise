@@ -69,7 +69,11 @@ class RecommendationViewModel(
                     cards to persistedRules
                 }.collect { (cards, persistedRules) ->
                     latestCards = cards
-                    latestRules = persistedRules
+                    // Explicitly supplied rules are test/preview fixtures and should remain
+                    // available even when the persistent repository is also wired in. For the
+                    // same card, the explicit rule set takes precedence; otherwise persisted
+                    // rules are used as the production source of truth.
+                    latestRules = persistedRules + rules
                     recompute()
                 }
             } catch (error: CancellationException) {
