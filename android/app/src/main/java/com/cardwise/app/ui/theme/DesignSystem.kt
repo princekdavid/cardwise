@@ -45,11 +45,6 @@ object CardWisePalette {
     val Line = Color(0xFF263244)
 }
 
-object CardWiseMotion {
-    const val screenTransitionMillis = 320
-    const val cardEnterMillis = 420
-}
-
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
