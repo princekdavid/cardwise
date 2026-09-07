@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.recommendation.CardRecommendation
 import com.cardwise.app.domain.scan.UpiPaymentRequest
@@ -178,7 +179,7 @@ private fun InputSection(
             OutlinedTextField(
                 value = input.category,
                 onValueChange = onCategoryChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("recommendation_category"),
                 label = { Text("Category") },
                 placeholder = { Text("Dining, travel, groceries…") },
                 singleLine = true
@@ -319,7 +320,7 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         ) {
             Text("Something went wrong", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(message, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Try again") }
+            TextButton(onClick = onRetry) { Text("Try again") }</TextButton>
         }
     }
 }
