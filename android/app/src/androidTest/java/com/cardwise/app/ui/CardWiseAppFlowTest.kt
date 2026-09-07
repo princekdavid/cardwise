@@ -1,5 +1,6 @@
 package com.cardwise.app.ui
 
+import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -8,6 +9,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.test.InstrumentationRegistry
 import org.junit.Rule
 import org.junit.Test
 
@@ -73,9 +75,9 @@ class CardWiseAppFlowTest {
     }
 
     private fun captureScreenshot(name: String) {
-        val instrumentation = androidx.test.InstrumentationRegistry.getInstrumentation()
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
         val path = "/data/local/tmp/cardwise-$name.png"
-        val fd = instrumentation.uiAutomation.executeShellCommand("screencap -p $path")
-        fd.close()
+        val fd: ParcelFileDescriptor = instrumentation.uiAutomation.executeShellCommand("screencap -p $path")
+        ParcelFileDescriptor.AutoCloseInputStream(fd).use { it.readBytes() }
     }
 }
