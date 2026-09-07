@@ -139,7 +139,7 @@ fun CardWiseApp(
                                     selectedIndex = index
                                     if (item != AppDestination.Insights) pendingPayment = null
                                 },
-                                icon = { Text(item.label.take(1)) },
+                                icon = { Text(item.label.take(1), modifier = Modifier.semantics { androidx.compose.ui.semantics.contentDescription = item.label }) },
                                 label = { Text(item.label) }
                             )
                         }
