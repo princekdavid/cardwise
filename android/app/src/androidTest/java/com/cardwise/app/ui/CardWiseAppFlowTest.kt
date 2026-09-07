@@ -2,6 +2,7 @@ package com.cardwise.app.ui
 
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -47,7 +48,7 @@ class CardWiseAppFlowTest {
 
         composeRule.onNodeWithText("Scan").performClick()
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithText("Scan").fetchSemanticsNodes().size > 0
+            composeRule.onAllNodesWithText("Scan").fetchSemanticsNodes().isNotEmpty()
         }
         captureScreenshot("04-scan-screen")
 
