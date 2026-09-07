@@ -75,7 +75,7 @@ fun CardWiseApp(
         }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
-        var pendingPayment by remember { mutableStateOf(initialPayment) }
+        var pendingPayment by remember(initialPayment) { mutableStateOf(initialPayment) }
         var showHandoffConfirmation by remember { mutableStateOf(false) }
         var awaitingPaymentReturn by remember { mutableStateOf(false) }
         var showPaymentReturnNotice by remember { mutableStateOf(false) }
