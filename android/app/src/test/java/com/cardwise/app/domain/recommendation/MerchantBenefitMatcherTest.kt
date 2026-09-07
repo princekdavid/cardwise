@@ -38,12 +38,19 @@ class MerchantBenefitMatcherTest {
     }
 
     @Test
-    fun match_ignoresBlankOrUnmatchedHints() {
-        val benefit = entry("none", hints = setOf("", "unknown"))
+    fun match_ignoresUnmatchedHints() {
+        val benefit = entry("none", hints = setOf("unknown"))
 
         val matches = MerchantBenefitMatcher.match(listOf(benefit), "Acme Cafe", "acme@upi")
 
         assertTrue(matches.isEmpty())
+    }
+
+    @Test
+    fun match_returnsEmptyWhenPaymentMetadataIsMissing() {
+        val benefit = entry("none", hints = setOf("acme"))
+
+        assertTrue(MerchantBenefitMatcher.match(listOf(benefit), null, null).isEmpty())
     }
 
     private fun entry(
