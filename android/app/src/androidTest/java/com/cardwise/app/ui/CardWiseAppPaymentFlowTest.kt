@@ -33,21 +33,7 @@ class CardWiseAppPaymentFlowTest {
         val rules = FakeRewardRuleRepository(
             mapOf(card.id to listOf(RewardRule(category = "Groceries", rewardRatePercent = 5.0)))
         )
-        val catalog = FakeBenefitCatalogRepository(
-            BenefitCatalogSnapshot(
-                version = 1L,
-                entries = listOf(
-                    BenefitCatalogEntry(
-                        cardId = card.id,
-                        benefitId = "fresh-mart",
-                        title = "Fresh Mart rewards",
-                        description = "Extra rewards at Fresh Mart",
-                        categories = setOf("Groceries"),
-                        merchantHints = setOf("fresh mart")
-                    )
-                )
-            )
-        )
+        val catalog = FakeBenefitCatalogRepository(testCatalog(card.id))
 
         composeRule.setContent {
             CardWiseApp(
@@ -62,7 +48,7 @@ class CardWiseAppPaymentFlowTest {
         composeRule.onNodeWithText("Fresh Mart").assertIsDisplayed()
         composeRule.onNodeWithText("₹1250.50").assertIsDisplayed()
         composeRule.onNodeWithText("Recommended for this payment").assertIsDisplayed()
-        composeRule.onNodeWithText("₹62.50").assertIsDisplayed()
+        composeRule.onNodeWithText("₹62.53").assertIsDisplayed()
         composeRule.onNodeWithText("Continue to UPI app").assertIsDisplayed()
     }
 
@@ -78,21 +64,7 @@ class CardWiseAppPaymentFlowTest {
                 rewardRuleRepository = FakeRewardRuleRepository(
                     mapOf(card.id to listOf(RewardRule(category = "Groceries", rewardRatePercent = 5.0)))
                 ),
-                benefitCatalogRepository = FakeBenefitCatalogRepository(
-                    BenefitCatalogSnapshot(
-                        version = 1L,
-                        entries = listOf(
-                            BenefitCatalogEntry(
-                                cardId = card.id,
-                                benefitId = "fresh-mart",
-                                title = "Fresh Mart rewards",
-                                description = "Extra rewards at Fresh Mart",
-                                categories = setOf("Groceries"),
-                                merchantHints = setOf("fresh mart")
-                            )
-                        )
-                    )
-                ),
+                benefitCatalogRepository = FakeBenefitCatalogRepository(testCatalog(card.id)),
                 paymentLauncher = launcher,
                 initialPayment = payment
             )
@@ -122,6 +94,20 @@ class CardWiseAppPaymentFlowTest {
         name = "Rewards Card",
         lastFour = "1234",
         network = CardNetwork.VISA
+    )
+
+    private fun testCatalog(cardId: Long) = BenefitCatalogSnapshot(
+        version = 1L,
+        entries = listOf(
+            BenefitCatalogEntry(
+                cardId = cardId,
+                benefitId = "fresh-mart",
+                title = "Fresh Mart rewards",
+                description = "Extra rewards at Fresh Mart",
+                categories = setOf("Groceries"),
+                merchantHints = setOf("fresh mart")
+            )
+        )
     )
 
     private class FakeCardRepository(cards: List<Card>) : CardRepository {
