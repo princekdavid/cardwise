@@ -64,6 +64,16 @@ fun CardWiseApp(
     CardWiseTheme {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
+        val application = context.applicationContext as? CardWiseApplication
+        val resolvedRepository = repository ?: requireNotNull(application) {
+            "CardWiseApplication is required when no CardRepository is supplied"
+        }.container.cardRepository
+        val resolvedRewardRuleRepository = rewardRuleRepository ?: requireNotNull(application) {
+            "CardWiseApplication is required when no RewardRuleRepository is supplied"
+        }.container.rewardRuleRepository
+        val resolvedBenefitCatalogRepository = benefitCatalogRepository ?: requireNotNull(application) {
+            "CardWiseApplication is required when no BenefitCatalogRepository is supplied"
+        }.container.benefitCatalogRepository
         val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) {
             AndroidUpiPaymentLauncher(context.applicationContext)
         }
@@ -80,10 +90,6 @@ fun CardWiseApp(
         var awaitingPaymentReturn by remember { mutableStateOf(false) }
         var showPaymentReturnNotice by remember { mutableStateOf(false) }
         val destination = AppDestination.entries[selectedIndex]
-        val application = context.applicationContext as CardWiseApplication
-        val resolvedRepository = repository ?: application.container.cardRepository
-        val resolvedRewardRuleRepository = rewardRuleRepository ?: application.container.rewardRuleRepository
-        val resolvedBenefitCatalogRepository = benefitCatalogRepository ?: application.container.benefitCatalogRepository
 
         val walletViewModel: CardWalletViewModel = viewModel(
             factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) }
