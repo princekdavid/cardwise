@@ -19,9 +19,11 @@ fun PaymentHandoffDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Continue to your UPI app?") },
+        title = { Text("Choose a UPI app") },
         text = {
-            Text("CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.")
+            Text(
+                "CardWise will pass only sanitized payment details. If multiple UPI apps are installed, Android will let you choose one. CardWise's recommended card or payment method is a suggestion; the selected UPI app controls the final card or payment method."
+            )
         },
         confirmButton = {
             TextButton(onClick = {
@@ -43,7 +45,7 @@ fun PaymentHandoffDialog(
                             Toast.LENGTH_LONG
                         ).show()
                 }
-            }) { Text("Continue") }
+            }) { Text("Choose app") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
