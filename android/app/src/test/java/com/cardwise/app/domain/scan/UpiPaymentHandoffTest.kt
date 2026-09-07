@@ -32,7 +32,7 @@ class UpiPaymentHandoffTest {
             UpiPaymentRequest(
                 vpa = " merchant@upi ",
                 merchantName = " Merchant ",
-                amount = BigDecimal("100.0000"),
+                amount = BigDecimal("100.00"),
                 currency = "inr",
                 transactionReference = " ref ",
                 note = " note "
