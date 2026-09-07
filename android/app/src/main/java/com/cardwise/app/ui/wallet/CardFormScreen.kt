@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -46,14 +47,14 @@ fun CardFormScreen(
             onValueChange = { issuer = it; error = null },
             label = { Text("Issuer") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().testTag("card_issuer")
         )
         OutlinedTextField(
             value = name,
             onValueChange = { name = it; error = null },
             label = { Text("Card name") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().testTag("card_name")
         )
         OutlinedTextField(
             value = lastFour,
@@ -65,7 +66,7 @@ fun CardFormScreen(
             },
             label = { Text("Last four digits") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().testTag("card_last_four")
         )
         Column(modifier = Modifier.fillMaxWidth()) {
             Button(
