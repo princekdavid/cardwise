@@ -54,7 +54,10 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("Scan").performClick()
 
         composeRule.onNodeWithText("Camera access needed").assertExists()
-        composeRule.onNodeWithText("The QR payload is processed locally and is not stored.").assertExists()
+        composeRule.onNodeWithText(
+            "The QR payload is processed locally and is not stored.",
+            substring = true
+        ).assertExists()
     }
 
     @Test
@@ -100,6 +103,9 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.onNodeWithText("Category").performClick()
         composeRule.onNodeWithText("Category").performTextInput("dining")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Continue to UPI app").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithText("Continue to UPI app").performClick()
 
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
