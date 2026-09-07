@@ -24,8 +24,11 @@ class AndroidUpiPaymentLauncher(
         val uri = runCatching { UpiPaymentHandoff.buildUri(payment) }.getOrNull()
             ?: return UpiPaymentLaunchResult.UnsafePayment
 
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+        val handlers = context.packageManager.queryIntentActivities(intent, 0)
+        if (handlers.isEmpty()) return UpiPaymentLaunchResult.NoUpiApp
+
         return try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
             val chooser = Intent.createChooser(intent, "Choose UPI app").apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
