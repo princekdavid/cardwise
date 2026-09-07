@@ -24,6 +24,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -139,7 +141,7 @@ fun CardWiseApp(
                                     selectedIndex = index
                                     if (item != AppDestination.Insights) pendingPayment = null
                                 },
-                                icon = { Text(item.label.take(1)) },
+                                icon = { Text(item.label.take(1), modifier = Modifier.semantics { contentDescription = item.label }) },
                                 label = { Text(item.label) }
                             )
                         }

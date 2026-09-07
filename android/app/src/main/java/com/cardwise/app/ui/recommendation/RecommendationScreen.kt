@@ -26,6 +26,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,9 +58,13 @@ fun RecommendationScreen(
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
-                Text("Smart payment", style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    if (payment != null) "We found your payment QR. CardWise ranks your configured cards locally, then you choose the UPI app." 
+                    "Smart payment",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.semantics { heading() }
+                )
+                Text(
+                    if (payment != null) "We found your payment QR. CardWise ranks your configured cards locally, then you choose the UPI app."
                     else "Enter the purchase and CardWise will rank your configured cards by estimated reward.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -182,7 +188,8 @@ private fun SectionHeader(count: Int) {
     Text(
         text = if (count == 1) "Best match" else "$count matches",
         style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.SemiBold
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.semantics { heading() }
     )
 }
 

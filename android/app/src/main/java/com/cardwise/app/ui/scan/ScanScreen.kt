@@ -34,6 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -109,12 +112,11 @@ private fun PermissionContent(onGrant: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Camera access needed", style = MaterialTheme.typography.headlineSmall)
+        Text("Camera access needed", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text(
             "CardWise uses the camera only while you scan a payment QR. The QR payload is processed locally and is not stored.",
-            modifier = Modifier.padding(top = 12.dp),
-            style = MaterialTheme.typography.bodyLarge
-        )
+            modifier = Modifier.padding(top = 12.dp)
+        , style = MaterialTheme.typography.bodyLarge)
         Button(onClick = onGrant, modifier = Modifier.padding(top = 24.dp)) { Text("Allow camera") }
     }
 }
@@ -142,7 +144,9 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
     }
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().semantics {
+            contentDescription = "Camera preview. Point the camera at a UPI payment QR code."
+        },
         factory = { viewContext ->
             val previewView = PreviewView(viewContext)
             val providerFuture = ProcessCameraProvider.getInstance(viewContext)
@@ -215,7 +219,7 @@ private fun DetectedContent(
     Column(modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text("UPI payment found", style = MaterialTheme.typography.headlineSmall)
+                Text("UPI payment found", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
                 payment.merchantName?.let { Text(it, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp)) }
                 Text(payment.vpa, modifier = Modifier.padding(top = 6.dp))
                 payment.amount?.let { Text("₹$it", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp)) }
@@ -243,7 +247,8 @@ private fun InvalidContent(reason: InvalidScanReason, onScanAgain: () -> Unit) {
     ) {
         Text(
             if (reason == InvalidScanReason.NOT_UPI) "This QR isn't a UPI payment QR" else "This UPI QR can't be read safely",
-            style = MaterialTheme.typography.headlineSmall
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.semantics { heading() }
         )
         Text("Try another payment QR.", modifier = Modifier.padding(top = 12.dp))
         Button(onClick = onScanAgain, modifier = Modifier.padding(top = 24.dp)) { Text("Scan again") }
@@ -257,7 +262,7 @@ private fun CameraErrorContent(onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Camera unavailable", style = MaterialTheme.typography.headlineSmall)
+        Text("Camera unavailable", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("Check camera permission and try again.", modifier = Modifier.padding(top = 12.dp))
         Button(onClick = onRetry, modifier = Modifier.padding(top = 24.dp)) { Text("Try again") }
     }
