@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.cardwise.app.MainActivity
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
 import com.cardwise.app.domain.repository.CardRepository
@@ -34,7 +35,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CardWiseAppTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun wallet_isSelectedInitially() {
@@ -155,7 +156,7 @@ private fun captureScreenshot(name: String) {
 @RunWith(AndroidJUnit4::class)
 class PaymentHandoffDialogTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     private val payment = UpiPaymentRequest(
         vpa = "merchant@upi",
