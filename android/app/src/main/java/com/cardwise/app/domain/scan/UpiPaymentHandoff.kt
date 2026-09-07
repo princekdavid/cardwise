@@ -7,13 +7,14 @@ import java.nio.charset.StandardCharsets
 /** Builds a sanitized UPI payment URI from parsed fields; raw QR payload is never forwarded. */
 object UpiPaymentHandoff {
     private const val MAX_FIELD_LENGTH = 2048
+    private const val MAX_AMOUNT_SCALE = 2
 
     fun buildUri(payment: UpiPaymentRequest): String {
         val vpa = payment.vpa.trim()
         require(isValidVpa(vpa)) { "VPA is invalid" }
         require(payment.currency.equals("INR", ignoreCase = true)) { "Only INR payments are supported" }
-        require(payment.amount == null || payment.amount > BigDecimal.ZERO) {
-            "Amount must be positive when provided"
+        require(payment.amount == null || (payment.amount > BigDecimal.ZERO && payment.amount.scale() <= MAX_AMOUNT_SCALE)) {
+            "Amount must be positive and have at most two decimal places when provided"
         }
 
         val parameters = buildList {
