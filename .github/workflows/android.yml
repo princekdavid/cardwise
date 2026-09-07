@@ -62,4 +62,10 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           disable-animations: true
           disable-linux-hw-accel: false
-          script: gradle connectedDebugAndroidTest --no-daemon
+          script: |
+            set -o pipefail
+            gradle connectedDebugAndroidTest --no-daemon 2>&1 | tee instrumentation.log
+            if grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log; then
+              echo 'ERROR: instrumentation completed without executing any Android tests.'
+              exit 1
+            fi
