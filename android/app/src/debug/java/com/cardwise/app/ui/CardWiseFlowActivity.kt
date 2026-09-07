@@ -3,6 +3,9 @@ package com.cardwise.app.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
 import com.cardwise.app.domain.repository.CardRepository
@@ -20,6 +23,7 @@ class CardWiseFlowActivity : ComponentActivity() {
 
     private lateinit var repository: TestCardRepository
     private lateinit var card: Card
+    private var initialPayment by mutableStateOf<UpiPaymentRequest?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,14 +36,6 @@ class CardWiseFlowActivity : ComponentActivity() {
             network = CardNetwork.VISA
         )
         repository = TestCardRepository(emptyList())
-        setContent { renderCardWiseApp() }
-    }
-
-    fun showScannedPayment() {
-        runOnUiThread { renderCardWiseApp(initialPayment = paymentFixture()) }
-    }
-
-    private fun renderCardWiseApp(initialPayment: UpiPaymentRequest? = null) {
         setContent {
             CardWiseApp(
                 repository = repository,
@@ -50,6 +46,10 @@ class CardWiseFlowActivity : ComponentActivity() {
                 initialPayment = initialPayment
             )
         }
+    }
+
+    fun showScannedPayment() {
+        initialPayment = paymentFixture()
     }
 
     private fun paymentFixture() = UpiPaymentRequest(
