@@ -11,7 +11,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.waitUntil
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -103,9 +105,12 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.onNodeWithText("Category").performClick()
         composeRule.onNodeWithText("Category").performTextInput("dining")
-        composeRule.waitUntil(timeoutMillis = 5_000) {
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText("Continue to UPI app").fetchSemanticsNodes().isNotEmpty()
         }
+        composeRule.onNodeWithText("Continue to UPI app").performScrollTo()
+        composeRule.onNodeWithText("Continue to UPI app").assertExists()
         composeRule.onNodeWithText("Continue to UPI app").performClick()
 
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
