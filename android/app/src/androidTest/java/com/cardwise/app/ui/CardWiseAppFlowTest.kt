@@ -1,5 +1,6 @@
 package com.cardwise.app.ui
 
+import android.accessibilityservice.AccessibilityService
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -7,7 +8,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.InstrumentationRegistry
@@ -61,7 +61,10 @@ class CardWiseAppFlowTest {
         captureScreenshot("05-scanned-payment")
 
         composeRule.onNodeWithTag("recommendation_category").performTextInput("dining")
-        composeRule.onNodeWithTag("recommendation_category").performImeAction()
+        composeRule.waitForIdle()
+        InstrumentationRegistry.getInstrumentation().uiAutomation
+            .performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+        composeRule.waitForIdle()
         captureScreenshot("06-category-entered")
 
         try {
