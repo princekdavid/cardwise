@@ -18,6 +18,22 @@ class MerchantBenefitMatcherTest {
     }
 
     @Test
+    fun match_prefersMerchantPartialOverVpaPartial() {
+        val merchantPartial = entry("merchant", hints = setOf("fresh"))
+        val vpaPartial = entry("vpa", hints = setOf("freshmart@upi"))
+
+        val matches = MerchantBenefitMatcher.match(
+            listOf(vpaPartial, merchantPartial),
+            "Fresh Mart",
+            "freshmart@upi"
+        )
+
+        assertEquals("merchant", matches.first().benefit.benefitId)
+        assertEquals(80, matches.first().score)
+        assertEquals(70, matches[1].score)
+    }
+
+    @Test
     fun match_canUseVpaWhenMerchantNameIsMissing() {
         val benefit = entry("vpa", hints = setOf("acmestore@upi"))
 
