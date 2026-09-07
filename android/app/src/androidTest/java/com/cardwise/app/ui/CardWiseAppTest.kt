@@ -105,8 +105,9 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("Category").performClick()
         composeRule.onNodeWithText("Category").performTextInput("dining")
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithText("Continue to UPI app").fetchSemanticsNodes().isNotEmpty()
+        composeRule.waitUntil(timeoutMillis = 30_000) {
+            composeRule.onAllNodesWithText("Everyday Rewards").fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithText("Continue to UPI app").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Continue to UPI app").performScrollTo()
         composeRule.onNodeWithText("Continue to UPI app").assertExists()
