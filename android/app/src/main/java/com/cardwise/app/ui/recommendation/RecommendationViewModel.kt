@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class RecommendationViewModel(
@@ -63,18 +62,23 @@ class RecommendationViewModel(
         observeJob = viewModelScope.launch {
             _uiState.value = RecommendationUiState.Loading(input)
             try {
+                launch {
+                    repository.observeCards().collect { cards ->
+                        latestCards = cards
+                        recompute()
+                    }
+                }
+
                 val rulesFlow: Flow<Map<Long, List<RewardRule>>> =
                     rewardRuleRepository?.observeRules() ?: kotlinx.coroutines.flow.flowOf(rules)
-                combine(repository.observeCards(), rulesFlow) { cards, persistedRules ->
-                    cards to persistedRules
-                }.collect { (cards, persistedRules) ->
-                    latestCards = cards
-                    // Explicitly supplied rules are test/preview fixtures and should remain
-                    // available even when the persistent repository is also wired in. For the
-                    // same card, the explicit rule set takes precedence; otherwise persisted
-                    // rules are used as the production source of truth.
-                    latestRules = persistedRules + rules
-                    recompute()
+                launch {
+                    rulesFlow.collect { persistedRules ->
+                        // Explicitly supplied rules are test/preview fixtures and remain
+                        // available even when the persistent repository is also wired in.
+                        // For duplicate card IDs, explicit rules take precedence.
+                        latestRules = persistedRules + rules
+                        recompute()
+                    }
                 }
             } catch (error: CancellationException) {
                 throw error
