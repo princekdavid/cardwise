@@ -63,6 +63,7 @@ jobs:
           disable-animations: true
           disable-linux-hw-accel: false
           script: |
+            bash -s <<'EOF'
             set +e
             set -o pipefail
             gradle connectedDebugAndroidTest --no-daemon 2>&1 | tee instrumentation.log
@@ -74,6 +75,7 @@ jobs:
               test_status=1
             fi
             exit "$test_status"
+            EOF
       - name: Upload UI diagnostic screenshots
         if: always()
         uses: actions/upload-artifact@v4
