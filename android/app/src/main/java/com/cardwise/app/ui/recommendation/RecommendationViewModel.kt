@@ -2,11 +2,13 @@ package com.cardwise.app.ui.recommendation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cardwise.app.domain.model.BenefitCatalogEntry
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.recommendation.BenefitCatalogRuleMapper
 import com.cardwise.app.domain.repository.BenefitCatalogRepository
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
+import com.cardwise.app.domain.recommendation.MerchantBenefitMatcher
 import com.cardwise.app.domain.recommendation.PaymentContext
 import com.cardwise.app.domain.recommendation.RecommendationEngine
 import com.cardwise.app.domain.rewards.RewardRule
@@ -33,6 +35,7 @@ class RecommendationViewModel(
 
     private var latestCards = emptyList<Card>()
     private var latestRules = rules
+    private var latestCatalogEntries = emptyList<BenefitCatalogEntry>()
     private var observeJob: Job? = null
     private var input = RecommendationInput()
 
@@ -50,10 +53,23 @@ class RecommendationViewModel(
         recompute()
     }
 
-    /** Prefills only user-visible, non-sensitive payment fields from a scanned UPI QR. */
+    /** Prefills user-visible payment fields and derives a category from trusted catalogue hints. */
     fun prefillFromUpi(payment: UpiPaymentRequest) {
         require(payment.currency.equals("INR", ignoreCase = true)) { "Only INR payments are supported" }
-        input = input.copy(amount = payment.amount?.toPlainString().orEmpty())
+        val matchedCategory = MerchantBenefitMatcher.match(
+            entries = latestCatalogEntries,
+            merchantName = payment.merchantName,
+            vpa = payment.vpa
+        ).asSequence()
+            .flatMap { it.benefit.categories.asSequence() }
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .firstOrNull()
+
+        input = input.copy(
+            amount = payment.amount?.toPlainString().orEmpty(),
+            category = matchedCategory.orEmpty()
+        )
         recompute()
     }
 
@@ -74,6 +90,7 @@ class RecommendationViewModel(
                     Triple(cards, persistedRules, catalog)
                 }.collect { (cards, persistedRules, catalog) ->
                     latestCards = cards
+                    latestCatalogEntries = catalog?.entries.orEmpty()
                     latestRules = BenefitCatalogRuleMapper.merge(
                         catalogueRules = catalog?.let(BenefitCatalogRuleMapper::toRewardRules).orEmpty(),
                         explicitRules = persistedRules
