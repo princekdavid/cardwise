@@ -1,11 +1,13 @@
 package com.cardwise.app.ui
 
 import android.graphics.Bitmap
+import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -25,7 +27,9 @@ class CardWiseAppFlowTest {
         composeRule.onNodeWithText("₹125.00").assertExists()
         captureScreenshot("01-flow-launch")
 
-        composeRule.onNodeWithTag("recommendation_category").performTextInput("dining")
+        composeRule.onNodeWithTag("recommendation_category")
+            .performTextInput("dining")
+            .performImeAction()
         captureScreenshot("02-flow-category")
 
         try {
@@ -52,14 +56,13 @@ class CardWiseAppFlowTest {
 
     private fun captureScreenshot(name: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val screenshotDirectory = File(
-            instrumentation.targetContext.getExternalFilesDir(null),
-            "ui-screenshots"
-        ).apply { mkdirs() }
-        val screenshot = instrumentation.uiAutomation.takeScreenshot()
-        FileOutputStream(File(screenshotDirectory, "$name.png")).use { output ->
-            check(screenshot.compress(Bitmap.CompressFormat.PNG, 100, output))
-        }
-        screenshot.recycle()
+        val path = "/data/local/tmp/cardwise-$name.png"
+        val fd: ParcelFileDescriptor = instrumentation.uiAutomation.executeShellCommand("screencap -p $path")
+        ParcelFileDescriptor.AutoCloseInputStream(fd).use { it.copyTo(OutputStreamSink()) }
+    }
+
+    private class OutputStreamSink : java.io.OutputStream() {
+        override fun write(b: Int) = Unit
+        override fun write(b: ByteArray, off: Int, len: Int) = Unit
     }
 }
