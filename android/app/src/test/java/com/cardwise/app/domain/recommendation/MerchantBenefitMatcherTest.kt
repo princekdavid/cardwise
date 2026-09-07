@@ -20,7 +20,7 @@ class MerchantBenefitMatcherTest {
     @Test
     fun match_prefersMerchantPartialOverVpaPartial() {
         val merchantPartial = entry("merchant", hints = setOf("fresh"))
-        val vpaPartial = entry("vpa", hints = setOf("freshmart@upi"))
+        val vpaPartial = entry("vpa", hints = setOf("mart@upi"))
 
         val matches = MerchantBenefitMatcher.match(
             listOf(vpaPartial, merchantPartial),
