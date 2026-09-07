@@ -2,7 +2,6 @@ package com.cardwise.app.ui
 
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -81,9 +80,8 @@ class CardWiseAppTest {
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card)), recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))), paymentLauncher = launcher, initialPayment = payment) }
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
-        composeRule.onNodeWithText("Category").performClick()
         composeRule.onNodeWithText("Category").performTextInput("dining")
-        composeRule.waitUntil(timeoutMillis = 10_000) { composeRule.onAllNodesWithText("Continue to UPI app").fetchSemanticsNodes().isNotEmpty() }
+        composeRule.onNodeWithText("Best match").assertExists()
         composeRule.onNodeWithText("Continue to UPI app").performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
         composeRule.onNodeWithText("Continue").performClick()
