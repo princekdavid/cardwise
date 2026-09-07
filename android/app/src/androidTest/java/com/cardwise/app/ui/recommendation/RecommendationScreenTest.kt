@@ -1,9 +1,9 @@
 package com.cardwise.app.ui.recommendation
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -36,7 +36,10 @@ class RecommendationScreenTest {
         composeRule.onNodeWithText("Amount").performTextInput("1000")
         composeRule.onNodeWithText("Category").performTextInput("Dining")
 
-        composeRule.onNodeWithText("Recommended").assertExists()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Recommended for this payment").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Recommended for this payment").assertExists()
         composeRule.onNodeWithText("Dining Card").assertExists()
         composeRule.onNodeWithText("₹50.00").assertExists()
     }
