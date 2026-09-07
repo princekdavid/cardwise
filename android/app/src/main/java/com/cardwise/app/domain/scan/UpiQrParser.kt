@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import java.util.Locale
 
 /** Parsed payment data extracted from a UPI payment QR without retaining the raw payload. */
 data class UpiPaymentRequest(
@@ -66,7 +67,7 @@ object UpiQrParser {
             if (key.isBlank() || value.length > MAX_PARAMETER_LENGTH) {
                 return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MALFORMED_URI)
             }
-            if (parameters.put(key.lowercase(), value) != null) {
+            if (parameters.put(key.lowercase(Locale.ROOT), value) != null) {
                 return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.DUPLICATE_PARAMETER)
             }
         }
@@ -75,7 +76,7 @@ object UpiQrParser {
             ?: return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_VPA)
         if (!isValidVpa(vpa)) return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_VPA)
 
-        val currency = parameters["cu"]?.trim()?.uppercase()
+        val currency = parameters["cu"]?.trim()?.uppercase(Locale.ROOT)
             ?: return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_CURRENCY)
         if (currency != SUPPORTED_CURRENCY) {
             return UpiQrParseResult.Invalid(UpiQrParseResult.Reason.UNSUPPORTED_CURRENCY)
