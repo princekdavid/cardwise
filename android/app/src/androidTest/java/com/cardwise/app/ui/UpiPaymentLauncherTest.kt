@@ -55,6 +55,15 @@ class UpiPaymentLauncherTest {
     }
 
     @Test
+    fun launch_whenStartActivityIsBlocked_returnsNoUpiApp() {
+        val context = SecurityExceptionContext(ApplicationProvider.getApplicationContext())
+
+        val result = AndroidUpiPaymentLauncher(context).launch(payment)
+
+        assertEquals(UpiPaymentLaunchResult.NoUpiApp, result)
+    }
+
+    @Test
     fun launch_withUnsafePayment_doesNotStartActivity() {
         val context = RecordingContext(ApplicationProvider.getApplicationContext())
         val unsafe = payment.copy(note = "bad\nvalue")
@@ -77,6 +86,12 @@ class UpiPaymentLauncherTest {
     private class ThrowingContext(base: Context) : ContextWrapper(base) {
         override fun startActivity(intent: Intent) {
             throw ActivityNotFoundException("No handler")
+        }
+    }
+
+    private class SecurityExceptionContext(base: Context) : ContextWrapper(base) {
+        override fun startActivity(intent: Intent) {
+            throw SecurityException("Launch blocked")
         }
     }
 }
