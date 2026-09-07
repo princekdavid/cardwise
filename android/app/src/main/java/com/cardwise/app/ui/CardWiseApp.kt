@@ -103,7 +103,10 @@ fun CardWiseApp(
         )
 
         LaunchedEffect(initialPayment) {
-            initialPayment?.let(recommendationViewModel::prefillFromUpi)
+            if (initialPayment != null) {
+                selectedIndex = AppDestination.entries.indexOf(AppDestination.Insights)
+                recommendationViewModel.prefillFromUpi(initialPayment)
+            }
         }
 
         DisposableEffect(lifecycleOwner) {
