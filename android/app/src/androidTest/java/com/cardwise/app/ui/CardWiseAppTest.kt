@@ -1,5 +1,6 @@
 package com.cardwise.app.ui
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.test.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -22,6 +24,8 @@ import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.domain.rewards.RewardRule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.io.File
+import java.io.FileOutputStream
 import java.math.BigDecimal
 import org.junit.Rule
 import org.junit.Test
@@ -103,22 +107,47 @@ class CardWiseAppTest {
 
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
-        composeRule.onNodeWithTag("recommendation_category").performTextInput("dining")
+        captureScreenshot("01-after-launch")
 
-        composeRule.waitUntil(timeoutMillis = 30_000) {
-            composeRule.onAllNodesWithText("Everyday Rewards").fetchSemanticsNodes().isNotEmpty() &&
-                composeRule.onAllNodesWithText("Continue to UPI app").fetchSemanticsNodes().isNotEmpty()
+        composeRule.onNodeWithTag("recommendation_category").performTextInput("dining")
+        captureScreenshot("02-after-category")
+
+        try {
+            composeRule.waitUntil(timeoutMillis = 30_000) {
+                composeRule.onAllNodesWithText("Everyday Rewards").fetchSemanticsNodes().isNotEmpty() &&
+                    composeRule.onAllNodesWithText("Continue to UPI app").fetchSemanticsNodes().isNotEmpty()
+            }
+        } catch (failure: Throwable) {
+            captureScreenshot("03-recommendation-wait-failure")
+            throw failure
         }
+
+        captureScreenshot("03-recommendation-ready")
         composeRule.onNodeWithText("Continue to UPI app").performScrollTo()
         composeRule.onNodeWithText("Continue to UPI app").assertExists()
         composeRule.onNodeWithText("Continue to UPI app").performClick()
 
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
+        captureScreenshot("04-handoff-dialog")
         composeRule.onNodeWithText("Continue").performClick()
+        captureScreenshot("05-after-handoff")
 
         assert(launcher.launchCount == 1)
         composeRule.onAllNodesWithText("Continue to UPI app").assertCountEquals(0)
     }
+}
+
+private fun captureScreenshot(name: String) {
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    val screenshotDirectory = File(
+        instrumentation.context.getExternalFilesDir(null),
+        "ui-screenshots"
+    ).apply { mkdirs() }
+    val screenshot = instrumentation.uiAutomation.takeScreenshot()
+    FileOutputStream(File(screenshotDirectory, "$name.png")).use { output ->
+        screenshot.compress(Bitmap.CompressFormat.PNG, 100, output)
+    }
+    screenshot.recycle()
 }
 
 @RunWith(AndroidJUnit4::class)
