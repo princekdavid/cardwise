@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BenefitCatalogSyncTest {
@@ -23,6 +22,7 @@ class BenefitCatalogSyncTest {
         assertEquals(3L, dataSource.requestedVersion)
         assertEquals(BenefitCatalogSync.Result.Updated(4L), result)
         assertEquals(newer, repository.current.value)
+        assertEquals(1, repository.replaceCount)
     }
 
     @Test
@@ -38,15 +38,18 @@ class BenefitCatalogSyncTest {
     }
 
     @Test
-    fun refresh_doesNotReportUpdateForStaleSnapshot() = runTest {
-        val repository = FakeRepository(BenefitCatalogSnapshot(5L, listOf(entry("current"))))
-        val dataSource = RecordingDataSource(BenefitCatalogSnapshot(4L, listOf(entry("stale"))))
+    fun refresh_ignoresStaleSnapshotBeforePersistence() = runTest {
+        val current = BenefitCatalogSnapshot(5L, listOf(entry("current")))
+        val stale = BenefitCatalogSnapshot(4L, listOf(entry("stale")))
+        val repository = FakeRepository(current)
+        val dataSource = RecordingDataSource(stale)
 
         val result = BenefitCatalogSync(repository, dataSource).refresh()
 
         assertEquals(BenefitCatalogSync.Result.NoUpdate, result)
         assertEquals(5L, dataSource.requestedVersion)
-        assertTrue(repository.current.value.entries.single().benefitId == "stale")
+        assertEquals(0, repository.replaceCount)
+        assertEquals(current, repository.current.value)
     }
 
     private fun entry(id: String) = BenefitCatalogEntry(
