@@ -26,11 +26,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.recommendation.CardRecommendation
 import com.cardwise.app.domain.scan.UpiPaymentRequest
@@ -320,7 +320,7 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         ) {
             Text("Something went wrong", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(message, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Try again") }</TextButton>
+            TextButton(onClick = onRetry) { Text("Try again") }
         }
     }
 }
