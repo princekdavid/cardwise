@@ -84,9 +84,7 @@ fun EnginePulse(modifier: Modifier = Modifier) {
         animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "engine_alpha"
     )
-    Box(
-        modifier = modifier.size(9.dp).clip(RoundedCornerShape(50)).background(CardWisePalette.Emerald.copy(alpha = alpha))
-    )
+    Box(modifier = modifier.size(9.dp).clip(RoundedCornerShape(50)).background(CardWisePalette.Emerald.copy(alpha = alpha)))
 }
 
 @Composable
