@@ -10,11 +10,11 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch HEAD: `811621f8f393530ee43e8ccc296e0545dad4458c`
-- Latest branch commit: `docs(wallet): record tactile deck and detail sheet reconciliation`
+- Current branch HEAD: `6b2baa88490a40d46546f4d2df123348d98b30e1`
+- Latest branch commit: `docs(cardwise): synchronize wallet CI fix context`
 - PR: #11, `feat: integrate prototype design system and key screens`
 - PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
-- Android CI: a new run is pending/in progress for the current wallet slice; do not mark it verified until unit/build/instrumentation results and logs are inspected.
+- Android CI: pending for the current wallet slice; the latest pre-fix run executed the instrumentation suite but failed one wallet detail-sheet assertion and then exposed a wrapper exit-status/shell parsing problem.
 
 ## Product promise
 
@@ -87,9 +87,11 @@ Implemented in the current slice:
 - card detail presentation in a Material 3 bottom sheet;
 - persisted Active/Paused updates through `CardWalletViewModel`;
 - edit/remove actions remain repository-backed;
-- empty deck and catalogue entry point remain supported.
+- empty deck and catalogue entry point remain supported;
+- instrumentation detail-sheet assertion now waits for the bottom-sheet semantics to appear;
+- CI instrumentation wrapper now captures the real Gradle exit status without relying on `pipefail` or nested shell quoting.
 
-The previous instrumentation failure was a duplicate-text assertion in `populatedDeck_showsCardAndDetailsEntryPoint`. The test was corrected to assert a dedicated `card_detail_name` semantic tag instead of relying on ambiguous text matching. CI was also hardened to propagate the actual Gradle instrumentation exit status when output is piped through `tee`.
+The latest instrumentation evidence showed the emulator booted and **23 tests started**, with **1 skipped and 1 failed**. The failing assertion was the card-detail semantic tag; the same run also exposed a wrapper parsing problem after Gradle completed. Both code paths have now been corrected, but the fixes require a fresh CI run for verification.
 
 Still required before Wallet is considered verified:
 - current CI green for the latest HEAD;
