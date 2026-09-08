@@ -40,6 +40,16 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("Browse card catalogue").assertExists()
     }
 
+    @Test fun cardCatalogue_exposesSearchAndFilterControls() {
+        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(emptyList())) }
+        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithText("Browse card catalogue").performClick()
+        composeRule.onNodeWithTag("catalog_search").assertExists()
+        composeRule.onNodeWithTag("catalog_filters").assertExists()
+        composeRule.onNodeWithText("Travel").performClick()
+        composeRule.onNodeWithText("Travel").assertIsSelected()
+    }
+
     @Test fun populatedDeck_showsCardAndDetailsEntryPoint() {
         val card = Card(7L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card))) }
