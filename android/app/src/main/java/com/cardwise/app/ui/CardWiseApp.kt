@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
@@ -68,9 +69,6 @@ fun CardWiseApp(
         val lifecycleOwner = LocalLifecycleOwner.current
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
-        // Explicit recommendation rules are test/demo data and must not be shadowed by
-        // the app's persisted rule repository. A real repository remains the default
-        // when no explicit rules are supplied.
         val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) {
             application.container.rewardRuleRepository
         } else {
@@ -133,7 +131,9 @@ fun CardWiseApp(
                                 onClick = { destination = item },
                                 icon = { Text(item.label.take(1)) },
                                 label = { Text(item.label) },
-                                modifier = Modifier.semantics { contentDescription = item.label }
+                                modifier = Modifier
+                                    .testTag("nav_${item.name.lowercase()}")
+                                    .semantics { contentDescription = item.label }
                             )
                         }
                     }
