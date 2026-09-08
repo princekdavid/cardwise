@@ -92,7 +92,12 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.onNodeWithTag("recommendation_category").performTextInput("dining")
         composeRule.waitUntil(timeoutMillis = 15_000) {
-            composeRule.onNodeWithTag("continue_to_upi").fetchSemanticsNodes().isNotEmpty()
+            try {
+                composeRule.onNodeWithTag("continue_to_upi").assertExists()
+                true
+            } catch (_: AssertionError) {
+                false
+            }
         }
         composeRule.onNodeWithText("Best match").assertExists()
         composeRule.onNodeWithTag("continue_to_upi").performClick()
