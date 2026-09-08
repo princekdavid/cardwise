@@ -57,6 +57,9 @@ class CardWiseAppTest {
         composeRule.onNodeWithTag("wallet_card_7").assertExists()
         composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
         composeRule.onNodeWithText("Details").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("card_detail_name").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag("card_detail_name").assertExists()
     }
 
@@ -148,7 +151,7 @@ class PaymentHandoffDialogTest {
     @Test fun noUpiApp_reportsOutcome() {
         val launcher = RecordingLauncher(UpiPaymentLaunchResult.NoUpiApp)
         var result: UpiPaymentLaunchResult? = null
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }
+        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}, onHandoffCompleted = { result = it }) }
         composeRule.onNodeWithText("Continue").performClick()
         assert(result == UpiPaymentLaunchResult.NoUpiApp)
     }
