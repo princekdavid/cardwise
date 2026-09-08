@@ -13,6 +13,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,12 +37,14 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.domain.scan.UpiQrParseResult
 import com.cardwise.app.domain.scan.UpiQrParser
+import com.cardwise.app.ui.theme.CardWiseMotion
+import com.cardwise.app.ui.theme.CardWiseSpacing
+import com.cardwise.app.ui.theme.GlassCard
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -80,7 +82,10 @@ fun ScanScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         AnimatedContent(
             targetState = hasPermission to state,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            transitionSpec = {
+                fadeIn(animationSpec = tween(CardWiseMotion.contentTransitionMillis)) togetherWith
+                    fadeOut(animationSpec = tween(CardWiseMotion.contentTransitionMillis))
+            },
             label = "scan_state"
         ) { (permissionGranted, scanState) ->
             when {
@@ -108,16 +113,17 @@ fun ScanScreen(
 @Composable
 private fun PermissionContent(onGrant: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier.fillMaxSize().padding(CardWiseSpacing.xl),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Camera access needed", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text(
             "CardWise uses the camera only while you scan a payment QR. The QR payload is processed locally and is not stored.",
-            modifier = Modifier.padding(top = 12.dp)
-        , style = MaterialTheme.typography.bodyLarge)
-        Button(onClick = onGrant, modifier = Modifier.padding(top = 24.dp)) { Text("Allow camera") }
+            modifier = Modifier.padding(top = CardWiseSpacing.sm),
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Button(onClick = onGrant, modifier = Modifier.padding(top = CardWiseSpacing.lg)) { Text("Allow camera") }
     }
 }
 
@@ -216,23 +222,26 @@ private fun DetectedContent(
     onFindBestCard: () -> Unit,
     onScanAgain: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(20.dp)) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(CardWiseSpacing.lg),
+        verticalArrangement = Arrangement.Center
+    ) {
+        GlassCard(modifier = Modifier.fillMaxWidth(), elevated = true) {
+            Column(modifier = Modifier.padding(CardWiseSpacing.lg)) {
                 Text("UPI payment found", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
-                payment.merchantName?.let { Text(it, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp)) }
-                Text(payment.vpa, modifier = Modifier.padding(top = 6.dp))
-                payment.amount?.let { Text("₹$it", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp)) }
-                payment.note?.let { Text(it, modifier = Modifier.padding(top = 8.dp)) }
+                payment.merchantName?.let { Text(it, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = CardWiseSpacing.sm)) }
+                Text(payment.vpa, modifier = Modifier.padding(top = CardWiseSpacing.xs))
+                payment.amount?.let { Text("₹$it", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = CardWiseSpacing.md)) }
+                payment.note?.let { Text(it, modifier = Modifier.padding(top = CardWiseSpacing.sm)) }
             }
         }
-        Button(onClick = onFindBestCard, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Button(onClick = onFindBestCard, modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.md)) {
             Text("Find best card")
         }
-        Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.sm)) {
             Text("Continue to payment")
         }
-        Button(onClick = onScanAgain, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentPadding = PaddingValues(12.dp)) {
+        Button(onClick = onScanAgain, modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.sm), contentPadding = PaddingValues(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
             Text("Scan again")
         }
     }
@@ -241,7 +250,7 @@ private fun DetectedContent(
 @Composable
 private fun InvalidContent(reason: InvalidScanReason, onScanAgain: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier.fillMaxSize().padding(CardWiseSpacing.xl),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -250,20 +259,20 @@ private fun InvalidContent(reason: InvalidScanReason, onScanAgain: () -> Unit) {
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() }
         )
-        Text("Try another payment QR.", modifier = Modifier.padding(top = 12.dp))
-        Button(onClick = onScanAgain, modifier = Modifier.padding(top = 24.dp)) { Text("Scan again") }
+        Text("Try another payment QR.", modifier = Modifier.padding(top = CardWiseSpacing.sm))
+        Button(onClick = onScanAgain, modifier = Modifier.padding(top = CardWiseSpacing.lg)) { Text("Scan again") }
     }
 }
 
 @Composable
 private fun CameraErrorContent(onRetry: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier.fillMaxSize().padding(CardWiseSpacing.xl),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Camera unavailable", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
-        Text("Check camera permission and try again.", modifier = Modifier.padding(top = 12.dp))
-        Button(onClick = onRetry, modifier = Modifier.padding(top = 24.dp)) { Text("Try again") }
+        Text("Check camera permission and try again.", modifier = Modifier.padding(top = CardWiseSpacing.sm))
+        Button(onClick = onRetry, modifier = Modifier.padding(top = CardWiseSpacing.lg)) { Text("Try again") }
     }
 }
