@@ -1,5 +1,6 @@
 package com.cardwise.app.ui
 
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -43,7 +44,7 @@ class CardWiseAppTest {
         val card = Card(7L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card))) }
         composeRule.onNodeWithContentDescription("Cards").performClick()
-        composeRule.onNodeWithText("Everyday Rewards").assertExists()
+        composeRule.onNodeWithContentDescription("Everyday Rewards ending 1234").assertExists()
         composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
         composeRule.onNodeWithText("Details").performClick()
         composeRule.onNodeWithText("Everyday Rewards").assertExists()
@@ -55,8 +56,8 @@ class CardWiseAppTest {
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive))) }
         composeRule.onNodeWithContentDescription("Cards").performClick()
         composeRule.onNodeWithText("Active").performClick()
-        composeRule.onNodeWithText("Active Card").assertExists()
-        composeRule.onNodeWithText("Paused Card").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Active Card ending 1111").assertExists()
+        composeRule.onNodeWithContentDescription("Paused Card ending 2222").assertDoesNotExist()
     }
 
     @Test fun selectingOffers_showsOfferSurface() {
@@ -81,6 +82,9 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.onNodeWithText("Category").performTextInput("dining")
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onNodeWithText("Best match").fetchSemanticsNodeOrNull() != null
+        }
         composeRule.onNodeWithText("Best match").assertExists()
         composeRule.onNodeWithText("Continue to UPI app").performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
