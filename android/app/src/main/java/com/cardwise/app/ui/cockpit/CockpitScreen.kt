@@ -35,6 +35,7 @@ import com.cardwise.app.ui.theme.CardWisePalette
 import com.cardwise.app.ui.theme.DecisionPulse
 import com.cardwise.app.ui.theme.EnginePulse
 import com.cardwise.app.ui.theme.GlassCard
+import com.cardwise.app.ui.theme.MetricTile
 import com.cardwise.app.ui.theme.SectionTitle
 
 @Composable
@@ -184,19 +185,5 @@ fun CockpitScreen(
             }
         }
         Spacer(Modifier.height(4.dp))
-    }
-}
-
-@Composable
-private fun MetricTile(value: String, label: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(14.dp)
-    ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
     }
 }
