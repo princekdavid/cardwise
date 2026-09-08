@@ -1,7 +1,7 @@
 package com.cardwise.app.ui
 
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.createComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -58,6 +58,14 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
         composeRule.onNodeWithText("Details").performClick()
         composeRule.onNodeWithTag("card_detail_name").assertExists()
+    }
+
+    @Test fun tactileDeck_exposesSpotlightCard() {
+        val card = Card(7L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
+        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card))) }
+        composeRule.onNodeWithTag("nav_wallet").performClick()
+        composeRule.onNodeWithTag("wallet_tactile_deck").assertExists()
+        composeRule.onNodeWithTag("wallet_spotlight_card_7").assertExists()
     }
 
     @Test fun activeFilter_hidesInactiveCards() {
