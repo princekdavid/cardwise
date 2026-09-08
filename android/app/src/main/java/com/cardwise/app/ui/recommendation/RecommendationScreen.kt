@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +64,7 @@ fun RecommendationScreen(viewModel: RecommendationViewModel, payment: UpiPayment
                 val ready = state as RecommendationUiState.Ready
                 item { Text(if (ready.recommendations.size == 1) "Best match" else "${ready.recommendations.size} ranked matches", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
                 items(ready.recommendations, key = { it.card.id }, contentType = { "recommendation" }) { RecommendationCard(it) }
-                if (payment != null && onContinueToPayment != null) item { Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth()) { Text("Continue to UPI app") } }
+                if (payment != null && onContinueToPayment != null) item { Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth().testTag("continue_to_upi")) { Text("Continue to UPI app") } }
             }
             is RecommendationUiState.Empty -> item { EmptyState((state as RecommendationUiState.Empty).input) }
             is RecommendationUiState.Error -> item { ErrorState((state as RecommendationUiState.Error).message, viewModel::retry) }
@@ -86,8 +87,8 @@ fun RecommendationScreen(viewModel: RecommendationViewModel, payment: UpiPayment
         OutlinedTextField(value = input.amount, onValueChange = { newValue ->
             val validAmount = newValue.length <= 12 && newValue.count { character -> character == '.' } <= 1 && newValue.all { character -> character.isDigit() || character == '.' }
             if (validAmount) onAmountChange(newValue)
-        }, modifier = Modifier.fillMaxWidth(), label = { Text("Amount") }, prefix = { Text("₹ ") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
-        OutlinedTextField(value = input.category, onValueChange = { newValue -> onCategoryChange(newValue) }, modifier = Modifier.fillMaxWidth(), label = { Text("Category") }, placeholder = { Text("Dining, travel, groceries…") }, singleLine = true)
+        }, modifier = Modifier.fillMaxWidth().testTag("recommendation_amount"), label = { Text("Amount") }, prefix = { Text("₹ ") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+        OutlinedTextField(value = input.category, onValueChange = { newValue -> onCategoryChange(newValue) }, modifier = Modifier.fillMaxWidth().testTag("recommendation_category"), label = { Text("Category") }, placeholder = { Text("Dining, travel, groceries…") }, singleLine = true)
     } }
 }
 
