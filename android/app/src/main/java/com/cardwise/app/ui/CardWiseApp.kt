@@ -68,7 +68,14 @@ fun CardWiseApp(
         val lifecycleOwner = LocalLifecycleOwner.current
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
-        val resolvedRewardRuleRepository = rewardRuleRepository ?: application.container.rewardRuleRepository
+        // Explicit recommendation rules are test/demo data and must not be shadowed by
+        // the app's persisted rule repository. A real repository remains the default
+        // when no explicit rules are supplied.
+        val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) {
+            application.container.rewardRuleRepository
+        } else {
+            null
+        }
         val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) { AndroidUpiPaymentLauncher(context.applicationContext) }
         val snackbarHostState = remember { SnackbarHostState() }
 
