@@ -99,7 +99,7 @@ fun EnginePulse(modifier: Modifier = Modifier) {
     val alpha by transition.animateFloat(
         initialValue = 0.55f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(CardWiseMotion.enginePulseMillis, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "engine_alpha"
     )
     Box(modifier = modifier.size(9.dp).clip(RoundedCornerShape(50)).background(CardWisePalette.Emerald.copy(alpha = alpha)))
@@ -111,7 +111,7 @@ fun DecisionPulse(modifier: Modifier = Modifier) {
     val scale by transition.animateFloat(
         initialValue = 0.94f,
         targetValue = 1.06f,
-        animationSpec = infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(CardWiseMotion.decisionPulseMillis, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "decision_scale"
     )
     Box(
