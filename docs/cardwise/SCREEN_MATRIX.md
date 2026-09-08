@@ -1,136 +1,300 @@
 # CardWise Screen & Interaction Matrix
 
-This is the working reconciliation map between the approved CardWise reference journey and production Android implementation. `IMPLEMENTED` means code exists; `VERIFIED` requires evidence from tests/APK/manual validation.
+Updated: 2026-09-08
 
-## Conceptual screen set from the latest reference artifacts
+This is the production reconciliation map between the **latest approved CardWise reference artifacts** and the Android implementation. `IMPLEMENTED` means code exists; `VERIFIED` requires evidence from tests/APK/manual validation.
 
-| ID | Screen | Intended responsibility | Key states/interactions | Current status |
-|---|---|---|---|---|
-| S-001 | Onboarding | Explain promise/privacy and establish initial setup | Privacy oath, theme entry, setup/continue | DESIGNED / NEEDS VERIFICATION |
-| S-002 | Cockpit | Premium home/dashboard and fast payment intelligence | Metrics, deck context, scan CTA, category-coded content | PARTIAL |
-| S-003 | QR Scan | Capture supported UPI QR locally | Permission, scanning, duplicate detection, invalid/non-UPI handling | IMPLEMENTED; APK verification pending |
-| S-004 | Reasoning | Show deterministic evaluation process | Loading/evaluation/provenance states | DESIGNED |
-| S-005 | Recommendation | Present best card/payment method and why | Best match, benefit, caveats, continue | IMPLEMENTED; prototype reconciliation pending |
-| S-006 | Handoff | Explicitly confirm and safely launch UPI app | Confirmation, cancel, launch, no-handler, return | IMPLEMENTED; APK/reference reconciliation pending |
-| S-007 | Wallet / My Deck | Manage physical-card deck | Empty/populated, active/paused, detail/edit/delete | PARTIAL |
-| S-008 | Card Catalog | Discover supported cards | Search, filters, category discovery, add | PARTIAL |
-| S-009 | Offers | Discover active relevant offers | Offer list/detail, applicability, expiry | PARTIAL / engine contract pending |
-| S-010 | Insights / Milestones | Explain historical value and progress | Savings, rewards, milestones | DESIGNED |
-| S-011 | Privacy Vault | Privacy controls and local-data management | Transparency, reset data, settings | DESIGNED |
+Reference artifacts:
+- `CardWise Interactive Experience Prototype.html` — latest known 2026-09-07.
+- `CardWise Jetpack Compose Android Application.kt.txt` — latest known 2026-09-07.
+
+For normalized visual rules, see `docs/cardwise/DESIGN_SOURCE.md`. For execution order and backend ownership, see `docs/cardwise/UI_BACKEND_PLAN.md`.
+
+## Screen matrix
+
+| ID | Screen | Should do | Reference design | Current production | Backend/domain | Next verification |
+|---|---|---|---|---|---|---|
+| S-001 | Onboarding | Explain promise/privacy and establish setup | Zero-Credential Privacy, calm centered hero, privacy oath, titanium CTA | DESIGNED | onboarding/preferences | Implement + verify setup/reset |
+| S-002 | Cockpit | Give premium home intelligence + fast scan | Airy layout, deck count, scan hero, savings context, category accents | PARTIAL | wallet + metrics; engines as needed | Visual + state reconciliation |
+| S-003 | QR Scan | Capture supported UPI QR locally | Camera HUD, emerald reticle, scan line, privacy callout | IMPLEMENTED | Scanner + ENG-001 | APK/device visual validation |
+| S-004 | Reasoning | Explain deterministic evaluation | Orbital core + staged reasoning feed | DESIGNED | ENG-003/004 trace | Implement + deterministic tests |
+| S-005 | Recommendation | Show best route, benefit, why, caveats | Physical card spotlight, math/provenance, comparison | IMPLEMENTED | ENG-002/003/004 | Visual/state reconciliation |
+| S-006 | Handoff | Explicitly confirm and launch payment | Resolver/carousel, explicit CTA, return confirmation | IMPLEMENTED | Payment launcher boundary | APK + lifecycle validation |
+| S-007 | My Deck | Manage tactile enrolled cards | Physical card skins, stack, active/paused, detail sheet | PARTIAL | Room + wallet repository | Visual + CRUD/persistence validation |
+| S-008 | Card Catalog | Discover/filter/add cards | Category-coded discovery, search, card skins | PARTIAL | catalog provider + wallet | Provider contract + UI |
+| S-009 | Offers | Show active relevant promotions | Active Card Promos, expiry, provenance | PARTIAL | Offer provider + ENG-005 | Engine contract + UI |
+| S-010 | Insights/Milestones | Explain historical value/progress | Savings + milestone cards/progress | DESIGNED | history + ENG-007 | Define data contract then implement |
+| S-011 | Privacy Vault | Explain/control local data and reset | Manifest/provenance, on-device data, reset | DESIGNED | local data/privacy boundary | Reconcile claims + reset flow |
+
+## Global visual rules
+
+- Target personality: premium + intelligent + calm.
+- Obsidian Dark and Pearl Bright are both first-class themes.
+- Prefer shared glass/elevated surfaces, restrained borders/shadows, generous spacing and strong financial-number hierarchy.
+- Use semantic category colors as functional accents, not decoration.
+- Use tactile physical-card treatment for card identities where data supports it.
+- Use monospace for financial/provenance data where useful.
+- Use a metallic/titanium primary CTA treatment for major actions.
+- Use short, purposeful motion; avoid meaningless indefinite spinners.
+- Keep all styling centralized in tokens/components; do not copy CSS literals into every screen.
+- Launcher logo is immutable.
+
+## Global component requirements
+
+Each reusable component should define applicable:
+- default;
+- pressed;
+- focused;
+- disabled;
+- loading;
+- success;
+- error;
+- selected/active;
+- accessibility semantics/content description.
+
+Core families:
+`CardWiseSurface`, `CardWiseElevatedSurface`, `TitaniumActionButton`, `StatusPill`, `CategoryChip`, `MerchantContextCard`, `RewardSummary`, `RecommendationCard`, `PhysicalCard`, `PhysicalCardDeck`, `ScanReticle`, `ReasoningStep`, `BottomNavDock`, `CardDetailSheet`, `ConfirmDialog`, `ToastBanner`, `LoadingState`, `EmptyState`, `ErrorState`.
 
 ## Cross-screen state requirements
 
-Every production screen should explicitly account for:
+Every production screen must explicitly account for, where applicable:
 
 - Loading.
 - Content/success.
 - Empty.
 - Error/recovery.
-- Disabled/inapplicable actions where relevant.
+- Disabled/inapplicable actions.
 - Accessibility semantics and content descriptions.
 - Light/dark theme behavior.
 - Large-font/font-scale behavior.
 - Navigation/back behavior.
-- Process/lifecycle recreation where applicable.
+- Process/lifecycle recreation.
+
+## Detailed interaction inventory
+
+### S-001 Onboarding
+
+Reference:
+- Local / Private / Deterministic badge.
+- "Pay Smart. Pay Less." promise.
+- Zero-Credential Architecture card.
+- Explicit list of data CardWise does not access.
+- Start Optimizing CTA.
+
+Production rule:
+- Never request unnecessary SMS/bank credential access.
+- Consent/setup state belongs outside transient Compose state.
+
+### S-002 Cockpit
+
+Reference:
+- CardWise Engine + Payment Cockpit header.
+- Deck count.
+- Scan Merchant QR hero.
+- Quick payment context/calculation area.
+- Optimized savings + evaluated-payment metric.
+- Offers entry.
+
+Production rule:
+- Do not hard-code prototype metrics.
+- Metrics must come from an explicit data boundary.
+
+### S-003 QR Scan
+
+Reference:
+- Scan & Find header.
+- Camera viewport.
+- Emerald reticle/corner brackets.
+- Scan line.
+- On-device privacy message.
+
+Required states:
+- permission needed/granted/denied;
+- scanning;
+- valid UPI;
+- duplicate;
+- malformed/invalid;
+- non-UPI;
+- missing amount;
+- lifecycle return.
+
+### S-004 Reasoning
+
+Reference:
+- Orbital core.
+- Synthesizing Optimal Route.
+- Staged pipeline: parse → evaluate cards → apply promos/rules → ready.
+
+Production rule:
+- Display real evaluation stages/provenance only.
+- Do not fabricate timing, test counts or AI claims.
+
+### S-005 Recommendation
+
+Reference:
+- Decision Engine label.
+- Merchant + MCC/VPA + amount.
+- Optimal Choice badge.
+- Net reward/yield.
+- Physical winner card.
+- Calculation/provenance.
+- Why-not comparison.
+- Pay CTA, copy UPI, adjust amount.
+
+Required explanation contract:
+1. What should I use?
+2. What benefit is expected?
+3. Why did it win?
+4. What caveats/limits apply?
+5. Is the value configured, calculated, remote or uncertain?
+
+### S-006 Handoff
+
+Reference:
+- App/card resolver presentation.
+- Candidate app state.
+- Selected payment app/card.
+- Explicit pay/continue action.
+
+Required states:
+- resolving;
+- ready;
+- cancel;
+- no handler;
+- launched;
+- returned;
+- paid/incomplete confirmation.
+
+### S-007 My Deck
+
+Reference:
+- My Physical Deck header.
+- Add button.
+- Tactile card skins.
+- Empty deck state.
+- Card details.
+- Active/paused.
+- Remove.
+
+Production rule:
+- Room/repository remains authoritative for enrolled cards.
+- Catalog products and user enrollment remain separate models.
+
+### S-008 Catalog
+
+Reference:
+- Search by card/issuer/category.
+- Category-coded discovery.
+- Card identity/skin.
+- Perks/network/fee metadata.
+- Add-to-deck state.
+
+Required states:
+- initial;
+- search results;
+- no results;
+- filter selected;
+- already added;
+- provider unavailable.
+
+### S-009 Offers
+
+Reference:
+- Active Card Promos.
+- Benefit highlight.
+- Expiry/urgency.
+- Terms.
+- Source/provenance.
+
+Required states:
+- active;
+- expired;
+- applicable;
+- not applicable;
+- stale/missing provider data;
+- provider error.
+
+### S-010 Insights/Milestones
+
+Reference direction:
+- optimized/saved value;
+- evaluation count;
+- spend/reward summaries;
+- milestone progress.
+
+Production rule:
+- No fake historical numbers.
+- Define durable history before introducing ENG-007.
+
+### S-011 Privacy Vault
+
+Reference:
+- Privacy Vault title/subtitle.
+- Engine provenance manifest.
+- On-device data management.
+- Reset/wipe action.
+
+Production rule:
+- Show only runtime/build-generated provenance facts.
+- Destructive reset should be explicit and recoverable.
+
+## Modal/sheet/toast inventory
+
+The reference includes:
+- Missing amount modal.
+- Non-UPI QR rejection dialog.
+- Post-handoff confirmation drawer/modal.
+- Card detail bottom sheet.
+- Toast feedback.
+- Global navigation/reasoning loader overlay.
+
+These are shared interaction patterns and should be implemented as reusable Compose components where possible.
+
+## Bottom navigation
+
+Reference visual pattern:
+- floating rounded dock;
+- compact labels/icons;
+- elevated center Scan action;
+- emerald active state;
+- contextual navigation for non-tab screens.
+
+The exact final fifth destination must be reconciled with the latest approved product navigation before locking the production tab set.
 
 ## Scan → Recommendation → Handoff state machine
 
 ```text
 SCAN
- ├─ camera permission needed → permission explanation → user grants/denies
- ├─ unsupported/invalid QR → rejection/error → retry
- └─ valid UPI QR
+ ├─ permission needed → explanation → grant/deny
+ ├─ invalid/non-UPI → rejection → retry
+ └─ valid UPI
        ↓
    ephemeral PaymentContext
        ↓
-   REASONING / recommendation evaluation
-       ├─ missing amount → amount input modal/state
-       ├─ no eligible card → explain no-match + recovery
-       └─ recommendation ready
+   REASONING
+       ├─ missing amount → amount input
+       ├─ no eligible card → explain + recovery
+       └─ ready
              ↓
        RECOMMENDATION
              ↓
-       HANDOFF confirmation
-        ├─ Cancel → recommendation
+       HANDOFF
+        ├─ Cancel → Recommendation
         └─ Continue → external UPI app
-                       ├─ no handler → error/recovery
+                       ├─ no handler → recovery
                        └─ launched → lifecycle return
                                       ↓
-                                post-handoff state
+                                post-handoff confirmation
 ```
-
-## Wallet states
-
-- No cards: clear empty state + catalog entry point.
-- Cards present: physical deck/card list.
-- Active filter: inactive cards excluded from active view.
-- Card detail: benefits, metadata and actions.
-- Edit: update card configuration.
-- Delete/remove: explicit destructive confirmation where appropriate.
-- Persistence: state survives process/app lifecycle according to repository contract.
-
-## Catalog states
-
-- Search empty.
-- Search results.
-- Category/filter selected.
-- No matching cards.
-- Card detail.
-- Add to deck.
-- Provider/data unavailable.
-
-## Offer states
-
-- Active offers.
-- Expired offer.
-- Offer not applicable to selected card.
-- Applicable to card/merchant/transaction.
-- Missing/stale provider data.
-- Offer benefit estimate with provenance.
-
-## Recommendation explanation contract
-
-Every recommendation surface should be able to answer:
-
-1. What should I use?
-2. What benefit is expected?
-3. Why did this option win?
-4. What limits/caveats apply?
-5. Is the value a configured fact, calculation, remote fact or uncertain estimate?
-
-## Prototype-specific interaction inventory to reconcile
-
-The latest reference artifacts include or emphasize:
-
-- Obsidian Dark / Pearl Bright theme switching.
-- Privacy oath during onboarding.
-- QR scan → reasoning → recommendation → payment handoff.
-- Missing amount modal.
-- Non-UPI QR rejection.
-- Post-handoff confirmation.
-- Card detail bottom sheet.
-- Active/paused card behavior.
-- Remove-card flow.
-- Toast feedback.
-- Bottom navigation around Cockpit / My Deck / QR Scan hero / Offers / Milestones.
-- Privacy Vault / reset data.
-- Airy Cockpit & category colors.
-- On-device AR lock-on concept.
-- Deterministic reasoning feed.
-- Physical Card Spotlight & Math Provenance.
-- App & Card Resolver Carousel.
-- Tactile Physical Card Deck.
-- Category-Coded Discovery.
-- Active Card Promos.
-
-These are **requirements to reconcile**, not permission to replace the existing production architecture or hard-code reference mock data.
 
 ## Validation rule
 
-When a screen is changed:
+When a screen changes:
 
-1. Update this matrix if scope/state behavior changed.
-2. Add or update Compose instrumentation tests for critical interactions.
-3. Run unit + instrumentation/build CI.
-4. Validate the running APK for visual/interaction requirements that automated tests cannot establish.
-5. Mark `VERIFIED` only after evidence is recorded in project memory.
+1. Update this matrix if scope/state behavior changes.
+2. Update `DESIGN_SOURCE.md` only when a reusable design rule changes.
+3. Add/update Compose instrumentation tests for critical interactions.
+4. Run unit + instrumentation/build CI.
+5. Validate the running APK for visual/interaction requirements automation cannot establish.
+6. Record exact commit/CI/APK evidence.
+7. Mark `VERIFIED` only after evidence exists.

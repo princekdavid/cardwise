@@ -7,16 +7,26 @@ project:
   architecture: Presentation -> ViewModel/UI State -> Domain -> Repository -> Data
   promise: "Before I pay, CardWise tells me the smartest way to pay."
   working_branch: feat/design-system-prototype-integration
-  implementation_baseline: "Historical branch baseline before memory commits: 1aa3343eca479be70be04e579b563e1bb6b3cb54"
+  current_head: b147d65ecc187febf15ea1d426ccd4b2702b9e4a
+  current_ci: "Android CI run #378 passed for current HEAD"
+  design_plan: docs/cardwise/UI_BACKEND_PLAN.md
+  design_source: docs/cardwise/DESIGN_SOURCE.md
 
 status_vocabulary: [DISCOVERED, PLANNED, DESIGNED, IN_PROGRESS, PARTIAL, IMPLEMENTED, VERIFIED, BLOCKED, DEFERRED, REJECTED, OBSOLETE, NEEDS_VERIFICATION]
 
 source_of_truth:
   - {id: CODE, priority: 1, source: "Current repository code and tests"}
-  - {id: DESIGN, priority: 2, source: "CardWise Interactive Experience Prototype.html; CardWise Jetpack Compose Android Application.kt.txt", latest_known: 2026-09-07}
-  - {id: MEMORY, priority: 3, source: "docs/cardwise/*"}
-  - {id: HISTORICAL_DOCS, priority: 4, source: "docs/PRODUCT_SPEC.md, docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/STATUS.md, docs/UX_SYSTEM.md"}
+  - {id: DESIGN, priority: 2, source: "Latest approved CardWise design/reference artifacts", latest_known: 2026-09-07}
+  - {id: DESIGN_RULES, priority: 3, source: "docs/cardwise/DESIGN_SOURCE.md and SCREEN_MATRIX.md"}
+  - {id: MEMORY, priority: 4, source: "docs/cardwise/KNOWLEDGE_GRAPH.yaml and AI_CONTEXT.md"}
+  - {id: HISTORICAL_DOCS, priority: 5, source: "docs/PRODUCT_SPEC.md, docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/UX_SYSTEM.md, docs/STATUS.md"}
   - {id: CONFLICT_RULE, priority: 0, source: "Never guess when sources conflict; record and resolve the discrepancy."}
+
+design_artifacts:
+  latest:
+    - {name: "CardWise Interactive Experience Prototype.html", version_date: 2026-09-07, role: "visual + interaction reference"}
+    - {name: "CardWise Jetpack Compose Android Application.kt.txt", version_date: 2026-09-07, role: "Compose visual/reference implementation"}
+  rule: "Use the latest approved artifacts for intended UI, but preserve production architecture and never promote mock data to production truth."
 
 constraints:
   - {id: C-001, severity: critical, status: VERIFIED, rule: "Existing APK launcher logo must remain exactly as-is; never redesign, recolor, replace or reinterpret it."}
@@ -29,135 +39,47 @@ constraints:
   - {id: C-008, severity: high, status: ACTIVE, rule: "IMPLEMENTED and VERIFIED are separate states and require separate evidence."}
 
 features:
-  F-001:
-    name: Card Wallet
-    status: VERIFIED
-    should_do: "Let users add, edit, activate/pause, inspect and remove cards and configured benefits."
-    done: [card_model_validation, Room_persistence, repository_boundary, list_add_edit_delete_detail, benefit_overview, loading_empty_error_states]
-    next: "Reconcile physical-card/deck presentation and verify all interactions on the current APK."
-  F-002:
-    name: Rewards & Benefit Intelligence
-    status: VERIFIED
-    should_do: "Represent and calculate rewards/benefits using deterministic rules, categories, caps and thresholds."
-    done: [reward_rules, deterministic_calculation, benefit_tracking, expiry_reminder_policy, persisted_rules, edge_case_tests]
-    next: "Keep calculation independent and evolve through composable engine contracts."
-  F-003:
-    name: Recommendation
-    status: VERIFIED
-    should_do: "Given a transaction and eligible payment options, select the best expected value and explain why."
-    done: [payment_context, eligibility_validation, deterministic_ranking, explainable_result, ViewModel_state_flow_UI, persisted_rule_integration, tests]
-    next: "Reconcile Reasoning/Recommendation prototype presentation and expand ranking inputs through explicit engines."
-  F-004:
-    name: QR Scan
-    status: VERIFIED
-    should_do: "Scan supported UPI QR codes, parse locally and recover safely from invalid/unsupported/repeated scans."
-    done: [CameraX_MLKit, permission_UX, local_UPI_parser, invalid_handling, duplicate_protection, lifecycle_hardening]
-    next: "APK/device validation across all scanner states."
-  F-005:
-    name: Scan & Pay
-    status: VERIFIED
-    should_do: "Convert a supported scan into a recommendation and safely hand off to an external UPI app after confirmation."
-    done: [scan_prefill, sanitized_UPI_URI, explicit_confirmation, safe_launcher, lifecycle_return, instrumentation]
-    next: "Validate current APK and reconcile post-handoff/error states with the latest reference."
+  F-001: {name: Card Wallet, status: VERIFIED, should_do: "Let users add, edit, activate/pause, inspect and remove cards and configured benefits."}
+  F-002: {name: Rewards & Benefit Intelligence, status: VERIFIED, should_do: "Represent and calculate rewards/benefits using deterministic rules, categories, caps and thresholds."}
+  F-003: {name: Recommendation, status: VERIFIED, should_do: "Given a transaction and eligible payment options, select the best expected value and explain why."}
+  F-004: {name: QR Scan, status: VERIFIED, should_do: "Scan supported UPI QR codes, parse locally and recover safely from invalid/unsupported/repeated scans."}
+  F-005: {name: Scan & Pay, status: VERIFIED, should_do: "Convert a supported scan into a recommendation and safely hand off to an external UPI app after confirmation."}
   F-006:
     name: Cockpit
     status: PARTIAL
     should_do: "Provide premium home surface with payment intelligence, deck status, useful metrics and a fast Scan action."
-    reference_requirements: [airy_layout, category_coding, fast_scan, card_reward_context, theme_awareness]
-    next: "Screen-by-screen visual and interaction reconciliation."
+    design_focus: [airy_layout, category_colors, fast_scan, deck_context, savings_context, theme_awareness]
+    next: "Implement/reconcile UI and move aggregate metrics out of transient Compose state into a defined data boundary."
   F-007:
     name: My Deck / Wallet presentation
     status: PARTIAL
     should_do: "Present enrolled physical cards as a tactile, manageable deck while preserving Room/repository behavior."
-    reference_requirements: [physical_card_spotlight, math_provenance, detail_bottom_sheet, active_paused, edit_remove]
-    next: "Reconcile prototype deck behavior without replacing production architecture."
+    design_focus: [physical_card_spotlight, tactile_deck, active_paused, detail_sheet, edit_remove, empty_state]
   F-008:
     name: Card Catalog
     status: PARTIAL
     should_do: "Discover supported cards and add relevant cards to the deck."
-    reference_requirements: [search, filters, category_discovery, provider_backed_data]
-    next: "Define catalog provider/data contract and complete UI reconciliation."
+    design_focus: [search, filters, category_discovery, physical_card_identity]
   F-009:
     name: Offers
     status: PARTIAL
     should_do: "Surface active relevant offers and determine whether they apply to cards, merchants and transactions."
-    reference_requirements: [active_offers, applicability, expiry, provenance]
-    next: "Define Offer Engine and provider-backed offer data before expanding UI."
-  F-010:
-    name: Insights / Milestones
-    status: DESIGNED
-    should_do: "Explain historical savings, rewards, spend patterns and progress."
-    next: "Confirm exact scope/data contract from approved reference before implementation."
-  F-011:
-    name: Privacy Vault / Settings
-    status: DESIGNED
-    should_do: "Give transparency and control over locally stored CardWise data, privacy behavior and reset."
-    next: "Reconcile with reference and security model."
-  F-012:
-    name: Onboarding
-    status: DESIGNED
-    should_do: "Explain product promise/privacy and establish initial setup before Cockpit."
-    reference_requirements: [privacy_oath, theme_entry, explicit_consent]
-    next: "Verify current production onboarding and implement only after reconciliation."
-  F-013:
-    name: Theme System
-    status: IMPLEMENTED
-    should_do: "Provide theme-aware rendering using shared design tokens."
-    reference_requirements: [Obsidian_Dark, Pearl_Bright, shared_spacing, shared_motion]
-    next: "Verify all new screens use the same tokens and accessibility contrast."
+    design_focus: [active_promos, expiry, applicability, provenance]
+  F-010: {name: Insights / Milestones, status: DESIGNED, should_do: "Explain historical savings, rewards, spend patterns and progress."}
+  F-011: {name: Privacy Vault / Settings, status: DESIGNED, should_do: "Give transparency and control over locally stored CardWise data, privacy behavior and reset."}
+  F-012: {name: Onboarding, status: DESIGNED, should_do: "Explain product promise/privacy and establish initial setup before Cockpit."}
+  F-013: {name: Theme System, status: IMPLEMENTED, should_do: "Provide theme-aware rendering using shared design tokens."}
 
 engines:
   design_rule: "Feature = user capability. Engine = reusable business responsibility. Add/split engines only when cohesive responsibility, independent tests, evolving rules or distinct data providers justify separation."
   registry:
-    ENG-001:
-      name: QR / Payment Context Resolver
-      status: IMPLEMENTED
-      should_do: "Normalize supported QR/UPI input into safe PaymentContext."
-      inputs: [qr_payload]
-      outputs: [payment_context, validation_result]
-      must: [validate_untrusted_input, keep_sensitive_credentials_out, keep_raw_payload_ephemeral]
-      must_not: [authorize_payment, choose_best_card, store_UPI_PIN]
-    ENG-002:
-      name: Reward Engine
-      status: IMPLEMENTED_AS_DOMAIN_LOGIC
-      should_do: "Calculate expected card reward/benefit deterministically."
-      inputs: [payment_context, card, reward_rules]
-      outputs: [reward_estimate, provenance]
-      must: [deterministic, cap_threshold_handling, numeric_safety]
-      future_extensions: [cashback, points, miles, category_multipliers, spend_thresholds]
-    ENG-003:
-      name: Recommendation Engine
-      status: IMPLEMENTED
-      should_do: "Evaluate eligible options, calculate expected value, rank deterministically and produce reasoning."
-      inputs: [payment_context, wallet, reward_rules, offers, eligibility_constraints]
-      outputs: [ranked_candidates, selected_candidate, benefit_calculation, reasoning, caveats]
-      pipeline: [normalize_context, eligibility, apply_rules, calculate, rank, explain]
-      must_not: [launch_payment_app, mutate_wallet, depend_on_UI_state, claim_unverified_savings]
-      future_extensions: [offer_weighting, merchant_rules, user_preferences, travel_value, subscription_detection]
-    ENG-004:
-      name: Eligibility Engine
-      status: IMPLEMENTED_WITHIN_RECOMMENDATION
-      should_do: "Determine whether a card/rule/offer/payment method applies and explain ineligibility."
-      future_extensions: [merchant_restrictions, network_restrictions, category_restrictions, spend_limits]
-    ENG-005:
-      name: Offer Engine
-      status: PLANNED
-      should_do: "Discover, normalize, filter and explain applicable promotions without hard-coding offers in UI."
-      inputs: [merchant, payment_context, wallet, offer_catalog, time]
-      outputs: [applicable_offers, benefit_estimates, eligibility_reason, provenance]
-      must: [provider_backed, expiry_tracking, uncertainty_handling, card_merchant_network_matching]
-      future_providers: [issuer, network, merchant, partner]
-    ENG-006:
-      name: Merchant Intelligence Engine
-      status: PROPOSED
-      should_do: "Resolve/enrich merchant identity and context when reliable data is available."
-      possible_inputs: [PaymentContext, MCC, VPA_hints, merchant_sources]
-      possible_outputs: [merchant_identity, category, confidence]
-    ENG-007:
-      name: Insights Engine
-      status: PROPOSED
-      should_do: "Aggregate transaction/reward history into explainable savings, spend and milestone insights."
-      possible_outputs: [savings_metrics, trends, reward_summaries, benefit_utilization, milestones]
+    ENG-001: {name: QR / Payment Context Resolver, status: IMPLEMENTED, should_do: "Normalize supported QR/UPI input into safe PaymentContext."}
+    ENG-002: {name: Reward Engine, status: IMPLEMENTED_AS_DOMAIN_LOGIC, should_do: "Calculate expected card reward/benefit deterministically."}
+    ENG-003: {name: Recommendation Engine, status: IMPLEMENTED, should_do: "Evaluate eligible options, calculate expected value, rank deterministically and produce reasoning."}
+    ENG-004: {name: Eligibility Engine, status: IMPLEMENTED_WITHIN_RECOMMENDATION, should_do: "Determine whether a card/rule/offer/payment method applies and explain ineligibility."}
+    ENG-005: {name: Offer Engine, status: PLANNED, should_do: "Discover, normalize, filter and explain applicable promotions without hard-coding offers in UI."}
+    ENG-006: {name: Merchant Intelligence Engine, status: PROPOSED, should_do: "Resolve/enrich merchant identity and context when reliable data is available."}
+    ENG-007: {name: Insights Engine, status: PROPOSED, should_do: "Aggregate transaction/reward history into explainable savings, spend and milestone insights."}
   engine_admission_rule: "Do not create an engine just for abstraction. Create one when the responsibility needs independent rules, testing, a data/provider boundary or independent evolution."
 
 screens:
@@ -176,12 +98,7 @@ screens:
 
 flows:
   FLOW-001: {name: Onboarding, path: [ONBOARDING, COCKPIT], status: NEEDS_VERIFICATION}
-  FLOW-002:
-    name: Scan to recommendation to payment
-    path: [SCAN, REASONING, RECOMMENDATION, HANDOFF, EXTERNAL_UPI_APP, RETURN]
-    status: PARTIAL
-    states: [permission, valid_upi, invalid_qr, non_upi_qr, missing_amount, loading, ready, confirmation, no_handler, return]
-    known_gap: "Full UI instrumentation path is intentionally deferred until the current UI is fully validated against the APK/reference."
+  FLOW-002: {name: Scan to recommendation to payment, path: [SCAN, REASONING, RECOMMENDATION, HANDOFF, EXTERNAL_UPI_APP, RETURN], status: PARTIAL, known_gap: "Full UI E2E instrumentation follows visual/state reconciliation."}
   FLOW-003: {name: Wallet management, path: [WALLET, CARD_DETAIL, ADD_EDIT, DELETE], status: VERIFIED}
   FLOW-004: {name: Catalog discovery, path: [WALLET, CATALOG, FILTER, CARD_DETAIL, ADD], status: PARTIAL}
   FLOW-005: {name: Offers discovery, path: [OFFERS, OFFER_DETAIL, CARD_OR_MERCHANT_CONTEXT], status: DESIGNED}
@@ -189,37 +106,30 @@ flows:
 
 verification:
   historical_milestones: {M0: VERIFIED, M1: VERIFIED, M2: VERIFIED, M3: VERIFIED, M4: VERIFIED, M5: VERIFIED, M6: VERIFIED, M7: PARTIAL}
-  latest_historical_m6_commit: 7591de9ae4a25ee03e6a4448f13a54f15b43884f
-  current_design_branch_ci: NEEDS_VERIFICATION
+  current_head_ci: {commit: b147d65ecc187febf15ea1d426ccd4b2702b9e4a, run: 378, status: VERIFIED}
   deferred_test: "Scan -> Recommendation -> Handoff full UI instrumentation test"
 
 work_queue:
   NOW:
-    - "Run Android CI against current working branch HEAD."
-    - "Complete prototype/reference versus production screen reconciliation."
-    - "Validate current APK and update evidence."
-    - "Keep project memory synchronized with implementation."
+    - "Use DESIGN_SOURCE.md as the normalized UI source for implementation."
+    - "Implement/reconcile shared UI primitives and tokens."
+    - "Cockpit UI + backend/data-state reconciliation."
+    - "My Deck/Wallet visual reconciliation while preserving Room/repository."
+    - "Reconcile Scan -> Reasoning -> Recommendation -> Handoff against latest reference."
+    - "Keep project memory synchronized with every meaningful implementation commit."
   NEXT:
-    - "Cockpit polish/reconciliation."
-    - "My Deck/Wallet visual reconciliation."
-    - "Catalog provider contract and UI completion."
-    - "Offer Engine contract and provider boundary."
-    - "Restore deferred end-to-end flow test."
-  LATER: ["Insights/Milestones", "Merchant Intelligence Engine", "Additional reward/offer models and safe payment methods"]
+    - "Card Catalog provider/data contract and UI completion."
+    - "Offer Engine contract/provider boundary and Offers UI."
+    - "Insights/Milestones history contract and UI."
+    - "Privacy Vault and onboarding/privacy oath."
+    - "Restore full critical-flow E2E instrumentation."
+  LATER: ["Merchant Intelligence Engine", "Additional reward/offer models", "Additional safe payment methods", "Release visual regression depth"]
   BLOCKED: []
-  DEFERRED: ["Full Scan -> Recommendation -> Handoff UI instrumentation until APK/UI validation."]
-
-improvements:
-  - {id: IMP-001, area: Design, goal: "Align screens, states, dialogs, bottom-sheets, navigation and motion with approved reference."}
-  - {id: IMP-002, area: Engines, goal: "Separate reward/eligibility/offer responsibilities when independent evolution/testing justifies it."}
-  - {id: IMP-003, area: Provenance, goal: "Distinguish known facts, user data, calculations, remote data and uncertain/stale data."}
-  - {id: IMP-004, area: Testing, goal: "Expand deterministic domain and critical-flow instrumentation coverage."}
-  - {id: IMP-005, area: Performance, goal: "Profile startup, recomposition, scanner processing, recommendation rendering and database work."}
-  - {id: IMP-006, area: Security, goal: "Review permissions, exported components, logs, backups and sensitive-data boundaries."}
-  - {id: IMP-007, area: Accessibility, goal: "Maintain semantics, descriptions, touch targets and font scaling across all screens."}
+  DEFERRED: ["Full Scan -> Recommendation -> Handoff UI instrumentation until UI reconciliation is complete."]
 
 maintenance:
   meaningful_change_rule: "Update affected feature/engine/screen/work-queue entries with meaningful implementation changes."
   trivial_change_rule: "Pure formatting/mechanical commits do not require semantic memory updates."
   verification_rule: "Never mark VERIFIED without explicit evidence."
+  design_change_rule: "Global visual changes update DESIGN_SOURCE.md/token/component definitions; screen-specific changes update SCREEN_MATRIX.md and the affected feature entry."
   history_rule: "Do not erase superseded decisions; mark them OBSOLETE and record the replacement."

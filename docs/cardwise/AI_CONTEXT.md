@@ -10,10 +10,11 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch tip at context creation: `1aa3343eca479be70be04e579b563e1bb6b3cb54`
-- Latest branch commit: `refactor: apply shared cockpit spacing and motion`
+- Current branch HEAD: `b147d65ecc187febf15ea1d426ccd4b2702b9e4a`
+- Latest branch commit: `docs: add CardWise durable project memory to design branch`
 - PR: #11, `feat: integrate prototype design system and key screens`
-- PR #11 is open and not merged; its recorded head is `6a56dcda...`, while the branch has since advanced to `1aa3343e...`. Treat the branch tip, not the stale PR head metadata, as the current implementation baseline.
+- PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
+- Android CI: run #378 for current HEAD completed successfully.
 
 ## Product promise
 
@@ -21,18 +22,34 @@
 
 CardWise is a privacy-first payment companion. It manages a user's cards and benefits, evaluates payment context, explains recommendations, and assists with QR-based UPI payment handoff without handling UPI PINs or banking credentials.
 
+## Canonical project documents
+
+Read these in order for a new session:
+
+1. `docs/cardwise/AI_CONTEXT.md` — bootstrap context.
+2. `docs/cardwise/KNOWLEDGE_GRAPH.yaml` — machine-readable project state, feature/engine/screen registry and work queue.
+3. `docs/cardwise/DESIGN_SOURCE.md` — normalized visual language, tokens, components and small-change playbook.
+4. `docs/cardwise/SCREEN_MATRIX.md` — screen/state/interaction reconciliation.
+5. `docs/cardwise/UI_BACKEND_PLAN.md` — finalized screen-by-screen UI + backend execution plan.
+6. `docs/cardwise/ENGINE_CATALOG.md` — business-engine contracts and extension rules.
+
+Existing narrower documents remain useful: `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/UX_SYSTEM.md`, `docs/ROADMAP.md`, `docs/BETA_HARDENING_CHECKLIST.md`, `docs/DEFINITION_OF_DONE.md`.
+
+## Latest approved design artifacts
+
+- `CardWise Interactive Experience Prototype.html` — latest known 2026-09-07.
+- `CardWise Jetpack Compose Android Application.kt.txt` — latest known 2026-09-07.
+
+These are approved **reference artifacts**, not a production architecture. The single-file Compose artifact must not replace the repository's production architecture.
+
 ## Source-of-truth hierarchy
 
-1. Current repository code and tests for what is actually implemented.
-2. Latest approved CardWise design/reference artifacts supplied for the project:
-   - `CardWise Interactive Experience Prototype.html` (latest known: 2026-09-07)
-   - `CardWise Jetpack Compose Android Application.kt.txt` (latest known: 2026-09-07)
-3. `docs/cardwise/KNOWLEDGE_GRAPH.yaml` for consolidated project intent, status and traceability.
-4. `docs/cardwise/SCREEN_MATRIX.md` for screen/state coverage.
-5. `docs/cardwise/ENGINE_CATALOG.md` for business-engine contracts and extension points.
-6. Existing product/architecture/UX/roadmap documents for historical intent.
+1. Current repository code and tests for actual implementation.
+2. Latest approved design/reference artifacts for intended visual and interaction design.
+3. `docs/cardwise/*` for consolidated intent, reconciliation, contracts and plan.
+4. Historical product/architecture/UX/roadmap documents.
 
-When sources conflict, do not silently guess. Record the discrepancy and resolve it explicitly.
+When sources conflict, record the discrepancy and resolve it explicitly; never silently guess.
 
 ## Protected constraints
 
@@ -43,41 +60,63 @@ When sources conflict, do not silently guess. Record the discrepancy and resolve
 - External payment handoff requires explicit user action.
 - Business logic must not be embedded in Compose UI.
 - Recommendation results must be deterministic for identical inputs/rules and explainable.
-- Dynamic card, offer and merchant data must remain provider/engine backed; do not hard-code prototype data into production behavior.
+- Dynamic card, offer and merchant data must remain provider/engine backed; prototype data is not production truth.
 - `IMPLEMENTED` and `VERIFIED` are different states.
 
-## What is already implemented / verified historically
+## What is already implemented / historically verified
 
 - M0 foundation: Android/Compose scaffold, design tokens, navigation shell, CI and baseline tests.
 - M1 wallet: card model/validation, Room persistence, repository boundary, list/add/edit/delete/detail and benefits.
 - M2 rewards/benefits: reward rules, categories, caps/thresholds, deterministic calculations, benefit tracking/reminder policy, persistence and edge-case tests.
-- M3 recommendation: payment context, eligibility validation, deterministic ranking, explainable result, UI/ViewModel/state flow and tests.
+- M3 recommendation: payment context, eligibility, deterministic ranking, explainable result, UI/ViewModel/state flow and tests.
 - M4 scan: CameraX/ML Kit QR scanner, local UPI parsing, invalid/unsupported handling, duplicate protection and lifecycle hardening.
-- M5 scan & pay: scan→recommendation prefill, sanitized UPI URI, confirmation, safe launcher, lifecycle-safe return and instrumentation coverage.
+- M5 scan & pay: scan→recommendation prefill, sanitized UPI URI, confirmation, safe launcher, lifecycle-safe return and instrumentation.
 - M6 production hardening: privacy, scanner lifecycle, deterministic recommendation/explanation, handoff/no-handler handling, testability seams and CI verification.
-- M7 work already landed on historical/main: accessibility hardening (M7.1), wallet persistence regression hardening (M7.2), recommendation list performance hardening (M7.3) are present in commit history; do not assume the full current branch is CI-verified until CI is run against the current tip.
+- M7 historical work: accessibility, wallet persistence regression and recommendation performance hardening landed.
 
-## Current design-integration work
+## Finalized UI + backend direction
 
-The prototype/reference adds or emphasizes a richer product surface including Cockpit, Scan, Reasoning, Recommendation, Handoff, Wallet/My Deck, Catalog, Offers, Insights, Vault, onboarding/privacy oath, theme switching, card detail states, missing-amount and unsupported-QR handling, post-handoff confirmation, and bottom navigation.
+The next development stream is explicitly **UI + backend together**. For every screen we will implement:
 
-The production code must be reconciled screen-by-screen with those artifacts. The reference single-file Compose implementation is **not** a replacement for the production repository architecture.
+- the intended user capability;
+- the latest reference visual language;
+- loading/content/empty/error/disabled states;
+- the ViewModel/UI-state contract;
+- domain/repository data ownership;
+- engine/provider responsibilities where justified;
+- unit/instrumentation coverage;
+- APK/manual visual verification.
 
-## Immediate next actions
+Execution order is documented in `UI_BACKEND_PLAN.md` and currently starts with shared UI primitives, then Cockpit, My Deck, Scan reconciliation, Reasoning, Recommendation, Handoff, Catalog, Offer Engine/Offers, Insights, Vault/Onboarding and final hardening.
 
-1. Run CI against current branch tip `1aa3343e...` and record the result.
-2. Finish screen-by-screen prototype/reference → production reconciliation.
-3. Complete any remaining M7 beta hardening gaps that are still applicable after reconciliation.
-4. Implement the agreed design-system/prototype screens incrementally without regressing existing wallet/recommendation/scan/pay architecture.
-5. Keep engine/business contracts independent of UI.
-6. Add/expand deterministic tests before marking each feature `VERIFIED`.
+## Current work queue
+
+NOW:
+1. Shared UI/design-token reconciliation using `DESIGN_SOURCE.md`.
+2. Cockpit UI + data/state reconciliation.
+3. My Deck/Wallet visual reconciliation while preserving Room/repository.
+4. Scan → Reasoning → Recommendation → Handoff visual/state reconciliation.
+5. Keep memory synchronized with every meaningful implementation commit.
+
+NEXT:
+1. Card Catalog provider/data contract.
+2. Offer Engine contract/provider boundary and Offers UI.
+3. Insights/Milestones history contract and UI.
+4. Privacy Vault and onboarding/privacy oath.
+5. Restore full Scan → Recommendation → Handoff E2E instrumentation after UI reconciliation.
+
+LATER:
+- Merchant Intelligence Engine.
+- Additional reward/offer models and safe payment methods.
+- Release hardening and visual regression depth.
 
 ## How to continue after a chat reset
 
 1. Read this file.
 2. Read `KNOWLEDGE_GRAPH.yaml`.
-3. Read `SCREEN_MATRIX.md` and `ENGINE_CATALOG.md` only for the area being changed.
-4. Verify current branch and HEAD in GitHub.
-5. Check CI for that exact HEAD.
-6. Pick the first item under `NOW` in the knowledge graph unless the user explicitly changes priority.
-7. Update the knowledge graph and relevant status docs in the same meaningful commit as the feature change.
+3. Read `DESIGN_SOURCE.md` and `UI_BACKEND_PLAN.md` for active design/implementation work.
+4. Read `SCREEN_MATRIX.md` for the specific screen.
+5. Verify current branch and HEAD in GitHub.
+6. Check CI for that exact HEAD.
+7. Pick the first `NOW` item unless the user changes priority.
+8. Update affected memory documents in the same meaningful commit as implementation.
