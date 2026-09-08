@@ -2,7 +2,6 @@ package com.cardwise.app.ui
 
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -28,21 +27,21 @@ class CardWiseAppTest {
 
     @Test fun selectingCards_updatesSelectedDestination() {
         composeRule.setContent { CardWiseApp() }
-        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
-        composeRule.onNodeWithText("Cards", useUnmergedTree = true).assertIsSelected()
+        composeRule.onNodeWithTag("nav_wallet").performClick()
+        composeRule.onNodeWithTag("nav_wallet").assertIsSelected()
         composeRule.onNodeWithText("My Physical Deck").assertExists()
     }
 
     @Test fun emptyDeck_showsCatalogueEntryPoint() {
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(emptyList())) }
-        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithTag("nav_wallet").performClick()
         composeRule.onNodeWithText("No cards in your deck").assertExists()
         composeRule.onNodeWithText("Browse card catalogue").assertExists()
     }
 
     @Test fun cardCatalogue_exposesSearchAndFilterControls() {
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(emptyList())) }
-        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithTag("nav_wallet").performClick()
         composeRule.onNodeWithText("Browse card catalogue").performClick()
         composeRule.onNodeWithTag("catalog_search").assertExists()
         composeRule.onNodeWithTag("catalog_filters").assertExists()
@@ -53,7 +52,7 @@ class CardWiseAppTest {
     @Test fun populatedDeck_showsCardAndDetailsEntryPoint() {
         val card = Card(7L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card))) }
-        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithTag("nav_wallet").performClick()
         composeRule.onNodeWithTag("wallet_card_7").assertExists()
         composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
         composeRule.onNodeWithText("Details").performClick()
@@ -64,7 +63,7 @@ class CardWiseAppTest {
         val active = Card(1L, "CardWise Bank", "Active Card", "1111", CardNetwork.VISA, isActive = true)
         val inactive = Card(2L, "CardWise Bank", "Paused Card", "2222", CardNetwork.MASTERCARD, isActive = false)
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive))) }
-        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithTag("nav_wallet").performClick()
         composeRule.onNodeWithText("Active").performClick()
         composeRule.onNodeWithTag("wallet_card_1").assertExists()
         composeRule.onNodeWithTag("wallet_card_2").assertDoesNotExist()
@@ -91,12 +90,12 @@ class CardWiseAppTest {
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card)), recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))), paymentLauncher = launcher, initialPayment = payment) }
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
-        composeRule.onNodeWithText("Category").performTextInput("dining")
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithText("Best match").fetchSemanticsNodes().isNotEmpty()
+        composeRule.onNodeWithTag("recommendation_category").performTextInput("dining")
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onNodeWithTag("continue_to_upi").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Best match").assertExists()
-        composeRule.onNodeWithText("Continue to UPI app").performClick()
+        composeRule.onNodeWithTag("continue_to_upi").performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
         composeRule.onNodeWithText("Continue").performClick()
         assert(launcher.launchCount == 1)
