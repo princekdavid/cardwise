@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.test.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -110,9 +111,11 @@ fun CardWalletScreen(
                         AnimatedVisibility(true, enter = fadeIn() + slideInVertically { it / 6 }) {
                             GlassCard(
                                 elevated = true,
-                                modifier = Modifier.semantics {
-                                    contentDescription = "${card.name} ending ${card.lastFour}"
-                                }
+                                modifier = Modifier
+                                    .testTag("wallet_card_${card.id}")
+                                    .semantics {
+                                        contentDescription = "${card.name} ending ${card.lastFour}"
+                                    }
                             ) {
                                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                     PhysicalCard(card)
