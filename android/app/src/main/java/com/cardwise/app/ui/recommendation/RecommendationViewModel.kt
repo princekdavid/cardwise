@@ -23,29 +23,19 @@ class RecommendationViewModel(
     private val rewardRuleRepository: RewardRuleRepository? = null,
     private val rules: Map<Long, List<RewardRule>> = emptyMap()
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<RecommendationUiState>(
-        RecommendationUiState.Loading(RecommendationInput())
-    )
+    private val _uiState = MutableStateFlow<RecommendationUiState>(RecommendationUiState.Loading(RecommendationInput()))
     val uiState: StateFlow<RecommendationUiState> = _uiState.asStateFlow()
 
     private var latestCards = emptyList<Card>()
     private var latestRules = rules
+    private var dataReady = false
     private var observeJob: Job? = null
     private var input = RecommendationInput()
 
-    init {
-        observeData()
-    }
+    init { observeData() }
 
-    fun setAmount(value: String) {
-        input = input.copy(amount = value)
-        recompute()
-    }
-
-    fun setCategory(value: String) {
-        input = input.copy(category = value)
-        recompute()
-    }
+    fun setAmount(value: String) { input = input.copy(amount = value); recompute() }
+    fun setCategory(value: String) { input = input.copy(category = value); recompute() }
 
     /** Prefills only user-visible, non-sensitive payment fields from a scanned UPI QR. */
     fun prefillFromUpi(payment: UpiPaymentRequest) {
@@ -54,61 +44,49 @@ class RecommendationViewModel(
         recompute()
     }
 
-    fun retry() {
-        observeData()
-    }
+    fun retry() { observeData() }
 
     private fun observeData() {
         observeJob?.cancel()
+        dataReady = false
         observeJob = viewModelScope.launch {
             _uiState.value = RecommendationUiState.Loading(input)
             try {
-                val rulesFlow: Flow<Map<Long, List<RewardRule>>> =
-                    rewardRuleRepository?.observeRules() ?: kotlinx.coroutines.flow.flowOf(rules)
-                combine(repository.observeCards(), rulesFlow) { cards, persistedRules ->
-                    cards to persistedRules
-                }.collect { (cards, persistedRules) ->
-                    latestCards = cards
-                    latestRules = persistedRules
-                    recompute()
-                }
+                val rulesFlow: Flow<Map<Long, List<RewardRule>>> = rewardRuleRepository?.observeRules()
+                    ?: kotlinx.coroutines.flow.flowOf(rules)
+                combine(repository.observeCards(), rulesFlow) { cards, persistedRules -> cards to persistedRules }
+                    .collect { (cards, persistedRules) ->
+                        latestCards = cards
+                        latestRules = persistedRules
+                        dataReady = true
+                        recompute()
+                    }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Throwable) {
-                _uiState.value = RecommendationUiState.Error(
-                    input = input,
-                    message = error.message ?: "We couldn't load your cards."
-                )
+                _uiState.value = RecommendationUiState.Error(input, error.message ?: "We couldn't load your cards.")
             }
         }
     }
 
     private fun recompute() {
+        if (!dataReady) {
+            _uiState.value = RecommendationUiState.Loading(input)
+            return
+        }
         val amount = input.amount.toDoubleOrNull()
         val category = input.category.trim()
-
         if (amount == null || amount <= 0.0 || category.isEmpty()) {
             _uiState.value = RecommendationUiState.Empty(input)
             return
         }
-
         runCatching {
-            RecommendationEngine.recommend(
-                context = PaymentContext(category = category, amount = amount),
-                cards = latestCards,
-                rules = latestRules
-            )
+            RecommendationEngine.recommend(PaymentContext(category = category, amount = amount), latestCards, latestRules)
         }.onSuccess { recommendations ->
-            _uiState.value = if (recommendations.isEmpty()) {
-                RecommendationUiState.Empty(input)
-            } else {
-                RecommendationUiState.Ready(input, recommendations)
-            }
+            _uiState.value = if (recommendations.isEmpty()) RecommendationUiState.Empty(input)
+            else RecommendationUiState.Ready(input, recommendations)
         }.onFailure { error ->
-            _uiState.value = RecommendationUiState.Error(
-                input = input,
-                message = error.message ?: "We couldn't calculate a recommendation."
-            )
+            _uiState.value = RecommendationUiState.Error(input, error.message ?: "We couldn't calculate a recommendation.")
         }
     }
 }

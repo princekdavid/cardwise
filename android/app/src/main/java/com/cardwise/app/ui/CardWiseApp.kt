@@ -7,8 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -17,15 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -37,6 +31,9 @@ import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
 import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.navigation.AppDestination
+import com.cardwise.app.ui.catalog.CardCatalogScreen
+import com.cardwise.app.ui.cockpit.CockpitScreen
+import com.cardwise.app.ui.offers.OffersScreen
 import com.cardwise.app.ui.recommendation.RecommendationScreen
 import com.cardwise.app.ui.recommendation.RecommendationViewModel
 import com.cardwise.app.ui.recommendation.RecommendationViewModelFactory
@@ -61,49 +58,44 @@ fun CardWiseApp(
     paymentLauncher: UpiPaymentLauncher? = null,
     initialPayment: UpiPaymentRequest? = null
 ) {
-    CardWiseTheme {
-        val context = LocalContext.current
+    var darkTheme by rememberSaveable { mutableStateOf(true) }
+    CardWiseTheme(darkTheme = darkTheme) {
+        val context = androidx.compose.ui.platform.LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
-        val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) {
-            AndroidUpiPaymentLauncher(context.applicationContext)
+        val application = context.applicationContext as CardWiseApplication
+        val resolvedRepository = repository ?: application.container.cardRepository
+        val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) {
+            application.container.rewardRuleRepository
+        } else {
+            null
         }
+        val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) { AndroidUpiPaymentLauncher(context.applicationContext) }
         val snackbarHostState = remember { SnackbarHostState() }
-        var selectedIndex by rememberSaveable {
-            mutableIntStateOf(
-                if (initialPayment != null) AppDestination.entries.indexOf(AppDestination.Insights) else 0
-            )
-        }
+
+        var destination by rememberSaveable { mutableStateOf(if (initialPayment != null) AppDestination.Recommendation else AppDestination.Cockpit) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
         var pendingPayment by remember { mutableStateOf(initialPayment) }
         var showHandoffConfirmation by remember { mutableStateOf(false) }
         var awaitingPaymentReturn by remember { mutableStateOf(false) }
         var showPaymentReturnNotice by remember { mutableStateOf(false) }
-        val destination = AppDestination.entries[selectedIndex]
-        val application = context.applicationContext as CardWiseApplication
-        val resolvedRepository = repository ?: application.container.cardRepository
-        val resolvedRewardRuleRepository = rewardRuleRepository ?: application.container.rewardRuleRepository
 
-        val walletViewModel: CardWalletViewModel = viewModel(
-            factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) }
-        )
+        val walletViewModel: CardWalletViewModel = viewModel(factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) })
         val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
-        val selectedCard = (walletState as? WalletUiState.Success)
-            ?.cards?.firstOrNull { it.id == selectedCardId }
-
+        val selectedCard = (walletState as? WalletUiState.Success)?.cards?.firstOrNull { it.id == selectedCardId }
         val recommendationViewModel: RecommendationViewModel = viewModel(
             key = "recommendation",
             factory = remember(resolvedRepository, resolvedRewardRuleRepository, recommendationRules) {
-                RecommendationViewModelFactory(
-                    repository = resolvedRepository,
-                    rewardRuleRepository = resolvedRewardRuleRepository,
-                    rules = recommendationRules
-                )
+                RecommendationViewModelFactory(resolvedRepository, resolvedRewardRuleRepository, recommendationRules)
             }
         )
 
-        LaunchedEffect(initialPayment) {
-            initialPayment?.let(recommendationViewModel::prefillFromUpi)
+        LaunchedEffect(initialPayment) { initialPayment?.let(recommendationViewModel::prefillFromUpi) }
+        LaunchedEffect(showPaymentReturnNotice) {
+            if (showPaymentReturnNotice) {
+                snackbarHostState.showSnackbar("Back from UPI app. Payment status is managed by the UPI app.")
+                showPaymentReturnNotice = false
+            }
         }
 
         DisposableEffect(lifecycleOwner) {
@@ -118,103 +110,75 @@ fun CardWiseApp(
             onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
         }
 
-        LaunchedEffect(showPaymentReturnNotice) {
-            if (!showPaymentReturnNotice) return@LaunchedEffect
-            showPaymentReturnNotice = false
-            snackbarHostState.showSnackbar(
-                "Back from UPI app. Payment status is managed by your UPI app."
-            )
-        }
-
-        fun requestPaymentHandoff(payment: UpiPaymentRequest) {
-            if (!awaitingPaymentReturn) {
-                pendingPayment = payment
-                showHandoffConfirmation = true
-            }
+        fun requestHandoff(payment: UpiPaymentRequest) {
+            pendingPayment = payment
+            showHandoffConfirmation = true
         }
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                if (walletScreen == WalletScreen.List) {
-                    NavigationBar {
-                        AppDestination.entries.forEachIndexed { index, item ->
-                            NavigationBarItem(
-                                selected = index == selectedIndex,
-                                onClick = {
-                                    selectedIndex = index
-                                    if (item != AppDestination.Insights) pendingPayment = null
-                                },
-                                icon = { Text(item.label.take(1), modifier = Modifier.semantics { contentDescription = item.label }) },
-                                label = { Text(item.label) }
-                            )
-                        }
-                    }
+                if (destination.showInBottomBar && walletScreen == WalletScreen.List) {
+                    CardWiseNavigationBar(
+                        destination = destination,
+                        onDestinationSelected = { destination = it }
+                    )
                 }
             }
         ) { paddingValues ->
             AnimatedContent(
-                targetState = walletScreen to destination,
+                targetState = destination to walletScreen,
                 modifier = Modifier.fillMaxSize().padding(paddingValues),
-                transitionSpec = {
-                    fadeIn(tween(CardWiseMotion.screenTransitionMillis)) togetherWith
-                        fadeOut(tween(CardWiseMotion.screenTransitionMillis))
-                },
-                label = "app_screen_transition"
-            ) { (screen, currentDestination) ->
+                transitionSpec = { fadeIn(tween(CardWiseMotion.screenTransitionMillis)) togetherWith fadeOut(tween(CardWiseMotion.screenTransitionMillis)) },
+                label = "cardwise_screen_transition"
+            ) { (currentDestination, currentWalletScreen) ->
                 when (currentDestination) {
-                    AppDestination.Insights -> RecommendationScreen(
-                        viewModel = recommendationViewModel,
-                        payment = pendingPayment,
-                        onContinueToPayment = pendingPayment?.let { payment ->
-                            { requestPaymentHandoff(payment) }
-                        }
-                    )
-                    AppDestination.Scan -> ScanScreen(
-                        onPaymentDetected = { payment: UpiPaymentRequest ->
-                            pendingPayment = payment
-                            recommendationViewModel.prefillFromUpi(payment)
-                            selectedIndex = AppDestination.entries.indexOf(AppDestination.Insights)
+                    AppDestination.Cockpit -> CockpitScreen(
+                        cards = (walletState as? WalletUiState.Success)?.cards.orEmpty(),
+                        onScan = { destination = AppDestination.Scan },
+                        onCalculate = { amount, category ->
+                            recommendationViewModel.setAmount(amount)
+                            recommendationViewModel.setCategory(category)
+                            pendingPayment = null
+                            destination = AppDestination.Recommendation
                         },
-                        onPaymentHandoffRequested = ::requestPaymentHandoff
+                        onOpenCards = { destination = AppDestination.Wallet },
+                        onToggleTheme = { darkTheme = !darkTheme },
+                        darkTheme = darkTheme
                     )
-                    AppDestination.Wallet -> when (screen) {
+                    AppDestination.Wallet -> when (currentWalletScreen) {
                         WalletScreen.List -> CardWalletScreen(
                             viewModel = walletViewModel,
                             onAddCard = { walletScreen = WalletScreen.Add },
-                            onOpenCard = { card ->
-                                selectedCardId = card.id
-                                walletScreen = WalletScreen.Detail
-                            }
+                            onOpenCard = { card -> selectedCardId = card.id; walletScreen = WalletScreen.Detail }
                         )
-                        WalletScreen.Add -> CardFormScreen(
+                        WalletScreen.Add -> CardCatalogScreen(viewModel = walletViewModel, onBack = { walletScreen = WalletScreen.List })
+                        WalletScreen.Detail -> if (selectedCard != null) CardDetailScreen(
+                            card = selectedCard,
+                            onEdit = { walletScreen = WalletScreen.Edit },
+                            onDelete = { walletViewModel.deleteCard(selectedCard.id); selectedCardId = null; walletScreen = WalletScreen.List },
+                            onBack = { walletScreen = WalletScreen.List }
+                        ) else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
+                        WalletScreen.Edit -> if (selectedCard != null) CardFormScreen(
                             viewModel = walletViewModel,
-                            onDone = { walletScreen = WalletScreen.List }
-                        )
-                        WalletScreen.Detail -> if (selectedCard != null) {
-                            CardDetailScreen(
-                                card = selectedCard,
-                                onEdit = { walletScreen = WalletScreen.Edit },
-                                onDelete = {
-                                    walletViewModel.deleteCard(selectedCard.id)
-                                    selectedCardId = null
-                                    walletScreen = WalletScreen.List
-                                },
-                                onBack = { walletScreen = WalletScreen.List }
-                            )
-                        } else {
-                            Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
-                        }
-                        WalletScreen.Edit -> if (selectedCard != null) {
-                            CardFormScreen(
-                                viewModel = walletViewModel,
-                                existingCard = selectedCard,
-                                onDone = { walletScreen = WalletScreen.Detail }
-                            )
-                        } else {
-                            Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
-                        }
+                            existingCard = selectedCard,
+                            onDone = { walletScreen = WalletScreen.Detail }
+                        ) else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
                     }
+                    AppDestination.Scan -> ScanScreen(
+                        onPaymentDetected = { payment ->
+                            pendingPayment = payment
+                            recommendationViewModel.prefillFromUpi(payment)
+                            destination = AppDestination.Recommendation
+                        },
+                        onPaymentHandoffRequested = ::requestHandoff
+                    )
+                    AppDestination.Offers -> OffersScreen()
+                    AppDestination.Recommendation -> RecommendationScreen(
+                        viewModel = recommendationViewModel,
+                        payment = pendingPayment,
+                        onContinueToPayment = pendingPayment?.let { { requestHandoff(it) } }
+                    )
                 }
             }
         }
@@ -227,14 +191,8 @@ fun CardWiseApp(
                 onDismiss = { showHandoffConfirmation = false },
                 onHandoffCompleted = { result ->
                     when (result) {
-                        UpiPaymentLaunchResult.Launched -> {
-                            pendingPayment = null
-                            awaitingPaymentReturn = true
-                        }
-                        UpiPaymentLaunchResult.NoUpiApp,
-                        UpiPaymentLaunchResult.UnsafePayment -> {
-                            showHandoffConfirmation = false
-                        }
+                        UpiPaymentLaunchResult.Launched -> { pendingPayment = null; awaitingPaymentReturn = true }
+                        UpiPaymentLaunchResult.NoUpiApp, UpiPaymentLaunchResult.UnsafePayment -> showHandoffConfirmation = false
                     }
                 }
             )

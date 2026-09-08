@@ -1,12 +1,15 @@
 package com.cardwise.app.ui
 
 import android.widget.Toast
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.cardwise.app.domain.scan.UpiPaymentRequest
+import com.cardwise.app.ui.theme.CardWiseSpacing
 
 @Composable
 fun PaymentHandoffDialog(
@@ -19,9 +22,17 @@ fun PaymentHandoffDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Continue to your UPI app?") },
+        title = {
+            Text(
+                "Continue to your UPI app?",
+                modifier = Modifier.padding(bottom = CardWiseSpacing.xs)
+            )
+        },
         text = {
-            Text("CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.")
+            Text(
+                "CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.",
+                modifier = Modifier.padding(vertical = CardWiseSpacing.xs)
+            )
         },
         confirmButton = {
             TextButton(onClick = {

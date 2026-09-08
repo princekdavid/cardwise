@@ -13,4 +13,9 @@ object CardWiseSpacing {
 
 object CardWiseMotion {
     const val screenTransitionMillis = 220
+    const val cardEnterMillis = 420
+    const val contentTransitionMillis = 180
+    const val emphasisTransitionMillis = 320
+    const val enginePulseMillis = 1200
+    const val decisionPulseMillis = 1600
 }

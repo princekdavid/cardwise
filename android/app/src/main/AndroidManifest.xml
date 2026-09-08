@@ -5,6 +5,8 @@
         android:name=".CardWiseApplication"
         android:theme="@style/Theme.CardWise"
         android:label="CardWise"
+        android:icon="@drawable/ic_cardwise_logo"
+        android:roundIcon="@drawable/ic_cardwise_logo"
         android:allowBackup="false"
         android:supportsRtl="true">
         <activity android:name=".MainActivity" android:exported="true">
