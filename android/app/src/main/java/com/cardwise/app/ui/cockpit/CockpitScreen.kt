@@ -3,6 +3,7 @@ package com.cardwise.app.ui.cockpit
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,7 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cardwise.app.domain.model.Card
+import com.cardwise.app.ui.theme.CardWiseMotion
 import com.cardwise.app.ui.theme.CardWisePalette
+import com.cardwise.app.ui.theme.CardWiseSpacing
 import com.cardwise.app.ui.theme.DecisionPulse
 import com.cardwise.app.ui.theme.EnginePulse
 import com.cardwise.app.ui.theme.GlassCard
@@ -55,29 +58,29 @@ fun CockpitScreen(
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = CardWiseSpacing.lg, vertical = CardWiseSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.md)
     ) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
                 Surface(
                     color = CardWisePalette.Emerald.copy(alpha = 0.14f),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(
                         "CW",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = CardWiseSpacing.sm, vertical = CardWiseSpacing.sm),
                         color = CardWisePalette.Emerald,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Black
                     )
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
                         EnginePulse()
                         Text(
                             "CARDWISE ENGINE",
@@ -94,11 +97,14 @@ fun CockpitScreen(
             }
         }
 
-        AnimatedVisibility(visible = true, enter = fadeIn() + scaleIn()) {
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(tween(CardWiseMotion.contentTransitionMillis)) + scaleIn(tween(CardWiseMotion.emphasisTransitionMillis))
+        ) {
             GlassCard(elevated = true, modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(Modifier.padding(CardWiseSpacing.md), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
                             Text("YOUR MONEY, OPTIMIZED", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
                             Text("Make every payment count.", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                             Text(
@@ -109,7 +115,7 @@ fun CockpitScreen(
                         }
                         DecisionPulse(Modifier.size(48.dp))
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
                         MetricTile("${cards.count { it.isActive }}", "Active cards", Modifier.weight(1f))
                         MetricTile("Local", "Decision engine", Modifier.weight(1f))
                     }
@@ -118,7 +124,7 @@ fun CockpitScreen(
         }
 
         GlassCard(elevated = true, modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.padding(CardWiseSpacing.md), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
                 Text("POINT & PAY", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
                 Text("Scan a merchant QR", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(
@@ -126,15 +132,13 @@ fun CockpitScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Button(onClick = onScan, modifier = Modifier.fillMaxWidth()) {
-                    Text("Scan & Find")
-                }
+                Button(onClick = onScan, modifier = Modifier.fillMaxWidth()) { Text("Scan & Find") }
             }
         }
 
         SectionTitle("Choose a route", "Manual calculation")
         GlassCard {
-            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.padding(CardWiseSpacing.sm + CardWiseSpacing.xs), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { if (it.length <= 10 && it.all { c -> c.isDigit() || c == '.' }) amount = it },
@@ -151,7 +155,7 @@ fun CockpitScreen(
                     label = { Text("Merchant or category") },
                     placeholder = { Text("e.g. dining") }
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
                     shortcuts.forEach { shortcut ->
                         FilterChip(
                             selected = category.equals(shortcut, true),
@@ -164,16 +168,14 @@ fun CockpitScreen(
                     onClick = { onCalculate(amount, category) },
                     enabled = amount.isNotBlank() && category.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Find the best way")
-                }
+                ) { Text("Find the best way") }
             }
         }
 
         GlassCard(elevated = true) {
-            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.padding(CardWiseSpacing.sm + CardWiseSpacing.xs), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
                 DecisionPulse(Modifier.size(46.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
                     Text("Build your Card Deck", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(
                         "Add cards from the catalogue to unlock better recommendations.",
@@ -184,6 +186,6 @@ fun CockpitScreen(
                 Button(onClick = onOpenCards) { Text("Open deck") }
             }
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(CardWiseSpacing.xs))
     }
 }
