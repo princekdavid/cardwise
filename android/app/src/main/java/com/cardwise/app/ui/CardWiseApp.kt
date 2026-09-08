@@ -5,8 +5,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -151,19 +153,11 @@ fun CardWiseApp(
                             onOpenCard = { card -> selectedCardId = card.id; walletScreen = WalletScreen.Detail }
                         )
                         WalletScreen.Add -> CardCatalogScreen(viewModel = walletViewModel, onBack = { walletScreen = WalletScreen.List })
-                        WalletScreen.Detail -> if (selectedCard != null) {
-                            CardDetailScreen(
-                                card = selectedCard,
-                                onEdit = { walletScreen = WalletScreen.Edit },
-                                onDelete = {
-                                    walletViewModel.deleteCard(selectedCard.id)
-                                    selectedCardId = null
-                                    walletScreen = WalletScreen.List
-                                },
-                                onToggleActive = { walletViewModel.updateCard(selectedCard.copy(isActive = !selectedCard.isActive)) },
-                                onBack = { walletScreen = WalletScreen.List }
-                            )
-                        } else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
+                        WalletScreen.Detail -> CardWalletScreen(
+                            viewModel = walletViewModel,
+                            onAddCard = { walletScreen = WalletScreen.Add },
+                            onOpenCard = { card -> selectedCardId = card.id },
+                        )
                         WalletScreen.Edit -> if (selectedCard != null) CardFormScreen(viewModel = walletViewModel, existingCard = selectedCard, onDone = { walletScreen = WalletScreen.Detail }) else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
                     }
                     AppDestination.Scan -> ScanScreen(
@@ -172,6 +166,26 @@ fun CardWiseApp(
                     )
                     AppDestination.Offers -> OffersScreen()
                     AppDestination.Recommendation -> RecommendationScreen(viewModel = recommendationViewModel, payment = pendingPayment, onContinueToPayment = pendingPayment?.let { { requestHandoff(it) } })
+                }
+            }
+        }
+
+        if (destination == AppDestination.Wallet && walletScreen == WalletScreen.Detail && selectedCard != null) {
+            ModalBottomSheet(
+                onDismissRequest = { walletScreen = WalletScreen.List; selectedCardId = null }
+            ) {
+                Column(Modifier.padding(bottom = CardWiseSpacing.lg)) {
+                    CardDetailScreen(
+                        card = selectedCard,
+                        onEdit = { walletScreen = WalletScreen.Edit },
+                        onDelete = {
+                            walletViewModel.deleteCard(selectedCard.id)
+                            selectedCardId = null
+                            walletScreen = WalletScreen.List
+                        },
+                        onToggleActive = { walletViewModel.updateCard(selectedCard.copy(isActive = !selectedCard.isActive)) },
+                        onBack = { walletScreen = WalletScreen.List; selectedCardId = null }
+                    )
                 }
             }
         }
