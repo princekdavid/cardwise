@@ -20,7 +20,7 @@ For normalized visual rules, see `docs/cardwise/DESIGN_SOURCE.md`. For execution
 | S-004 | Reasoning | Explain deterministic evaluation | Orbital core + staged reasoning feed | DESIGNED | ENG-003/004 trace | Implement + deterministic tests |
 | S-005 | Recommendation | Show best route, benefit, why, caveats | Physical card spotlight, math/provenance, comparison | IMPLEMENTED | ENG-002/003/004 | Visual/state reconciliation |
 | S-006 | Handoff | Explicitly confirm and launch payment | Resolver/carousel, explicit CTA, return confirmation | IMPLEMENTED | Payment launcher boundary | APK + lifecycle validation |
-| S-007 | My Deck | Manage tactile enrolled cards | Physical card skins, stack, active/paused, detail sheet | PARTIAL | Room + wallet repository | Visual + CRUD/persistence validation |
+| S-007 | My Deck | Manage tactile enrolled cards | Physical card skins, stack, active/paused, detail sheet | IN_PROGRESS | Room + wallet repository | Visual + CRUD/persistence validation |
 | S-008 | Card Catalog | Discover/filter/add cards | Category-coded discovery, search, card skins | PARTIAL | catalog provider + wallet | Provider contract + UI |
 | S-009 | Offers | Show active relevant promotions | Active Card Promos, expiry, provenance | PARTIAL | Offer provider + ENG-005 | Engine contract + UI |
 | S-010 | Insights/Milestones | Explain historical value/progress | Savings + milestone cards/progress | DESIGNED | history + ENG-007 | Define data contract then implement |
@@ -186,14 +186,29 @@ Reference:
 - My Physical Deck header.
 - Add button.
 - Tactile card skins.
+- Physical-card spotlight with stacked supporting cards.
 - Empty deck state.
-- Card details.
-- Active/paused.
-- Remove.
+- Card details presented as a bottom sheet.
+- Active/paused state.
+- Edit/remove actions.
+
+Implemented in current slice:
+- Room/repository-backed enrolled-card list.
+- Tactile spotlight selects an active card when available and exposes supporting cards as a compact stack.
+- Spotlight and supporting cards open the selected card detail surface.
+- Card detail is presented through Material 3 `ModalBottomSheet` while retaining the wallet context.
+- Active/Paused changes continue through `CardWalletViewModel`, not UI-local persistence.
+- Stable test semantics added for the detail title and tactile deck.
+
+Still pending:
+- APK visual validation of the physical-card stack/spotlight and sheet in Obsidian Dark + Pearl Bright.
+- CRUD/persistence validation on a running APK.
+- Final motion/accessibility pass for the tactile stack.
 
 Production rule:
 - Room/repository remains authoritative for enrolled cards.
 - Catalog products and user enrollment remain separate models.
+- Safe card metadata only; never render or store PAN, CVV or PIN.
 
 ### S-008 Catalog
 
