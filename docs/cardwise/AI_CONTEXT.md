@@ -2,7 +2,7 @@
 
 > Bootstrap document for any future development session. Read this first, then follow the linked canonical documents.
 
-## Current verified baseline
+## Current implementation baseline
 
 - Repository: `princekdavid/cardwise`
 - Platform: Android
@@ -10,11 +10,11 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch HEAD: `b147d65ecc187febf15ea1d426ccd4b2702b9e4a`
-- Latest branch commit: `docs: add CardWise durable project memory to design branch`
+- Current branch HEAD: `811621f8f393530ee43e8ccc296e0545dad4458c`
+- Latest branch commit: `docs(wallet): record tactile deck and detail sheet reconciliation`
 - PR: #11, `feat: integrate prototype design system and key screens`
 - PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
-- Android CI: run #378 for current HEAD completed successfully.
+- Android CI: a new run is pending/in progress for the current wallet slice; do not mark it verified until unit/build/instrumentation results and logs are inspected.
 
 ## Product promise
 
@@ -39,6 +39,7 @@ Existing narrower documents remain useful: `docs/PRODUCT_SPEC.md`, `docs/ARCHITE
 
 - `CardWise Interactive Experience Prototype.html` — latest known 2026-09-07.
 - `CardWise Jetpack Compose Android Application.kt.txt` — latest known 2026-09-07.
+- `CardWise_Complete_Product_Blueprint.txt` — supplied project reference for product intent and scope.
 
 These are approved **reference artifacts**, not a production architecture. The single-file Compose artifact must not replace the repository's production architecture.
 
@@ -74,6 +75,29 @@ When sources conflict, record the discrepancy and resolve it explicitly; never s
 - M6 production hardening: privacy, scanner lifecycle, deterministic recommendation/explanation, handoff/no-handler handling, testability seams and CI verification.
 - M7 historical work: accessibility, wallet persistence regression and recommendation performance hardening landed.
 
+## Current wallet slice
+
+The active slice is **My Deck / Wallet reconciliation**. It is being implemented UI + backend together while retaining the existing Room/repository/ViewModel boundary.
+
+Implemented in the current slice:
+- shared physical-card presentation;
+- tactile deck spotlight with stacked supporting cards;
+- active-card preference for the spotlight;
+- stable accessibility/test semantics for the deck and spotlight;
+- card detail presentation in a Material 3 bottom sheet;
+- persisted Active/Paused updates through `CardWalletViewModel`;
+- edit/remove actions remain repository-backed;
+- empty deck and catalogue entry point remain supported.
+
+The previous instrumentation failure was a duplicate-text assertion in `populatedDeck_showsCardAndDetailsEntryPoint`. The test was corrected to assert a dedicated `card_detail_name` semantic tag instead of relying on ambiguous text matching. CI was also hardened to propagate the actual Gradle instrumentation exit status when output is piped through `tee`.
+
+Still required before Wallet is considered verified:
+- current CI green for the latest HEAD;
+- inspect instrumentation logs, not only workflow conclusion;
+- APK visual validation in Obsidian Dark and Pearl Bright;
+- CRUD/persistence validation on a running APK;
+- final accessibility/motion pass for the tactile stack and sheet.
+
 ## Finalized UI + backend direction
 
 The next development stream is explicitly **UI + backend together**. For every screen we will implement:
@@ -92,10 +116,10 @@ Execution order is documented in `UI_BACKEND_PLAN.md` and currently starts with 
 ## Current work queue
 
 NOW:
-1. Shared UI/design-token reconciliation using `DESIGN_SOURCE.md`.
-2. Cockpit UI + data/state reconciliation.
-3. My Deck/Wallet visual reconciliation while preserving Room/repository.
-4. Scan → Reasoning → Recommendation → Handoff visual/state reconciliation.
+1. Obtain genuine green Android CI for the current Wallet/tactile-deck slice and inspect all logs.
+2. Validate My Deck bottom-sheet, tactile spotlight and persistence behavior on APK.
+3. Complete Cockpit real savings/evaluation history data boundary before displaying historical metrics.
+4. Reconcile Scan → Reasoning → Recommendation → Handoff against the latest approved reference artifacts.
 5. Keep memory synchronized with every meaningful implementation commit.
 
 NEXT:
@@ -119,4 +143,4 @@ LATER:
 5. Verify current branch and HEAD in GitHub.
 6. Check CI for that exact HEAD.
 7. Pick the first `NOW` item unless the user changes priority.
-8. Update affected memory documents in the same meaningful commit as implementation.
+8. Update affected memory documents in the same meaningful implementation slice.
