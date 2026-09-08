@@ -24,13 +24,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.ui.theme.CardWiseMotion
 import com.cardwise.app.ui.theme.CardWisePalette
@@ -44,6 +44,7 @@ import com.cardwise.app.ui.theme.SectionTitle
 @Composable
 fun CockpitScreen(
     cards: List<Card>,
+    viewModel: CockpitViewModel,
     onScan: () -> Unit,
     onCalculate: (amount: String, category: String) -> Unit,
     onOpenCards: () -> Unit,
@@ -51,8 +52,7 @@ fun CockpitScreen(
     darkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
-    var amount by rememberSaveable { mutableStateOf("") }
-    var category by rememberSaveable { mutableStateOf("") }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val shortcuts = listOf("Dining", "Travel", "Shopping", "Groceries")
 
     Column(
@@ -66,34 +66,25 @@ fun CockpitScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
-                Surface(
-                    color = CardWisePalette.Emerald.copy(alpha = 0.14f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
+            Column(verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
+                    EnginePulse()
+                    Text("CARDWISE ENGINE", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
+                }
+                Text("Payment Cockpit", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(50)) {
                     Text(
-                        "CW",
-                        modifier = Modifier.padding(horizontal = CardWiseSpacing.sm, vertical = CardWiseSpacing.sm),
-                        color = CardWisePalette.Emerald,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Black
+                        "${cards.size} cards",
+                        modifier = Modifier.padding(horizontal = CardWiseSpacing.sm, vertical = CardWiseSpacing.xs),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
-                        EnginePulse()
-                        Text(
-                            "CARDWISE ENGINE",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = CardWisePalette.Emerald,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Text("Payment Cockpit", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                IconButton(onClick = onToggleTheme, modifier = Modifier.semantics { contentDescription = "Toggle theme" }) {
+                    Text(if (darkTheme) "☼" else "☾", style = MaterialTheme.typography.titleLarge)
                 }
-            }
-            IconButton(onClick = onToggleTheme) {
-                Text(if (darkTheme) "☼" else "☾", style = MaterialTheme.typography.titleLarge)
             }
         }
 
@@ -132,7 +123,7 @@ fun CockpitScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Button(onClick = onScan, modifier = Modifier.fillMaxWidth()) { Text("Scan & Find") }
+                Button(onClick = onScan, modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Scan merchant QR" }) { Text("Scan & Find") }
             }
         }
 
@@ -140,16 +131,16 @@ fun CockpitScreen(
         GlassCard {
             Column(Modifier.padding(CardWiseSpacing.sm + CardWiseSpacing.xs), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
                 OutlinedTextField(
-                    value = amount,
-                    onValueChange = { if (it.length <= 10 && it.all { c -> c.isDigit() || c == '.' }) amount = it },
+                    value = state.amount,
+                    onValueChange = viewModel::setAmount,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     prefix = { Text("₹ ") },
                     label = { Text("Amount") }
                 )
                 OutlinedTextField(
-                    value = category,
-                    onValueChange = { category = it },
+                    value = state.merchantOrCategory,
+                    onValueChange = viewModel::setMerchantOrCategory,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     label = { Text("Merchant or category") },
@@ -158,15 +149,15 @@ fun CockpitScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
                     shortcuts.forEach { shortcut ->
                         FilterChip(
-                            selected = category.equals(shortcut, true),
-                            onClick = { category = shortcut.lowercase() },
+                            selected = state.merchantOrCategory.equals(shortcut, true),
+                            onClick = { viewModel.selectCategory(shortcut) },
                             label = { Text(shortcut) }
                         )
                     }
                 }
                 Button(
-                    onClick = { onCalculate(amount, category) },
-                    enabled = amount.isNotBlank() && category.isNotBlank(),
+                    onClick = { onCalculate(state.amount, state.merchantOrCategory) },
+                    enabled = state.canCalculate,
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Find the best way") }
             }
@@ -178,7 +169,8 @@ fun CockpitScreen(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
                     Text("Build your Card Deck", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(
-                        "Add cards from the catalogue to unlock better recommendations.",
+                        if (cards.isEmpty()) "Add cards from the catalogue to start optimizing payments."
+                        else "Your deck is ready. Add more cards to broaden recommendations.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
