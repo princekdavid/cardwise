@@ -15,7 +15,7 @@ For normalized visual rules, see `docs/cardwise/DESIGN_SOURCE.md`. For execution
 | ID | Screen | Should do | Reference design | Current production | Backend/domain | Next verification |
 |---|---|---|---|---|---|---|
 | S-001 | Onboarding | Explain promise/privacy and establish setup | Zero-Credential Privacy, calm centered hero, privacy oath, titanium CTA | DESIGNED | onboarding/preferences | Implement + verify setup/reset |
-| S-002 | Cockpit | Give premium home intelligence + fast scan | Airy layout, deck count, scan hero, savings context, category accents | PARTIAL | wallet + metrics; engines as needed | Visual + state reconciliation |
+| S-002 | Cockpit | Give premium home intelligence + fast scan | Airy layout, deck count, scan hero, savings context, category accents | IN_PROGRESS | wallet + Cockpit presentation state; metrics boundary still pending | Build + APK visual/state validation |
 | S-003 | QR Scan | Capture supported UPI QR locally | Camera HUD, emerald reticle, scan line, privacy callout | IMPLEMENTED | Scanner + ENG-001 | APK/device visual validation |
 | S-004 | Reasoning | Explain deterministic evaluation | Orbital core + staged reasoning feed | DESIGNED | ENG-003/004 trace | Implement + deterministic tests |
 | S-005 | Recommendation | Show best route, benefit, why, caveats | Physical card spotlight, math/provenance, comparison | IMPLEMENTED | ENG-002/003/004 | Visual/state reconciliation |
@@ -94,6 +94,21 @@ Reference:
 - Quick payment context/calculation area.
 - Optimized savings + evaluated-payment metric.
 - Offers entry.
+
+Implemented in current slice:
+- CardWise Engine / Payment Cockpit header.
+- Live enrolled-card count from wallet state.
+- Active-card count.
+- Reference-aligned scan hero and manual calculation surface.
+- Category shortcuts.
+- Empty-aware deck prompt.
+- Theme toggle semantics.
+- Cockpit manual-entry state moved from transient Compose state into `CockpitViewModel`.
+
+Still pending:
+- Real savings/evaluation history data boundary; prototype values must not be copied.
+- Final visual comparison on running APK.
+- Offers entry integration after the offer provider contract is finalized.
 
 Production rule:
 - Do not hard-code prototype metrics.
