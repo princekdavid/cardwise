@@ -7,6 +7,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.ui.theme.CardWiseSpacing
 
@@ -24,39 +25,36 @@ fun PaymentHandoffDialog(
         title = {
             Text(
                 "Continue to your UPI app?",
-                modifier = Modifier
+                modifier = Modifier.padding(bottom = CardWiseSpacing.xs)
             )
         },
         text = {
             Text(
                 "CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.",
-                modifier = Modifier
+                modifier = Modifier.padding(vertical = CardWiseSpacing.xs)
             )
         },
         confirmButton = {
-            TextButton(
-                modifier = Modifier,
-                onClick = {
-                    onDismiss()
-                    val result = launcher.launch(payment)
-                    onHandoffCompleted(result)
-                    when (result) {
-                        UpiPaymentLaunchResult.Launched -> Unit
-                        UpiPaymentLaunchResult.UnsafePayment ->
-                            Toast.makeText(
-                                context,
-                                "This payment can't be handed off safely.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        UpiPaymentLaunchResult.NoUpiApp ->
-                            Toast.makeText(
-                                context,
-                                "No UPI app is available on this device.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                    }
+            TextButton(onClick = {
+                onDismiss()
+                val result = launcher.launch(payment)
+                onHandoffCompleted(result)
+                when (result) {
+                    UpiPaymentLaunchResult.Launched -> Unit
+                    UpiPaymentLaunchResult.UnsafePayment ->
+                        Toast.makeText(
+                            context,
+                            "This payment can't be handed off safely.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    UpiPaymentLaunchResult.NoUpiApp ->
+                        Toast.makeText(
+                            context,
+                            "No UPI app is available on this device.",
+                            Toast.LENGTH_LONG
+                        ).show()
                 }
-            ) { Text("Continue") }
+            }) { Text("Continue") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
