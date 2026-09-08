@@ -54,9 +54,8 @@ class CardWiseAppTest {
         val card = Card(7L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card))) }
         composeRule.onNodeWithTag("nav_wallet").performClick()
-        composeRule.onNodeWithTag("wallet_card_7").assertExists()
-        composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
-        composeRule.onNodeWithText("Details").performClick()
+        composeRule.onNodeWithTag("wallet_tactile_deck").assertExists()
+        composeRule.onNodeWithTag("wallet_spotlight_card_7").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             try {
                 composeRule.onNodeWithTag("card_detail_name").assertExists()
