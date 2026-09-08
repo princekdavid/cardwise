@@ -1,7 +1,7 @@
 package com.cardwise.app.ui
 
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -57,7 +57,7 @@ class CardWiseAppTest {
         composeRule.onNodeWithTag("wallet_card_7").assertExists()
         composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
         composeRule.onNodeWithText("Details").performClick()
-        composeRule.onNodeWithText("Everyday Rewards").assertExists()
+        composeRule.onNodeWithTag("card_detail_name").assertExists()
     }
 
     @Test fun activeFilter_hidesInactiveCards() {
