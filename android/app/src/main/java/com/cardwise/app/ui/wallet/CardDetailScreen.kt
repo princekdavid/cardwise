@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cardwise.app.domain.model.Card
@@ -57,7 +58,7 @@ fun CardDetailScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(card.name, modifier = Modifier.testTag("card_detail_name"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
                             "${card.issuer} • ${card.network.name}",
                             style = MaterialTheme.typography.bodyMedium,
