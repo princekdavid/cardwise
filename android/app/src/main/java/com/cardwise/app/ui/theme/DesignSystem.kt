@@ -111,29 +111,22 @@ fun DecisionPulse(modifier: Modifier = Modifier) {
 fun PhysicalCard(
     card: Card,
     modifier: Modifier = Modifier,
-    compact: Boolean = false
+    compact: Boolean = false,
+    skin: CardSkin = cardSkinFor(card.id.hashCode())
 ) {
-    val skin = when {
-        card.name.contains("Scapia", ignoreCase = true) -> listOf(Color(0xFF0F766E), Color(0xFF134E4A))
-        card.name.contains("Amazon", ignoreCase = true) -> listOf(Color(0xFF111827), Color(0xFF374151))
-        card.name.contains("Slice", ignoreCase = true) -> listOf(Color(0xFF6B21A8), Color(0xFF9333EA))
-        card.name.contains("Swiggy", ignoreCase = true) -> listOf(Color(0xFF9A3412), Color(0xFFEA580C))
-        card.name.contains("Millennia", ignoreCase = true) -> listOf(Color(0xFF0C4A6E), Color(0xFF0369A1))
-        else -> listOf(Color(0xFF172033), Color(0xFF334155))
-    }
     Column(
         modifier = modifier
             .fillMaxWidth()
             .height(if (compact) 126.dp else 178.dp)
             .clip(RoundedCornerShape(22.dp))
             .shadow(if (compact) 7.dp else 14.dp, RoundedCornerShape(22.dp))
-            .background(Brush.linearGradient(skin))
+            .background(skin.gradient)
             .padding(if (compact) 14.dp else 18.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(card.issuer.uppercase(), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.72f), fontWeight = FontWeight.Bold)
-            Text("◉", color = Color(0xFFFDE68A), style = MaterialTheme.typography.titleMedium)
+            Text("◉", color = skin.chip, style = MaterialTheme.typography.titleMedium)
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(card.name, color = Color.White, style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
