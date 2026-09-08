@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,9 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.model.Card as PaymentCard
+import com.cardwise.app.ui.theme.CardDeckItem
 import com.cardwise.app.ui.theme.CardWisePalette
-import com.cardwise.app.ui.theme.GlassCard
-import com.cardwise.app.ui.theme.PhysicalCard
 import com.cardwise.app.ui.theme.SectionTitle
 
 @Composable
@@ -109,41 +107,11 @@ fun CardWalletScreen(
                 ) {
                     items(cards, key = PaymentCard::id) { card ->
                         AnimatedVisibility(true, enter = fadeIn() + slideInVertically { it / 6 }) {
-                            GlassCard(
-                                elevated = true,
-                                modifier = Modifier
-                                    .testTag("wallet_card_${card.id}")
-                                    .semantics {
-                                        contentDescription = "${card.name} ending ${card.lastFour}"
-                                    }
-                            ) {
-                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    PhysicalCard(card)
-                                    Row(
-                                        Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(Modifier.weight(1f)) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Text(card.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                                if (card.isActive) {
-                                                    Text("ACTIVE", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald)
-                                                }
-                                            }
-                                            Text("${card.issuer} • ${card.network.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            if (card.benefits.isNotEmpty()) {
-                                                Text(
-                                                    "${card.benefits.size} benefit${if (card.benefits.size == 1) "" else "s"}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = CardWisePalette.Emerald
-                                                )
-                                            }
-                                        }
-                                        TextButton(onClick = { onOpenCard(card) }) { Text("Details") }
-                                    }
-                                }
-                            }
+                            CardDeckItem(
+                                card = card,
+                                onOpenCard = onOpenCard,
+                                modifier = Modifier.testTag("wallet_card_${card.id}")
+                            )
                         }
                     }
                 }
