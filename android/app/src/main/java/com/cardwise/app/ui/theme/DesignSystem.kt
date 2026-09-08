@@ -76,6 +76,24 @@ fun SectionTitle(
 }
 
 @Composable
+fun MetricTile(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 fun EnginePulse(modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "engine_pulse")
     val alpha by transition.animateFloat(
