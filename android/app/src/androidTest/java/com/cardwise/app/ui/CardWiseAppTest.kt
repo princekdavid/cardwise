@@ -1,6 +1,5 @@
 package com.cardwise.app.ui
 
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -29,14 +28,14 @@ class CardWiseAppTest {
 
     @Test fun selectingCards_updatesSelectedDestination() {
         composeRule.setContent { CardWiseApp() }
-        composeRule.onNodeWithText("Cards").performClick()
-        composeRule.onNodeWithText("Cards").assertIsSelected()
+        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithText("Cards", useUnmergedTree = true).assertIsSelected()
         composeRule.onNodeWithText("My Physical Deck").assertExists()
     }
 
     @Test fun emptyDeck_showsCatalogueEntryPoint() {
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(emptyList())) }
-        composeRule.onNodeWithText("Cards").performClick()
+        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
         composeRule.onNodeWithText("No cards in your deck").assertExists()
         composeRule.onNodeWithText("Browse card catalogue").assertExists()
     }
@@ -44,7 +43,7 @@ class CardWiseAppTest {
     @Test fun populatedDeck_showsCardAndDetailsEntryPoint() {
         val card = Card(7L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card))) }
-        composeRule.onNodeWithText("Cards").performClick()
+        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
         composeRule.onNodeWithTag("wallet_card_7").assertExists()
         composeRule.onNodeWithText("CardWise Bank • VISA").assertExists()
         composeRule.onNodeWithText("Details").performClick()
@@ -55,7 +54,7 @@ class CardWiseAppTest {
         val active = Card(1L, "CardWise Bank", "Active Card", "1111", CardNetwork.VISA, isActive = true)
         val inactive = Card(2L, "CardWise Bank", "Paused Card", "2222", CardNetwork.MASTERCARD, isActive = false)
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive))) }
-        composeRule.onNodeWithText("Cards").performClick()
+        composeRule.onNodeWithText("Cards", useUnmergedTree = true).performClick()
         composeRule.onNodeWithText("Active").performClick()
         composeRule.onNodeWithTag("wallet_card_1").assertExists()
         composeRule.onNodeWithTag("wallet_card_2").assertDoesNotExist()
