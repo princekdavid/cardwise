@@ -75,6 +75,7 @@ jobs:
           disable-animations: true
           disable-linux-hw-accel: false
           script: |
+            set +e
             gradle connectedDebugAndroidTest --no-daemon > instrumentation.log 2>&1
             gradle_status=$?
             cat instrumentation.log
