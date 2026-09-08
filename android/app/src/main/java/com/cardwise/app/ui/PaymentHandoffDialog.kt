@@ -5,8 +5,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.cardwise.app.domain.scan.UpiPaymentRequest
+import com.cardwise.app.ui.theme.CardWiseSpacing
 
 @Composable
 fun PaymentHandoffDialog(
@@ -19,31 +21,42 @@ fun PaymentHandoffDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Continue to your UPI app?") },
+        title = {
+            Text(
+                "Continue to your UPI app?",
+                modifier = Modifier
+            )
+        },
         text = {
-            Text("CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.")
+            Text(
+                "CardWise will pass only sanitized payment details to a UPI app. You will choose the app and complete payment there.",
+                modifier = Modifier
+            )
         },
         confirmButton = {
-            TextButton(onClick = {
-                onDismiss()
-                val result = launcher.launch(payment)
-                onHandoffCompleted(result)
-                when (result) {
-                    UpiPaymentLaunchResult.Launched -> Unit
-                    UpiPaymentLaunchResult.UnsafePayment ->
-                        Toast.makeText(
-                            context,
-                            "This payment can't be handed off safely.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    UpiPaymentLaunchResult.NoUpiApp ->
-                        Toast.makeText(
-                            context,
-                            "No UPI app is available on this device.",
-                            Toast.LENGTH_LONG
-                        ).show()
+            TextButton(
+                modifier = Modifier,
+                onClick = {
+                    onDismiss()
+                    val result = launcher.launch(payment)
+                    onHandoffCompleted(result)
+                    when (result) {
+                        UpiPaymentLaunchResult.Launched -> Unit
+                        UpiPaymentLaunchResult.UnsafePayment ->
+                            Toast.makeText(
+                                context,
+                                "This payment can't be handed off safely.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        UpiPaymentLaunchResult.NoUpiApp ->
+                            Toast.makeText(
+                                context,
+                                "No UPI app is available on this device.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                    }
                 }
-            }) { Text("Continue") }
+            ) { Text("Continue") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
