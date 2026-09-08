@@ -145,9 +145,25 @@ fun CardWiseApp(
                         darkTheme = darkTheme
                     )
                     AppDestination.Wallet -> when (currentWalletScreen) {
-                        WalletScreen.List -> CardWalletScreen(viewModel = walletViewModel, onAddCard = { walletScreen = WalletScreen.Add }, onOpenCard = { card -> selectedCardId = card.id; walletScreen = WalletScreen.Detail })
+                        WalletScreen.List -> CardWalletScreen(
+                            viewModel = walletViewModel,
+                            onAddCard = { walletScreen = WalletScreen.Add },
+                            onOpenCard = { card -> selectedCardId = card.id; walletScreen = WalletScreen.Detail }
+                        )
                         WalletScreen.Add -> CardCatalogScreen(viewModel = walletViewModel, onBack = { walletScreen = WalletScreen.List })
-                        WalletScreen.Detail -> if (selectedCard != null) CardDetailScreen(card = selectedCard, onEdit = { walletScreen = WalletScreen.Edit }, onDelete = { walletViewModel.deleteCard(selectedCard.id); selectedCardId = null; walletScreen = WalletScreen.List }, onBack = { walletScreen = WalletScreen.List }) else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
+                        WalletScreen.Detail -> if (selectedCard != null) {
+                            CardDetailScreen(
+                                card = selectedCard,
+                                onEdit = { walletScreen = WalletScreen.Edit },
+                                onDelete = {
+                                    walletViewModel.deleteCard(selectedCard.id)
+                                    selectedCardId = null
+                                    walletScreen = WalletScreen.List
+                                },
+                                onToggleActive = { walletViewModel.updateCard(selectedCard.copy(isActive = !selectedCard.isActive)) },
+                                onBack = { walletScreen = WalletScreen.List }
+                            )
+                        } else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
                         WalletScreen.Edit -> if (selectedCard != null) CardFormScreen(viewModel = walletViewModel, existingCard = selectedCard, onDone = { walletScreen = WalletScreen.Detail }) else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
                     }
                     AppDestination.Scan -> ScanScreen(
