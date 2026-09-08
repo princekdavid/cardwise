@@ -75,14 +75,4 @@ jobs:
           disable-animations: true
           disable-linux-hw-accel: false
           script: |
-            set +e
-            gradle connectedDebugAndroidTest --no-daemon > instrumentation.log 2>&1
-            gradle_status=$?
-            cat instrumentation.log
-
-            if grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log; then
-              echo 'ERROR: instrumentation completed without executing any Android tests.'
-              exit 1
-            fi
-
-            exit "$gradle_status"
+            gradle connectedDebugAndroidTest --no-daemon > instrumentation.log 2>&1 || status=$?; status=${status:-0}; cat instrumentation.log; if grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log; then echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; fi; exit "$status"
