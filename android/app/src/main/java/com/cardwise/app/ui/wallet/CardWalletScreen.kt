@@ -3,12 +3,16 @@ package com.cardwise.app.ui.wallet
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cardwise.app.domain.model.Card as PaymentCard
 import com.cardwise.app.ui.theme.CardDeckItem
 import com.cardwise.app.ui.theme.CardWisePalette
+import com.cardwise.app.ui.theme.PhysicalCard
 import com.cardwise.app.ui.theme.SectionTitle
 
 @Composable
@@ -103,8 +108,23 @@ fun CardWalletScreen(
                 if (cards.isEmpty()) EmptyWallet(onAddCard)
                 else LazyColumn(
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    item(key = "wallet_spotlight") {
+                        CardDeckSpotlight(
+                            cards = cards,
+                            onOpenCard = onOpenCard
+                        )
+                    }
+                    item(key = "wallet_all_cards") {
+                        Text(
+                            "ALL ENROLLED CARDS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = CardWisePalette.Emerald,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+                        )
+                    }
                     items(cards, key = PaymentCard::id) { card ->
                         AnimatedVisibility(true, enter = fadeIn() + slideInVertically { it / 6 }) {
                             CardDeckItem(
@@ -116,6 +136,59 @@ fun CardWalletScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CardDeckSpotlight(
+    cards: List<PaymentCard>,
+    onOpenCard: (PaymentCard) -> Unit
+) {
+    val spotlight = cards.firstOrNull { it.isActive } ?: cards.first()
+    val supporting = cards.filterNot { it.id == spotlight.id }.take(2)
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("YOUR SPOTLIGHT", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
+                Text("Ready to use", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            Text(
+                "${cards.size} card${if (cards.size == 1) "" else "s"}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Box(
+            Modifier.fillMaxWidth().height(224.dp).testTag("wallet_tactile_deck"),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            supporting.asReversed().forEachIndexed { index, card ->
+                PhysicalCard(
+                    card = card,
+                    compact = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp)
+                        .offset(y = (index * 10).dp)
+                        .clickable { onOpenCard(card) }
+                        .semantics { contentDescription = "${card.name} ending ${card.lastFour}" }
+                )
+            }
+            PhysicalCard(
+                card = spotlight,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("wallet_spotlight_card_${spotlight.id}")
+                    .clickable { onOpenCard(spotlight) }
+                    .semantics { contentDescription = "Spotlight ${spotlight.name} ending ${spotlight.lastFour}" }
+            )
         }
     }
 }
