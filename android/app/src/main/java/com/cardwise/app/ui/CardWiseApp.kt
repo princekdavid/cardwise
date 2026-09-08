@@ -7,8 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -22,9 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -124,19 +119,10 @@ fun CardWiseApp(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (destination.showInBottomBar && walletScreen == WalletScreen.List) {
-                    NavigationBar {
-                        listOf(AppDestination.Cockpit, AppDestination.Wallet, AppDestination.Scan, AppDestination.Offers).forEach { item ->
-                            NavigationBarItem(
-                                selected = destination == item,
-                                onClick = { destination = item },
-                                icon = { Text(item.label.take(1)) },
-                                label = { Text(item.label) },
-                                modifier = Modifier
-                                    .testTag("nav_${item.name.lowercase()}")
-                                    .semantics { contentDescription = item.label }
-                            )
-                        }
-                    }
+                    CardWiseNavigationBar(
+                        destination = destination,
+                        onDestinationSelected = { destination = it }
+                    )
                 }
             }
         ) { paddingValues ->
