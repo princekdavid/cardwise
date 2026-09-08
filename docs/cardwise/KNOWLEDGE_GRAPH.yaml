@@ -7,8 +7,8 @@ project:
   architecture: Presentation -> ViewModel/UI State -> Domain -> Repository -> Data
   promise: "Before I pay, CardWise tells me the smartest way to pay."
   working_branch: feat/design-system-prototype-integration
-  current_head: b147d65ecc187febf15ea1d426ccd4b2702b9e4a
-  current_ci: "Android CI run #378 passed for current HEAD"
+  current_head: 9f515858067c64f5b8b91545b41156644d9c8375
+  current_ci: "Pending for current implementation commits; last verified Android CI run #378"
   design_plan: docs/cardwise/UI_BACKEND_PLAN.md
   design_source: docs/cardwise/DESIGN_SOURCE.md
 
@@ -46,10 +46,11 @@ features:
   F-005: {name: Scan & Pay, status: VERIFIED, should_do: "Convert a supported scan into a recommendation and safely hand off to an external UPI app after confirmation."}
   F-006:
     name: Cockpit
-    status: PARTIAL
+    status: IN_PROGRESS
     should_do: "Provide premium home surface with payment intelligence, deck status, useful metrics and a fast Scan action."
     design_focus: [airy_layout, category_colors, fast_scan, deck_context, savings_context, theme_awareness]
-    next: "Implement/reconcile UI and move aggregate metrics out of transient Compose state into a defined data boundary."
+    implementation: "CockpitViewModel now owns manual calculation presentation state and validation; Cockpit UI is reconciled to the latest reference direction with live wallet-derived card counts."
+    next: "Run CI/APK visual validation and add the real savings/evaluation history data boundary before showing historical metrics."
   F-007:
     name: My Deck / Wallet presentation
     status: PARTIAL
@@ -85,7 +86,7 @@ engines:
 screens:
   conceptual_reference_set: [ONBOARDING, COCKPIT, SCAN, REASONING, RECOMMENDATION, HANDOFF, WALLET, CATALOG, OFFERS, INSIGHTS, VAULT]
   S-001: {name: Onboarding, status: DESIGNED}
-  S-002: {name: Cockpit, status: PARTIAL}
+  S-002: {name: Cockpit, status: IN_PROGRESS, implementation_note: "Reference-aligned presentation and CockpitViewModel state boundary added; APK validation pending."}
   S-003: {name: QR Scan, status: IMPLEMENTED}
   S-004: {name: Reasoning, status: DESIGNED}
   S-005: {name: Recommendation, status: IMPLEMENTED}
@@ -106,15 +107,17 @@ flows:
 
 verification:
   historical_milestones: {M0: VERIFIED, M1: VERIFIED, M2: VERIFIED, M3: VERIFIED, M4: VERIFIED, M5: VERIFIED, M6: VERIFIED, M7: PARTIAL}
-  current_head_ci: {commit: b147d65ecc187febf15ea1d426ccd4b2702b9e4a, run: 378, status: VERIFIED}
+  last_verified_ci: {commit: b147d65ecc187febf15ea1d426ccd4b2702b9e4a, run: 378, status: VERIFIED}
+  current_implementation_ci: {commit: 9f515858067c64f5b8b91545b41156644d9c8375, status: PENDING}
+  cockpit_unit_tests: "CockpitViewModelTest covers validation, numeric input and category shortcut normalization."
   deferred_test: "Scan -> Recommendation -> Handoff full UI instrumentation test"
 
 work_queue:
   NOW:
-    - "Use DESIGN_SOURCE.md as the normalized UI source for implementation."
-    - "Implement/reconcile shared UI primitives and tokens."
-    - "Cockpit UI + backend/data-state reconciliation."
-    - "My Deck/Wallet visual reconciliation while preserving Room/repository."
+    - "Run Android CI against current Cockpit implementation commits."
+    - "Validate Cockpit on APK in Obsidian Dark and Pearl Bright."
+    - "Complete real savings/evaluation history data boundary before displaying historical metrics."
+    - "Reconcile My Deck/Wallet against latest reference while preserving Room/repository."
     - "Reconcile Scan -> Reasoning -> Recommendation -> Handoff against latest reference."
     - "Keep project memory synchronized with every meaningful implementation commit."
   NEXT:
