@@ -1,11 +1,12 @@
 package com.cardwise.app.domain.catalog
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import com.cardwise.app.domain.resource.ResourceProvider
 import com.cardwise.app.domain.resource.ResourceStore
 import com.cardwise.app.domain.resource.ResourceSyncEngine
+import com.cardwise.app.domain.resource.ResourceSyncResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Owns the current card catalogue. The UI only consumes this engine; it never owns card data.
@@ -22,8 +23,10 @@ class CardCatalogueEngine(
         _products.value = store.read()
     }
 
-    suspend fun refresh() {
-        syncEngine.refresh()
+    /** Refreshes the catalogue and returns the provider outcome to the repository boundary. */
+    suspend fun refresh(): ResourceSyncResult {
+        val result = syncEngine.refresh()
         _products.value = store.read()
+        return result
     }
 }
