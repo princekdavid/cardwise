@@ -3,6 +3,8 @@ package com.cardwise.app.domain.recommendation
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.rewards.RewardCalculator
 import com.cardwise.app.domain.rewards.RewardRule
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 /** Pure, deterministic ranking of cards for a payment context. */
@@ -22,7 +24,7 @@ object RecommendationEngine {
         val trace = mutableListOf<RecommendationTraceStep>()
         trace += RecommendationTraceStep(
             "context", "Normalize payment context",
-            "Using ${normalizedCategory.ifBlank { "an unspecified category" }} for ₹${String.format(Locale.ROOT, "%.2f", context.amount)}.",
+            "Using ${normalizedCategory.ifBlank { "an unspecified category" }} for ₹${context.amount.formatCurrency()}.",
             RecommendationTraceStatus.COMPLETED
         )
 
@@ -130,6 +132,6 @@ object RecommendationEngine {
         else if (rule.maximumEligibleSpend != null) append(" Only ₹${estimate.eligibleSpend.formatCurrency()} of this payment earns the rate.")
     }
 
-    private fun Double.formatCurrency(): String = String.format(Locale.ROOT, "%.2f", this)
+    private fun Double.formatCurrency(): String = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale.ROOT)).format(this)
     private fun Double.formatRate(): String = String.format(Locale.ROOT, "%.2f", this)
 }
