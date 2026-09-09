@@ -12,7 +12,8 @@ data class UpiPaymentRequest(
     val amount: BigDecimal?,
     val currency: String,
     val transactionReference: String?,
-    val note: String?
+    val note: String?,
+    val merchantCategory: String? = null
 )
 
 sealed interface UpiQrParseResult {
@@ -89,6 +90,8 @@ object UpiQrParser {
             parsed
         }
 
+        val merchantCategory = parameters["mc"]?.trim()?.takeIf { it.length in 3..4 && it.all(Char::isDigit) }
+
         return UpiQrParseResult.Success(
             UpiPaymentRequest(
                 vpa = vpa,
@@ -96,7 +99,8 @@ object UpiQrParser {
                 amount = amount,
                 currency = currency,
                 transactionReference = parameters["tr"]?.trim()?.takeIf(String::isNotEmpty),
-                note = parameters["tn"]?.trim()?.takeIf(String::isNotEmpty)
+                note = parameters["tn"]?.trim()?.takeIf(String::isNotEmpty),
+                merchantCategory = merchantCategory
             )
         )
     }
