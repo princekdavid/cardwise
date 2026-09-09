@@ -1,6 +1,6 @@
 # CardWise Screen & Interaction Matrix
 
-Updated: 2026-09-09
+Updated: 2026-09-10
 
 This is the production reconciliation map between the latest approved CardWise reference artifacts and the Android implementation. `IMPLEMENTED` means code exists; `VERIFIED` requires evidence from tests/APK/manual validation.
 
@@ -15,10 +15,38 @@ This is the production reconciliation map between the latest approved CardWise r
 | S-005 | Recommendation | Show best route, benefit, why, caveats | Physical card spotlight, math/provenance, comparison | IMPLEMENTED | ENG-002/003/004 | Visual/state reconciliation |
 | S-006 | Handoff | Explicitly confirm and launch payment | Resolver/carousel, explicit CTA, return confirmation | IMPLEMENTED | Payment launcher boundary | APK + lifecycle validation |
 | S-007 | My Deck | Manage tactile enrolled cards | Physical card skins, stack, active/paused, detail sheet | IN_PROGRESS | Room + wallet repository | Visual + CRUD/persistence validation |
-| S-008 | Card Catalog | Discover/filter/add cards | Category-coded discovery, search, card skins | PARTIAL | catalog provider + wallet | Provider contract + UI |
+| S-008 | Card Catalog | Discover/filter/add cards | Category-coded discovery, search, card skins | IN_PROGRESS | CardCatalogRepository → CardCatalogueEngine → provider/cache + wallet repository | Unit/instrumentation + provider-state validation |
 | S-009 | Offers | Show active relevant promotions | Active Card Promos, expiry, provenance | PARTIAL | Offer provider + ENG-005 | Engine contract + UI |
 | S-010 | Insights/Milestones | Explain historical value/progress | Savings + milestone cards/progress | DESIGNED | history + ENG-007 | Define data contract then implement |
 | S-011 | Privacy Vault | Explain/control local data and reset | Manifest/provenance, on-device data, reset | DESIGNED | local data/privacy boundary | Reconcile claims + reset flow |
+
+## Card Catalog reconciliation
+
+### S-008 Card Catalog
+
+Reference intent:
+- Category-coded discovery.
+- Search/filter by card identity and issuer.
+- Card identity/skin, perks/fee/network metadata.
+- Clear added/already-in-deck state.
+- Recovery for no matches and unavailable providers.
+
+Implemented in this slice:
+- Catalog UI now consumes `CardCatalogViewModel` rather than owning the catalogue list.
+- `CardCatalogRepository` defines the consumer/provider boundary.
+- `CardCatalogueEngine` owns provider refresh and local cache access through the existing generic resource contracts.
+- Stable string `productId` values are used as catalogue identities and Compose list keys.
+- Product metadata includes card type, network, annual fee, reward program, benefits and resource provenance/freshness metadata.
+- A replaceable built-in provider supplies deterministic local seed entries while explicitly marking their provenance `UNKNOWN`; the UI does not claim live issuer verification.
+- Search and category filters are state-driven in the ViewModel.
+- Add-to-deck remains owned by the wallet repository/ViewModel; catalogue products are converted to safe enrolled-card models without storing PAN/CVV/PIN data.
+- Loading, empty, unavailable-provider and cached-content-with-refresh-error states are represented.
+
+Still pending:
+- Replace the transitional local seed with verified issuer/network/partner provider(s).
+- Move the catalog cache to durable local storage for process-death/offline persistence.
+- Add card-detail/catalog metadata reconciliation against verified sources.
+- Complete APK/manual visual validation in Obsidian Dark and Pearl Bright.
 
 ## Recommendation reconciliation
 
