@@ -7,6 +7,7 @@ import com.cardwise.app.domain.resource.ResourceMetadata
 import com.cardwise.app.domain.resource.ResourceProvider
 import com.cardwise.app.domain.resource.ResourceSourceType
 import com.cardwise.app.domain.resource.ResourceStore
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
