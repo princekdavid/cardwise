@@ -1,6 +1,7 @@
 package com.cardwise.app.ui.recommendation
 
 import com.cardwise.app.domain.recommendation.CardRecommendation
+import com.cardwise.app.domain.recommendation.RecommendationTrace
 
 data class RecommendationInput(
     val amount: String = "",
@@ -8,21 +9,12 @@ data class RecommendationInput(
 )
 
 sealed interface RecommendationUiState {
-    data class Loading(
-        val input: RecommendationInput
-    ) : RecommendationUiState
-
+    data class Loading(val input: RecommendationInput) : RecommendationUiState
     data class Ready(
         val input: RecommendationInput,
-        val recommendations: List<CardRecommendation>
+        val recommendations: List<CardRecommendation>,
+        val trace: RecommendationTrace
     ) : RecommendationUiState
-
-    data class Empty(
-        val input: RecommendationInput
-    ) : RecommendationUiState
-
-    data class Error(
-        val input: RecommendationInput,
-        val message: String
-    ) : RecommendationUiState
+    data class Empty(val input: RecommendationInput) : RecommendationUiState
+    data class Error(val input: RecommendationInput, val message: String) : RecommendationUiState
 }
