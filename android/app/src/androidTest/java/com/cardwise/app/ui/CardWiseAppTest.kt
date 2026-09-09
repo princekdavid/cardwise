@@ -112,7 +112,7 @@ class CardWiseAppTest {
         }
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
-        composeRule.onNodeWithText("Best match").assertExists()
+        composeRule.onNodeWithTag("recommendation_winner").assertExists()
         composeRule.onNodeWithTag("continue_to_upi").performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
         composeRule.onNodeWithText("Choose UPI app").performClick()
