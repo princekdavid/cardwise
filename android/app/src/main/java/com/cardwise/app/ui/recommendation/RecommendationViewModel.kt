@@ -40,7 +40,10 @@ class RecommendationViewModel(
     /** Prefills only user-visible, non-sensitive payment fields from a scanned UPI QR. */
     fun prefillFromUpi(payment: UpiPaymentRequest) {
         require(payment.currency.equals("INR", ignoreCase = true)) { "Only INR payments are supported" }
-        input = input.copy(amount = payment.amount?.toPlainString().orEmpty())
+        input = input.copy(
+            amount = payment.amount?.toPlainString().orEmpty(),
+            category = payment.merchantCategory?.let(::categoryFromMcc).orEmpty()
+        )
         recompute()
     }
 
@@ -88,5 +91,13 @@ class RecommendationViewModel(
         }.onFailure { error ->
             _uiState.value = RecommendationUiState.Error(input, error.message ?: "We couldn't calculate a recommendation.")
         }
+    }
+
+    private fun categoryFromMcc(mcc: String): String? = when {
+        mcc in setOf("5411", "5422", "5441", "5451", "5462", "5499") -> "groceries"
+        mcc in "5812".."5814" -> "dining"
+        mcc in setOf("4511", "4722", "7011") -> "travel"
+        mcc in "5311".."5999" -> "shopping"
+        else -> null
     }
 }
