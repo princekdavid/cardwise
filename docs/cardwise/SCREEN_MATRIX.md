@@ -20,6 +20,29 @@ This is the production reconciliation map between the latest approved CardWise r
 | S-010 | Insights/Milestones | Explain historical value/progress | Savings + milestone cards/progress | DESIGNED | history + ENG-007 | Define data contract then implement |
 | S-011 | Privacy Vault | Explain/control local data and reset | Manifest/provenance, on-device data, reset | DESIGNED | local data/privacy boundary | Reconcile claims + reset flow |
 
+## Recommendation reconciliation
+
+### S-005 Recommendation
+
+Reference intent:
+- Physical card spotlight for the winning route.
+- Transparent benefit math/provenance.
+- Clear comparison explaining why alternatives did not win.
+- Recovery paths for changing the payment context or rescanning.
+
+Implemented in this slice:
+- Winner is promoted into a dedicated `BEST WAY` spotlight with the physical card treatment and expected reward.
+- Recommendation Engine now exposes deterministic provenance: eligible spend × reward rate, including an explicit cap result when applicable.
+- Alternatives carry a deterministic `whyNot` explanation based on the winner's estimated reward and the rule constraint that limited the alternative.
+- `Continue to UPI app` remains the handoff path for scanned payments.
+- `Scan another QR` returns to the Scan destination without exposing QR credentials.
+- `Adjust amount or category` returns to the Cockpit for a new manual context.
+- Empty states expose the same recovery actions where appropriate.
+
+Still pending:
+- APK visual validation in Obsidian Dark and Pearl Bright.
+- Critical-flow instrumentation for winner/provenance/why-not and recovery actions.
+
 ## Reasoning reconciliation
 
 ### S-004 Reasoning
@@ -85,6 +108,9 @@ SCAN
        └─ ready
              ↓
        RECOMMENDATION
+         ├─ winner + provenance + why-not
+         ├─ adjust context → Cockpit
+         └─ rescan → Scan
              ↓
        HANDOFF
         ├─ Cancel → Recommendation
