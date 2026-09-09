@@ -37,7 +37,9 @@ class RecommendationScreenTest {
         composeRule.onNodeWithText("Category").performTextInput("Dining")
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Recommended for this payment").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Recommended for this payment").fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithText("Dining Card").fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithText("₹50.00").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Recommended for this payment").assertExists()
         composeRule.onNodeWithText("Dining Card").assertExists()
