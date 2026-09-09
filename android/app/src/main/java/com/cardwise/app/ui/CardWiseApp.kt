@@ -38,6 +38,7 @@ import com.cardwise.app.ui.catalog.CardCatalogScreen
 import com.cardwise.app.ui.cockpit.CockpitScreen
 import com.cardwise.app.ui.cockpit.CockpitViewModel
 import com.cardwise.app.ui.offers.OffersScreen
+import com.cardwise.app.ui.reasoning.ReasoningScreen
 import com.cardwise.app.ui.recommendation.RecommendationScreen
 import com.cardwise.app.ui.recommendation.RecommendationViewModel
 import com.cardwise.app.ui.recommendation.RecommendationViewModelFactory
@@ -69,13 +70,11 @@ fun CardWiseApp(
         val lifecycleOwner = LocalLifecycleOwner.current
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
-        val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) {
-            application.container.rewardRuleRepository
-        } else null
+        val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) application.container.rewardRuleRepository else null
         val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) { AndroidUpiPaymentLauncher(context.applicationContext) }
         val snackbarHostState = remember { SnackbarHostState() }
 
-        var destination by rememberSaveable { mutableStateOf(if (initialPayment != null) AppDestination.Recommendation else AppDestination.Cockpit) }
+        var destination by rememberSaveable { mutableStateOf(if (initialPayment != null) AppDestination.Reasoning else AppDestination.Cockpit) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
         var pendingPayment by remember { mutableStateOf(initialPayment) }
@@ -89,9 +88,7 @@ fun CardWiseApp(
         val selectedCard = (walletState as? WalletUiState.Success)?.cards?.firstOrNull { it.id == selectedCardId }
         val recommendationViewModel: RecommendationViewModel = viewModel(
             key = "recommendation",
-            factory = remember(resolvedRepository, resolvedRewardRuleRepository, recommendationRules) {
-                RecommendationViewModelFactory(resolvedRepository, resolvedRewardRuleRepository, recommendationRules)
-            }
+            factory = remember(resolvedRepository, resolvedRewardRuleRepository, recommendationRules) { RecommendationViewModelFactory(resolvedRepository, resolvedRewardRuleRepository, recommendationRules) }
         )
 
         LaunchedEffect(initialPayment) { initialPayment?.let(recommendationViewModel::prefillFromUpi) }
@@ -122,9 +119,7 @@ fun CardWiseApp(
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                if (destination.showInBottomBar && walletScreen == WalletScreen.List) {
-                    CardWiseNavigationBar(destination = destination, onDestinationSelected = { destination = it })
-                }
+                if (destination.showInBottomBar && walletScreen == WalletScreen.List) CardWiseNavigationBar(destination = destination, onDestinationSelected = { destination = it })
             }
         ) { paddingValues ->
             AnimatedContent(
@@ -135,37 +130,23 @@ fun CardWiseApp(
             ) { (currentDestination, currentWalletScreen) ->
                 when (currentDestination) {
                     AppDestination.Cockpit -> CockpitScreen(
-                        cards = (walletState as? WalletUiState.Success)?.cards.orEmpty(),
-                        viewModel = cockpitViewModel,
+                        cards = (walletState as? WalletUiState.Success)?.cards.orEmpty(), viewModel = cockpitViewModel,
                         onScan = { destination = AppDestination.Scan },
                         onCalculate = { amount, category ->
-                            recommendationViewModel.setAmount(amount)
-                            recommendationViewModel.setCategory(category)
-                            pendingPayment = null
-                            destination = AppDestination.Recommendation
-                        },
-                        onOpenCards = { destination = AppDestination.Wallet },
-                        onToggleTheme = { darkTheme = !darkTheme },
-                        darkTheme = darkTheme
+                            recommendationViewModel.setAmount(amount); recommendationViewModel.setCategory(category); pendingPayment = null; destination = AppDestination.Recommendation
+                        }, onOpenCards = { destination = AppDestination.Wallet }, onToggleTheme = { darkTheme = !darkTheme }, darkTheme = darkTheme
                     )
                     AppDestination.Wallet -> when (currentWalletScreen) {
-                        WalletScreen.List -> CardWalletScreen(
-                            viewModel = walletViewModel,
-                            onAddCard = { walletScreen = WalletScreen.Add },
-                            onOpenCard = { card -> selectedCardId = card.id; walletScreen = WalletScreen.Detail }
-                        )
+                        WalletScreen.List -> CardWalletScreen(viewModel = walletViewModel, onAddCard = { walletScreen = WalletScreen.Add }, onOpenCard = { card -> selectedCardId = card.id; walletScreen = WalletScreen.Detail })
                         WalletScreen.Add -> CardCatalogScreen(viewModel = walletViewModel, onBack = { walletScreen = WalletScreen.List })
-                        WalletScreen.Detail -> CardWalletScreen(
-                            viewModel = walletViewModel,
-                            onAddCard = { walletScreen = WalletScreen.Add },
-                            onOpenCard = { card -> selectedCardId = card.id },
-                        )
+                        WalletScreen.Detail -> CardWalletScreen(viewModel = walletViewModel, onAddCard = { walletScreen = WalletScreen.Add }, onOpenCard = { card -> selectedCardId = card.id })
                         WalletScreen.Edit -> if (selectedCard != null) CardFormScreen(viewModel = walletViewModel, existingCard = selectedCard, onDone = { walletScreen = WalletScreen.Detail }) else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
                     }
                     AppDestination.Scan -> ScanScreen(
-                        onPaymentDetected = { payment -> pendingPayment = payment; recommendationViewModel.prefillFromUpi(payment); destination = AppDestination.Recommendation },
+                        onPaymentDetected = { payment -> pendingPayment = payment; recommendationViewModel.prefillFromUpi(payment); destination = AppDestination.Reasoning },
                         onPaymentHandoffRequested = ::requestHandoff
                     )
+                    AppDestination.Reasoning -> ReasoningScreen(viewModel = recommendationViewModel, payment = pendingPayment, onComplete = { destination = AppDestination.Recommendation })
                     AppDestination.Offers -> OffersScreen()
                     AppDestination.Recommendation -> RecommendationScreen(viewModel = recommendationViewModel, payment = pendingPayment, onContinueToPayment = pendingPayment?.let { { requestHandoff(it) } })
                 }
@@ -173,38 +154,21 @@ fun CardWiseApp(
         }
 
         if (destination == AppDestination.Wallet && walletScreen == WalletScreen.Detail && selectedCard != null) {
-            ModalBottomSheet(
-                onDismissRequest = { walletScreen = WalletScreen.List; selectedCardId = null }
-            ) {
+            ModalBottomSheet(onDismissRequest = { walletScreen = WalletScreen.List; selectedCardId = null }) {
                 Column(Modifier.padding(bottom = CardWiseSpacing.lg)) {
-                    CardDetailScreen(
-                        card = selectedCard,
-                        onEdit = { walletScreen = WalletScreen.Edit },
-                        onDelete = {
-                            walletViewModel.deleteCard(selectedCard.id)
-                            selectedCardId = null
-                            walletScreen = WalletScreen.List
-                        },
-                        onToggleActive = { walletViewModel.updateCard(selectedCard.copy(isActive = !selectedCard.isActive)) },
-                        onBack = { walletScreen = WalletScreen.List; selectedCardId = null }
-                    )
+                    CardDetailScreen(card = selectedCard, onEdit = { walletScreen = WalletScreen.Edit }, onDelete = { walletViewModel.deleteCard(selectedCard.id); selectedCardId = null; walletScreen = WalletScreen.List }, onToggleActive = { walletViewModel.updateCard(selectedCard.copy(isActive = !selectedCard.isActive)) }, onBack = { walletScreen = WalletScreen.List; selectedCardId = null })
                 }
             }
         }
 
         val payment = pendingPayment
         if (showHandoffConfirmation && payment != null && !awaitingPaymentReturn) {
-            PaymentHandoffDialog(
-                payment = payment,
-                launcher = resolvedPaymentLauncher,
-                onDismiss = { showHandoffConfirmation = false },
-                onHandoffCompleted = { result ->
-                    when (result) {
-                        UpiPaymentLaunchResult.Launched -> { pendingPayment = null; awaitingPaymentReturn = true }
-                        UpiPaymentLaunchResult.NoUpiApp, UpiPaymentLaunchResult.UnsafePayment -> showHandoffConfirmation = false
-                    }
+            PaymentHandoffDialog(payment = payment, launcher = resolvedPaymentLauncher, onDismiss = { showHandoffConfirmation = false }, onHandoffCompleted = { result ->
+                when (result) {
+                    UpiPaymentLaunchResult.Launched -> { pendingPayment = null; awaitingPaymentReturn = true }
+                    UpiPaymentLaunchResult.NoUpiApp, UpiPaymentLaunchResult.UnsafePayment -> showHandoffConfirmation = false
                 }
-            )
+            })
         }
     }
 }
