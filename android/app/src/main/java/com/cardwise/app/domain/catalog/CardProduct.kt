@@ -1,5 +1,6 @@
 package com.cardwise.app.domain.catalog
 
+import com.cardwise.app.domain.model.CardBenefit
 import com.cardwise.app.domain.model.CardNetwork
 import com.cardwise.app.domain.resource.ResourceMetadata
 
@@ -12,6 +13,7 @@ data class CardProduct(
     val cardType: CardType,
     val annualFee: MoneyAmount? = null,
     val rewardProgram: String? = null,
+    val benefits: List<CardBenefit> = emptyList(),
     val metadata: ResourceMetadata
 )
 
