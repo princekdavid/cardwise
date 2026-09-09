@@ -10,11 +10,11 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch HEAD: `6b2baa88490a40d46546f4d2df123348d98b30e1`
-- Latest branch commit: `docs(cardwise): synchronize wallet CI fix context`
+- Current branch HEAD: `4d21b26d6d561e2a99d17336cd1520837a59c287`
+- Latest branch commit: `test(scan): cover merchant category reconciliation`
 - PR: #11, `feat: integrate prototype design system and key screens`
 - PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
-- Android CI: pending for the current wallet slice; the latest pre-fix run executed the instrumentation suite but failed one wallet detail-sheet assertion and then exposed a wrapper exit-status/shell parsing problem.
+- Android CI: the latest verified run on the preceding HEAD was green; the current scan-reconciliation commits require a fresh CI run.
 
 ## Product promise
 
@@ -77,9 +77,9 @@ When sources conflict, record the discrepancy and resolve it explicitly; never s
 
 ## Current wallet slice
 
-The active slice is **My Deck / Wallet reconciliation**. It is being implemented UI + backend together while retaining the existing Room/repository/ViewModel boundary.
+The wallet/tactile-deck slice has been implemented and the latest preceding CI run is green. APK visual/persistence verification remains pending.
 
-Implemented in the current slice:
+Implemented:
 - shared physical-card presentation;
 - tactile deck spotlight with stacked supporting cards;
 - active-card preference for the spotlight;
@@ -87,18 +87,26 @@ Implemented in the current slice:
 - card detail presentation in a Material 3 bottom sheet;
 - persisted Active/Paused updates through `CardWalletViewModel`;
 - edit/remove actions remain repository-backed;
-- empty deck and catalogue entry point remain supported;
-- instrumentation detail-sheet assertion now waits for the bottom-sheet semantics to appear;
-- CI instrumentation wrapper now captures the real Gradle exit status without relying on `pipefail` or nested shell quoting.
+- empty deck and catalogue entry point remain supported.
 
-The latest instrumentation evidence showed the emulator booted and **23 tests started**, with **1 skipped and 1 failed**. The failing assertion was the card-detail semantic tag; the same run also exposed a wrapper parsing problem after Gradle completed. Both code paths have now been corrected, but the fixes require a fresh CI run for verification.
+## Current scan reconciliation slice
 
-Still required before Wallet is considered verified:
-- current CI green for the latest HEAD;
-- inspect instrumentation logs, not only workflow conclusion;
-- APK visual validation in Obsidian Dark and Pearl Bright;
-- CRUD/persistence validation on a running APK;
-- final accessibility/motion pass for the tactile stack and sheet.
+The active slice is **Scan reconciliation** and is implemented UI + backend together.
+
+Implemented in the current slice:
+- UPI QR parsing remains local and raw QR payloads are not retained;
+- optional merchant category code (`mc`) is preserved as normalized payment context;
+- recommendation prefill consumes the scanned amount and maps only high-confidence MCCs to `groceries`, `dining`, `travel`, or `shopping`;
+- unknown/ambiguous MCCs leave category empty so the user can choose rather than receiving a guessed recommendation category;
+- a scanned QR without an amount now requires an explicit amount entry before the “Find best card” action proceeds;
+- scanned payment context continues into recommendation and payment handoff without exposing payment credentials;
+- non-UPI and malformed QR handling remains fail-closed.
+
+Still required before Scan is considered verified:
+- fresh CI for the scan reconciliation commits;
+- instrumentation coverage for the missing-amount dialog and reconciled payment handoff;
+- APK validation of real QR scanning, amount reconciliation, category prefill and non-UPI rejection;
+- screenshot/video evidence if a UI failure is encountered (only when the environment provides capture capability).
 
 ## Finalized UI + backend direction
 
@@ -118,18 +126,18 @@ Execution order is documented in `UI_BACKEND_PLAN.md` and currently starts with 
 ## Current work queue
 
 NOW:
-1. Obtain genuine green Android CI for the current Wallet/tactile-deck slice and inspect all logs.
-2. Validate My Deck bottom-sheet, tactile spotlight and persistence behavior on APK.
-3. Complete Cockpit real savings/evaluation history data boundary before displaying historical metrics.
-4. Reconcile Scan → Reasoning → Recommendation → Handoff against the latest approved reference artifacts.
+1. Obtain genuine green Android CI for the current Scan reconciliation slice and inspect all logs.
+2. Add/restore instrumentation coverage for missing-amount reconciliation and the scanned payment path.
+3. Validate Scan behavior on APK, including real QR input, category context and safe handoff.
+4. Reconcile the next Reasoning slice against the approved reference artifacts.
 5. Keep memory synchronized with every meaningful implementation commit.
 
 NEXT:
-1. Card Catalog provider/data contract.
-2. Offer Engine contract/provider boundary and Offers UI.
-3. Insights/Milestones history contract and UI.
-4. Privacy Vault and onboarding/privacy oath.
-5. Restore full Scan → Recommendation → Handoff E2E instrumentation after UI reconciliation.
+1. Recommendation/Reasoning visual and backend reconciliation.
+2. Card Catalog provider/data contract.
+3. Offer Engine contract/provider boundary and Offers UI.
+4. Insights/Milestones history contract and UI.
+5. Privacy Vault and onboarding/privacy oath.
 
 LATER:
 - Merchant Intelligence Engine.
