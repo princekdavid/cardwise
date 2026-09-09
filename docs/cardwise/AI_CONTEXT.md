@@ -10,10 +10,10 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch HEAD at last implementation check: `da5604aa41079464dc0dd3bd31694d7125d5e13b`
+- Current branch HEAD at last implementation check: `487bb6f9ae56c1c23b6551c833150403a459563a`
 - PR: #11, `feat: integrate prototype design system and key screens`
 - PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
-- The latest known green CI before this reasoning slice was run #34329778507; this reasoning slice requires fresh CI verification.
+- CI workflow now includes a manual `workflow_dispatch` trigger; fresh verification is still pending for the current head.
 
 ## Product promise
 
@@ -87,9 +87,9 @@ For every screen implement the user capability, reference visual language, state
 ## Current work queue
 
 NOW:
-1. Run fresh Android CI for the Reasoning slice and inspect all logs.
-2. Fix any compile/test/instrumentation failures before continuing.
-3. Refine the Reasoning orbital visual treatment and add critical-flow instrumentation.
+1. Verify Android CI for the current branch head using the automatic/manual workflow path.
+2. Inspect all build and instrumentation logs and fix only verified failures.
+3. Refine the Reasoning orbital visual treatment and add critical-flow instrumentation after CI stability is established.
 4. Validate Scan → Reasoning → Recommendation on APK and both themes.
 5. Keep memory synchronized with meaningful commits.
 
