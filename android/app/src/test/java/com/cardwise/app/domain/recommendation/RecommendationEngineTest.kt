@@ -62,6 +62,20 @@ class RecommendationEngineTest {
         val trace = RecommendationEngine.evaluate(PaymentContext("Dining", 0.0), emptyList(), emptyMap()).trace
         assertEquals(listOf(RecommendationTraceStatus.COMPLETED, RecommendationTraceStatus.COMPLETED, RecommendationTraceStatus.PENDING, RecommendationTraceStatus.PENDING), trace.steps.map { it.status })
     }
+    @Test fun matchedRecommendationsExposeMathProvenanceAndWhyNotReason() {
+        val result = RecommendationEngine.evaluate(
+            PaymentContext("Dining", 2_000.0),
+            listOf(card(1), card(2)),
+            mapOf(
+                1L to listOf(RewardRule("Dining", 5.0)),
+                2L to listOf(RewardRule("Dining", 3.0, maximumEligibleSpend = 1_000.0))
+            )
+        ).recommendations
+        assertTrue(result.first().provenance.contains("₹2,000.00 eligible spend × 5.00%"))
+        assertEquals("", result.first().whyNot)
+        assertTrue(result[1].whyNot.contains("₹70.00"))
+        assertTrue(result[1].whyNot.contains("Only ₹1,000.00"))
+    }
     @Test(expected = IllegalArgumentException::class) fun rejectsNegativePaymentAmount() { PaymentContext("Dining", -1.0) }
     @Test(expected = IllegalArgumentException::class) fun rejectsInfinitePaymentAmount() { PaymentContext("Dining", Double.POSITIVE_INFINITY) }
     @Test(expected = IllegalArgumentException::class) fun rejectsNaNPaymentAmount() { PaymentContext("Dining", Double.NaN) }
