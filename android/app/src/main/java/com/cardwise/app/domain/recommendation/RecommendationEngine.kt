@@ -58,12 +58,21 @@ object RecommendationEngine {
             RecommendationTraceStatus.COMPLETED
         )
 
-        val recommendations = candidates.sortedWith(
+        val sortedCandidates = candidates.sortedWith(
             compareByDescending<Triple<Card, com.cardwise.app.domain.rewards.RewardEstimate, RewardRule>> { it.second.estimatedReward }
                 .thenByDescending { it.second.eligibleSpend }
                 .thenBy { it.first.id }
-        ).mapIndexed { index, (card, estimate, rule) ->
-            CardRecommendation(card, estimate, reasonFor(context, estimate, rule), index + 1)
+        )
+        val winnerReward = sortedCandidates.firstOrNull()?.second?.estimatedReward
+        val recommendations = sortedCandidates.mapIndexed { index, (card, estimate, rule) ->
+            CardRecommendation(
+                card = card,
+                reward = estimate,
+                reason = reasonFor(context, estimate, rule),
+                rank = index + 1,
+                provenance = provenanceFor(estimate, rule),
+                whyNot = if (index == 0 || winnerReward == null) "" else whyNotFor(estimate, rule, winnerReward)
+            )
         }
 
         trace += RecommendationTraceStep(
@@ -100,6 +109,25 @@ object RecommendationEngine {
         append(".")
         if (rule.rewardRatePercent > 0) append(" ${rule.rewardRatePercent.formatRate()}% rewards")
         if (estimate.capped) append(" (cap applied)")
+    }
+
+    private fun provenanceFor(
+        estimate: com.cardwise.app.domain.rewards.RewardEstimate,
+        rule: RewardRule
+    ): String = buildString {
+        append("₹${estimate.eligibleSpend.formatCurrency()} eligible spend × ${rule.rewardRatePercent.formatRate()}% = ₹${(estimate.eligibleSpend * rule.rewardRatePercent / 100.0).formatCurrency()}.")
+        if (estimate.capped) append(" Reward cap applied → ₹${estimate.estimatedReward.formatCurrency()}.")
+    }
+
+    private fun whyNotFor(
+        estimate: com.cardwise.app.domain.rewards.RewardEstimate,
+        rule: RewardRule,
+        winnerReward: Double
+    ): String = buildString {
+        val gap = (winnerReward - estimate.estimatedReward).coerceAtLeast(0.0)
+        append("Ranks below the winner by ₹${gap.formatCurrency()} estimated reward.")
+        if (estimate.capped) append(" Its reward is capped.")
+        else if (rule.maximumEligibleSpend != null) append(" Only ₹${estimate.eligibleSpend.formatCurrency()} of this payment earns the rate.")
     }
 
     private fun Double.formatCurrency(): String = String.format(Locale.ROOT, "%.2f", this)
