@@ -10,10 +10,10 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch HEAD at last implementation check: `487bb6f9ae56c1c23b6551c833150403a459563a`
+- Current branch HEAD at last implementation check: `b1788d8b013fdc3dc8126fb5c5ef185bd52f1039`
 - PR: #11, `feat: integrate prototype design system and key screens`
 - PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
-- CI workflow now includes a manual `workflow_dispatch` trigger; fresh verification is still pending for the current head.
+- Android CI run #432 is VERIFIED green on this exact head: build + instrumentation succeeded and the debug APK artifact was published.
 
 ## Product promise
 
@@ -61,7 +61,7 @@ Implemented:
 - safe transition into recommendation and handoff;
 - fail-closed malformed/non-UPI behavior.
 
-### Reasoning — current slice
+### Reasoning
 Implemented:
 - `RecommendationEngine.evaluate()` returns the normal recommendations plus a deterministic `RecommendationTrace`;
 - trace stages cover payment-context normalization, eligible-card evaluation, benefit calculation and ranking;
@@ -71,11 +71,17 @@ Implemented:
 - Reasoning UI progressively reveals actual trace steps with short presentation-only motion;
 - loading, empty and error states do not fabricate latency, provenance or AI claims.
 
-Still required:
-- refine the orbital visual treatment against the approved reference;
-- add/restore critical-flow instrumentation around Scan → Reasoning → Recommendation;
-- fresh CI verification;
-- APK visual validation in both themes.
+Remaining design/verification follow-up is tracked for the visual reconciliation and critical-flow instrumentation; CI is now green on the current implementation head.
+
+### Recommendation
+Implemented and CI-verified:
+- deterministic winner recommendation;
+- physical-card winner spotlight treatment;
+- transparent benefit math/provenance including eligible spend, rate and caps;
+- deterministic “Why not this card?” explanations for alternatives;
+- Rescan and Adjust amount/category recovery actions;
+- Continue to UPI handoff;
+- instrumentation stabilization for animated reward content.
 
 ## Finalized UI + backend direction
 
@@ -87,19 +93,16 @@ For every screen implement the user capability, reference visual language, state
 ## Current work queue
 
 NOW:
-1. Verify Android CI for the current branch head using the automatic/manual workflow path.
-2. Inspect all build and instrumentation logs and fix only verified failures.
-3. Refine the Reasoning orbital visual treatment and add critical-flow instrumentation after CI stability is established.
-4. Validate Scan → Reasoning → Recommendation on APK and both themes.
-5. Keep memory synchronized with meaningful commits.
+1. Payment Handoff visual/state reconciliation.
+2. Verify handoff state, external UPI launch/return handling and explicit confirmation behavior against the approved reference.
+3. Add/strengthen focused Handoff unit/instrumentation coverage without destabilizing existing flows.
+4. Keep memory synchronized with meaningful commits.
 
 NEXT:
-1. Recommendation visual/state reconciliation.
-2. Payment Handoff visual/state reconciliation.
-3. Card Catalog provider/data contract.
-4. Offer Engine contract/provider boundary and Offers UI.
-5. Insights/Milestones history contract and UI.
-6. Privacy Vault and onboarding/privacy oath.
+1. Card Catalog provider/data contract and UI completion.
+2. Offer Engine contract/provider boundary and Offers UI.
+3. Insights/Milestones history contract and UI.
+4. Privacy Vault and onboarding/privacy oath.
 
 LATER:
 - Merchant Intelligence Engine.
