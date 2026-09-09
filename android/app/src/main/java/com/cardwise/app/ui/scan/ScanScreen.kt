@@ -21,9 +21,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -49,6 +52,7 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import java.math.BigDecimal
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -72,9 +76,7 @@ fun ScanScreen(
     }
     var state by remember { mutableStateOf<ScanState>(ScanState.Scanning) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         hasPermission = granted
         state = if (granted) ScanState.Scanning else ScanState.CameraError
     }
@@ -132,9 +134,7 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor = remember { Executors.newSingleThreadExecutor() }
     val scanner = remember {
-        BarcodeScanning.getClient(
-            BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
-        )
+        BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build())
     }
     val handled = remember { AtomicBoolean(false) }
     val disposed = remember { AtomicBoolean(false) }
@@ -166,9 +166,7 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
                     }
                     cameraProvider.value = provider
                     val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
-                    val analysis = ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .build()
+                    val analysis = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
                     analysis.setAnalyzer(executor) { imageProxy ->
                         if (disposed.get() || handled.get()) {
                             imageProxy.close()
@@ -218,10 +216,21 @@ private fun CameraPreview(onResult: (ScanState) -> Unit) {
 @Composable
 private fun DetectedContent(
     payment: UpiPaymentRequest,
-    onContinueToPayment: () -> Unit,
-    onFindBestCard: () -> Unit,
+    onContinueToPayment: (UpiPaymentRequest) -> Unit,
+    onFindBestCard: (UpiPaymentRequest) -> Unit,
     onScanAgain: () -> Unit
 ) {
+    var showAmountDialog by remember(payment.vpa) { mutableStateOf(payment.amount == null) }
+    var amountDraft by remember(payment.vpa) { mutableStateOf("") }
+
+    fun submitWithAmount(action: (UpiPaymentRequest) -> Unit) {
+        val amount = amountDraft.toBigDecimalOrNull()
+        if (amount != null && amount > BigDecimal.ZERO && amount.scale() <= 2) {
+            showAmountDialog = false
+            action(payment.copy(amount = amount))
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(CardWiseSpacing.lg),
         verticalArrangement = Arrangement.Center
@@ -232,18 +241,52 @@ private fun DetectedContent(
                 payment.merchantName?.let { Text(it, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = CardWiseSpacing.sm)) }
                 Text(payment.vpa, modifier = Modifier.padding(top = CardWiseSpacing.xs))
                 payment.amount?.let { Text("₹$it", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = CardWiseSpacing.md)) }
+                    ?: Text("Amount not included in this QR", modifier = Modifier.padding(top = CardWiseSpacing.md))
+                payment.merchantCategory?.let { Text("Merchant category: $it", modifier = Modifier.padding(top = CardWiseSpacing.xs)) }
                 payment.note?.let { Text(it, modifier = Modifier.padding(top = CardWiseSpacing.sm)) }
             }
         }
-        Button(onClick = onFindBestCard, modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.md)) {
-            Text("Find best card")
-        }
-        Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.sm)) {
-            Text("Continue to payment")
-        }
-        Button(onClick = onScanAgain, modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.sm), contentPadding = PaddingValues(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
-            Text("Scan again")
-        }
+        Button(
+            onClick = {
+                if (payment.amount == null) showAmountDialog = true else onFindBestCard(payment)
+            },
+            modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.md)
+        ) { Text("Find best card") }
+        Button(
+            onClick = {
+                if (payment.amount == null) showAmountDialog = true else onContinueToPayment(payment)
+            },
+            modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.sm)
+        ) { Text("Continue to payment") }
+        Button(
+            onClick = onScanAgain,
+            modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.sm),
+            contentPadding = PaddingValues(CardWiseSpacing.sm + CardWiseSpacing.xs)
+        ) { Text("Scan again") }
+    }
+
+    if (showAmountDialog) {
+        AlertDialog(
+            onDismissRequest = { showAmountDialog = false },
+            title = { Text("Enter payment amount") },
+            text = {
+                OutlinedTextField(
+                    value = amountDraft,
+                    onValueChange = { value ->
+                        if (value.length <= 12 && value.count { it == '.' } <= 1 && value.all { it.isDigit() || it == '.' }) amountDraft = value
+                    },
+                    label = { Text("Amount") },
+                    prefix = { Text("₹ ") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                Button(onClick = { submitWithAmount(onFindBestCard) }) { Text("Find best card") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAmountDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
