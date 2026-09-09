@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,7 +49,14 @@ import com.cardwise.app.ui.theme.SectionTitle
 import java.util.Locale
 
 @Composable
-fun RecommendationScreen(viewModel: RecommendationViewModel, payment: UpiPaymentRequest? = null, onContinueToPayment: (() -> Unit)? = null, modifier: Modifier = Modifier) {
+fun RecommendationScreen(
+    viewModel: RecommendationViewModel,
+    payment: UpiPaymentRequest? = null,
+    onContinueToPayment: (() -> Unit)? = null,
+    onRescan: (() -> Unit)? = null,
+    onAdjustDetails: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val input = when (state) {
         is RecommendationUiState.Loading -> (state as RecommendationUiState.Loading).input
@@ -64,11 +72,13 @@ fun RecommendationScreen(viewModel: RecommendationViewModel, payment: UpiPayment
             is RecommendationUiState.Loading -> item { DecisionLoader() }
             is RecommendationUiState.Ready -> {
                 val ready = state as RecommendationUiState.Ready
-                item { Text(if (ready.recommendations.size == 1) "Best match" else "${ready.recommendations.size} ranked matches", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                items(ready.recommendations, key = { it.card.id }, contentType = { "recommendation" }) { RecommendationCard(it) }
-                if (payment != null && onContinueToPayment != null) item { Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth().testTag("continue_to_upi")) { Text("Continue to UPI app") } }
+                val winner = ready.recommendations.first()
+                item { WinnerSpotlight(winner) }
+                item { Text("${ready.recommendations.size} ranked match${if (ready.recommendations.size == 1) "" else "es"}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+                items(ready.recommendations.drop(1), key = { it.card.id }, contentType = { "recommendation_alternative" }) { RecommendationCard(it, winner) }
+                item { RecommendationActions(payment, onContinueToPayment, onRescan, onAdjustDetails) }
             }
-            is RecommendationUiState.Empty -> item { EmptyState((state as RecommendationUiState.Empty).input) }
+            is RecommendationUiState.Empty -> item { EmptyState((state as RecommendationUiState.Empty).input, onRescan, onAdjustDetails) }
             is RecommendationUiState.Error -> item { ErrorState((state as RecommendationUiState.Error).message, viewModel::retry) }
         }
     }
@@ -103,22 +113,54 @@ fun RecommendationScreen(viewModel: RecommendationViewModel, payment: UpiPayment
     } }
 }
 
-@Composable private fun RecommendationCard(recommendation: CardRecommendation) {
+@Composable private fun WinnerSpotlight(recommendation: CardRecommendation) {
     val card = recommendation.card
     AnimatedVisibility(true, enter = fadeIn(tween(CardWiseMotion.contentTransitionMillis)) + slideInVertically(animationSpec = tween(CardWiseMotion.cardEnterMillis)) { it / 5 }) {
-        GlassCard(elevated = recommendation.rank == 1) { Column(Modifier.padding(CardWiseSpacing.sm + CardWiseSpacing.xs), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
-            if (recommendation.rank == 1) Text("BEST WAY", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
-            PhysicalCard(card, compact = true)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { Text(if (recommendation.rank == 1) "Recommended for this payment" else "Alternative ${recommendation.rank - 1}", fontWeight = FontWeight.Bold); Text("${card.issuer} • ${card.network.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                Text("₹${String.format(Locale.ROOT, "%.2f", recommendation.reward.estimatedReward)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = CardWisePalette.Emerald)
-            }
+        GlassCard(elevated = true, modifier = Modifier.testTag("recommendation_winner")) { Column(Modifier.padding(CardWiseSpacing.md), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm)) {
+            Text("BEST WAY", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
+            PhysicalCard(card, compact = false)
+            Text("Recommended for this payment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("₹${String.format(Locale.ROOT, "%.2f", recommendation.reward.estimatedReward)} expected reward", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = CardWisePalette.Emerald)
             Text(recommendation.reason, style = MaterialTheme.typography.bodyMedium)
-            if (recommendation.reward.capped) Text("Reward cap applied", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Provenance(recommendation)
         } }
     }
 }
 
-@Composable private fun EmptyState(input: RecommendationInput) { Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) { Column(Modifier.padding(CardWiseSpacing.md + CardWiseSpacing.xs)) { Text(if (input.amount.isBlank() || input.category.isBlank()) "Add purchase details" else "No eligible card yet", fontWeight = FontWeight.Bold); Text(if (input.amount.isBlank() || input.category.isBlank()) "Enter a positive amount and a category to get a recommendation." else "None of your active cards has a matching reward rule.", Modifier.padding(top = CardWiseSpacing.xs), color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
+@Composable private fun RecommendationCard(recommendation: CardRecommendation, winner: CardRecommendation) {
+    val card = recommendation.card
+    AnimatedVisibility(true, enter = fadeIn(tween(CardWiseMotion.contentTransitionMillis)) + slideInVertically(animationSpec = tween(CardWiseMotion.cardEnterMillis)) { it / 5 }) {
+        GlassCard { Column(Modifier.padding(CardWiseSpacing.sm + CardWiseSpacing.xs), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
+            PhysicalCard(card, compact = true)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) { Text("Alternative ${recommendation.rank - 1}", fontWeight = FontWeight.Bold); Text("${card.issuer} • ${card.network.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                Text("₹${String.format(Locale.ROOT, "%.2f", recommendation.reward.estimatedReward)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = CardWisePalette.Emerald)
+            }
+            Text(recommendation.reason, style = MaterialTheme.typography.bodyMedium)
+            Text("Why not this card?", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(recommendation.whyNot.ifBlank { "The winner ranks higher on the deterministic reward calculation." }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Provenance(recommendation)
+        } }
+    }
+}
+
+@Composable private fun Provenance(recommendation: CardRecommendation) {
+    Surface(Modifier.fillMaxWidth().testTag("recommendation_math_${recommendation.card.id}"), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Column(Modifier.padding(CardWiseSpacing.sm), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
+            Text("HOW IT WAS CALCULATED", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            Text(recommendation.provenance.ifBlank { "Calculated from the active local reward rule." }, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable private fun RecommendationActions(payment: UpiPaymentRequest?, onContinueToPayment: (() -> Unit)?, onRescan: (() -> Unit)?, onAdjustDetails: (() -> Unit)?) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
+        if (payment != null && onContinueToPayment != null) Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth().testTag("continue_to_upi")) { Text("Continue to UPI app") }
+        if (payment != null && onRescan != null) OutlinedButton(onClick = onRescan, modifier = Modifier.fillMaxWidth().testTag("recommendation_rescan")) { Text("Scan another QR") }
+        if (onAdjustDetails != null) TextButton(onClick = onAdjustDetails, modifier = Modifier.fillMaxWidth().testTag("recommendation_adjust")) { Text("Adjust amount or category") }
+    }
+}
+
+@Composable private fun EmptyState(input: RecommendationInput, onRescan: (() -> Unit)?, onAdjustDetails: (() -> Unit)?) { Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) { Column(Modifier.padding(CardWiseSpacing.md + CardWiseSpacing.xs), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) { Text(if (input.amount.isBlank() || input.category.isBlank()) "Add purchase details" else "No eligible card yet", fontWeight = FontWeight.Bold); Text(if (input.amount.isBlank() || input.category.isBlank()) "Enter a positive amount and a category to get a recommendation." else "None of your active cards has a matching reward rule.", color = MaterialTheme.colorScheme.onSurfaceVariant); if (onRescan != null) OutlinedButton(onClick = onRescan, modifier = Modifier.fillMaxWidth().testTag("recommendation_rescan_empty")) { Text("Scan another QR") }; if (onAdjustDetails != null) TextButton(onClick = onAdjustDetails, modifier = Modifier.fillMaxWidth().testTag("recommendation_adjust_empty")) { Text("Adjust details") } } } }
 
 @Composable private fun ErrorState(message: String, onRetry: () -> Unit) { Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.errorContainer) { Column(Modifier.padding(CardWiseSpacing.md + CardWiseSpacing.xs)) { Text("Something went wrong", fontWeight = FontWeight.Bold); Text(message, Modifier.padding(top = CardWiseSpacing.xs)); TextButton(onClick = onRetry) { Text("Try again") } } } }
