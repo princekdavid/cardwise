@@ -1,10 +1,13 @@
 package com.cardwise.app.ui
 
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -113,7 +116,8 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.onNodeWithTag("recommendation_winner").assertExists()
-        composeRule.onNodeWithTag("continue_to_upi").performClick()
+        composeRule.onNodeWithTag("recommendation_content").performScrollToNode(hasTestTag("continue_to_upi"))
+        composeRule.onNodeWithTag("continue_to_upi").assertExists().performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
         composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(launcher.launchCount == 1)
