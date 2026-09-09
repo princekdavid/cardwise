@@ -1,9 +1,10 @@
 package com.cardwise.app.ui
 
-import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -83,7 +84,7 @@ class CardWiseAppTest {
         composeRule.onNodeWithTag("nav_wallet").performClick()
         composeRule.onNodeWithText("Active").performClick()
         composeRule.onNodeWithTag("wallet_card_1").assertExists()
-        composeRule.onNodeWithTag("wallet_card_2").assertDoesNotExist()
+        composeRule.onAllNodesWithTag("wallet_card_2").assertCountEquals(0)
     }
 
     @Test fun selectingOffers_showsOfferSurface() {
