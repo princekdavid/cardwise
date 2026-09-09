@@ -7,5 +7,7 @@ data class CardRecommendation(
     val card: Card,
     val reward: RewardEstimate,
     val reason: String,
-    val rank: Int
+    val rank: Int,
+    val provenance: String = "",
+    val whyNot: String = ""
 )
