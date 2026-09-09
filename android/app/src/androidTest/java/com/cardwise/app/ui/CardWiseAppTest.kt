@@ -104,7 +104,7 @@ class CardWiseAppTest {
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card)), recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))), paymentLauncher = launcher, initialPayment = payment) }
         composeRule.waitUntil(timeoutMillis = 15_000) {
             try {
-                composeRule.onNodeWithTag("continue_to_upi").assertExists()
+                composeRule.onNodeWithTag("recommendation_winner").assertExists()
                 true
             } catch (_: AssertionError) {
                 false
