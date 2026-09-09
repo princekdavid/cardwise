@@ -10,10 +10,10 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch HEAD at last implementation check: `b1788d8b013fdc3dc8126fb5c5ef185bd52f1039`
+- Current branch HEAD at last implementation check: `c1069bb380ecea0c5300b541082a874eeaee8304`
 - PR: #11, `feat: integrate prototype design system and key screens`
 - PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
-- Android CI run #432 is VERIFIED green on this exact head: build + instrumentation succeeded and the debug APK artifact was published.
+- CI was green on the preceding baseline; the catalog slice must be CI-verified before being marked verified.
 
 ## Product promise
 
@@ -71,10 +71,10 @@ Implemented:
 - Reasoning UI progressively reveals actual trace steps with short presentation-only motion;
 - loading, empty and error states do not fabricate latency, provenance or AI claims.
 
-Remaining design/verification follow-up is tracked for the visual reconciliation and critical-flow instrumentation; CI is now green on the current implementation head.
+Remaining design/verification follow-up is tracked for the visual reconciliation and critical-flow instrumentation.
 
 ### Recommendation
-Implemented and CI-verified:
+Implemented and CI-verified on the preceding baseline:
 - deterministic winner recommendation;
 - physical-card winner spotlight treatment;
 - transparent benefit math/provenance including eligible spend, rate and caps;
@@ -82,6 +82,22 @@ Implemented and CI-verified:
 - Rescan and Adjust amount/category recovery actions;
 - Continue to UPI handoff;
 - instrumentation stabilization for animated reward content.
+
+### Card Catalog
+Implemented in the current development slice, pending CI verification and final APK/manual validation:
+- `CardCatalogRepository` separates catalog consumers from provider/cache implementation;
+- `CardCatalogueEngine` owns provider refresh and local resource-store access;
+- `CardCatalogViewModel` owns query/filter/loading/empty/unavailable/cached-error state;
+- catalog products use stable string `productId` identities;
+- product metadata includes card type, network, annual fee, reward program, benefits and provenance/freshness metadata;
+- a replaceable built-in local seed provider exists only as transitional data and explicitly uses UNKNOWN provenance;
+- catalog UI no longer owns the catalogue list and routes add-to-deck through the existing wallet ViewModel/repository;
+- no sensitive payment credentials are introduced by catalog enrollment.
+
+Known remaining catalog work:
+- replace the transitional local seed with verified issuer/network/partner providers;
+- move catalog caching from process-local memory to durable local storage for process-death/offline behavior;
+- complete provider-backed detail/terms reconciliation and APK visual validation.
 
 ## Finalized UI + backend direction
 
@@ -93,16 +109,15 @@ For every screen implement the user capability, reference visual language, state
 ## Current work queue
 
 NOW:
-1. Payment Handoff visual/state reconciliation.
-2. Verify handoff state, external UPI launch/return handling and explicit confirmation behavior against the approved reference.
-3. Add/strengthen focused Handoff unit/instrumentation coverage without destabilizing existing flows.
+1. Verify the Card Catalog slice in CI and APK/manual validation.
+2. Replace the transitional local catalog seed with a verified provider when a real source/connection is available.
+3. Move catalog caching to durable local storage before claiming full offline/process-death support.
 4. Keep memory synchronized with meaningful commits.
 
 NEXT:
-1. Card Catalog provider/data contract and UI completion.
-2. Offer Engine contract/provider boundary and Offers UI.
-3. Insights/Milestones history contract and UI.
-4. Privacy Vault and onboarding/privacy oath.
+1. Offer Engine contract/provider boundary and Offers UI.
+2. Insights/Milestones history contract and UI.
+3. Privacy Vault and onboarding/privacy oath.
 
 LATER:
 - Merchant Intelligence Engine.
