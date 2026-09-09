@@ -7,8 +7,8 @@ project:
   architecture: Presentation -> ViewModel/UI State -> Domain -> Repository -> Data
   promise: "Before I pay, CardWise tells me the smartest way to pay."
   working_branch: feat/design-system-prototype-integration
-  current_head: ce0a81b37c834fbf3d339ffd090179a5a98edba8
-  current_ci: "Run #432 is VERIFIED green for parent implementation commit b1788d8b; memory-only sync commit is not independently CI-verified."
+  current_head: 49bee415ea87462a4f2e368233d21585f0bf32f2
+  current_ci: "Pending CI verification for the Card Catalog slice on the current head."
   design_plan: docs/cardwise/UI_BACKEND_PLAN.md
   design_source: docs/cardwise/DESIGN_SOURCE.md
 
@@ -35,16 +35,12 @@ constraints:
 features:
   F-001: {name: Card Wallet, status: VERIFIED, should_do: "Let users add, edit, activate/pause, inspect and remove cards and configured benefits."}
   F-002: {name: Rewards & Benefit Intelligence, status: VERIFIED, should_do: "Represent and calculate rewards/benefits using deterministic rules, categories, caps and thresholds."}
-  F-003:
-    name: Recommendation
-    status: VERIFIED
-    should_do: "Given a transaction and eligible payment options, select the best expected value and explain why."
-    implementation: "RecommendationEngine remains deterministic and exposes RecommendationEvaluation with a structured RecommendationTrace; RecommendationViewModel carries the trace to the Reasoning UI."
+  F-003: {name: Recommendation, status: VERIFIED, should_do: "Given a transaction and eligible payment options, select the best expected value and explain why.", implementation: "RecommendationEngine exposes deterministic RecommendationTrace."}
   F-004: {name: QR Scan, status: VERIFIED, should_do: "Scan supported UPI QR codes, parse locally and recover safely from invalid/unsupported/repeated scans."}
   F-005: {name: Scan & Pay, status: VERIFIED, should_do: "Convert a supported scan into a recommendation and safely hand off to an external UPI app after confirmation."}
   F-006: {name: Cockpit, status: IN_PROGRESS, should_do: "Provide premium home surface with payment intelligence, deck status, useful metrics and a fast Scan action."}
   F-007: {name: My Deck / Wallet presentation, status: IN_PROGRESS, should_do: "Present enrolled physical cards as a tactile, manageable deck while preserving Room/repository behavior."}
-  F-008: {name: Card Catalog, status: PARTIAL, should_do: "Discover supported cards and add relevant cards to the deck."}
+  F-008: {name: Card Catalog, status: IN_PROGRESS, should_do: "Discover supported cards, filter/search them and add relevant cards to the deck.", implementation: "CardCatalogRepository + CardCatalogueEngine + CardCatalogViewModel; transitional local seed provider has explicit UNKNOWN provenance."}
   F-009: {name: Offers, status: PARTIAL, should_do: "Surface active relevant offers and determine whether they apply to cards, merchants and transactions."}
   F-010: {name: Insights / Milestones, status: DESIGNED, should_do: "Explain historical savings, rewards, spend patterns and progress."}
   F-011: {name: Privacy Vault / Settings, status: DESIGNED, should_do: "Give transparency and control over locally stored CardWise data, privacy behavior and reset."}
@@ -67,39 +63,38 @@ screens:
   S-001: {name: Onboarding, status: DESIGNED}
   S-002: {name: Cockpit, status: IN_PROGRESS}
   S-003: {name: QR Scan, status: IMPLEMENTED}
-  S-004: {name: Reasoning, status: IN_PROGRESS, implementation_note: "ReasoningScreen consumes deterministic RecommendationTrace and scanned payments now route through Reasoning before Recommendation."}
+  S-004: {name: Reasoning, status: IN_PROGRESS}
   S-005: {name: Recommendation, status: VERIFIED}
   S-006: {name: Payment Handoff, status: IMPLEMENTED}
   S-007: {name: Wallet / My Deck, status: IN_PROGRESS}
-  S-008: {name: Card Catalog, status: PARTIAL}
+  S-008: {name: Card Catalog, status: IN_PROGRESS, implementation_note: "Provider-backed state/UI contract is implemented; verified-source provider and durable cache remain pending."}
   S-009: {name: Offers, status: PARTIAL}
   S-010: {name: Insights / Milestones, status: DESIGNED}
   S-011: {name: Privacy Vault, status: DESIGNED}
 
 flows:
   FLOW-001: {name: Onboarding, path: [ONBOARDING, COCKPIT], status: NEEDS_VERIFICATION}
-  FLOW-002: {name: Scan to recommendation to payment, path: [SCAN, REASONING, RECOMMENDATION, HANDOFF, EXTERNAL_UPI_APP, RETURN], status: IN_PROGRESS, known_gap: "Reasoning transition is implemented; full critical-flow instrumentation and APK validation remain."}
+  FLOW-002: {name: Scan to recommendation to payment, path: [SCAN, REASONING, RECOMMENDATION, HANDOFF, EXTERNAL_UPI_APP, RETURN], status: IN_PROGRESS}
   FLOW-003: {name: Wallet management, path: [WALLET, CARD_DETAIL, ADD_EDIT, DELETE], status: VERIFIED}
-  FLOW-004: {name: Catalog discovery, path: [WALLET, CATALOG, FILTER, CARD_DETAIL, ADD], status: PARTIAL}
+  FLOW-004: {name: Catalog discovery, path: [WALLET, CATALOG, FILTER, CARD_DETAIL, ADD], status: IN_PROGRESS, known_gap: "Verified external provider and durable catalog cache remain pending."}
   FLOW-005: {name: Offers discovery, path: [OFFERS, OFFER_DETAIL, CARD_OR_MERCHANT_CONTEXT], status: DESIGNED}
   FLOW-006: {name: Privacy reset, path: [VAULT, RESET_CONFIRMATION, ONBOARDING], status: DESIGNED}
 
 verification:
   historical_milestones: {M0: VERIFIED, M1: VERIFIED, M2: VERIFIED, M3: VERIFIED, M4: VERIFIED, M5: VERIFIED, M6: VERIFIED, M7: PARTIAL}
-  last_verified_ci: {commit: b1788d8b013fdc3dc8126fb5c5ef185bd52f1039, run: 34348709814, status: VERIFIED}
-  current_implementation_ci: {commit: b1788d8b013fdc3dc8126fb5c5ef185bd52f1039, run: 34348709814, status: VERIFIED}
-  reasoning_unit_tests: "RecommendationEngineTest covers matched/no-match trace ordering, deterministic ranking, pending downstream steps and recommendation provenance/why-not reasoning."
-  recommendation_instrumentation: "RecommendationScreenTest is CI-verified after stabilizing the animated reward-content assertion."
-  deferred_test: "Scan -> Recommendation -> Handoff full UI instrumentation test"
+  last_verified_ci: {commit: e67a07db6af063a5d0297a7bf09c14b69a09b320, run: 34376876262, status: VERIFIED}
+  current_implementation_ci: {commit: 49bee415ea87462a4f2e368233d21585f0bf32f2, status: NEEDS_VERIFICATION}
+  catalog_unit_tests: "CardCatalogueEngineTest covers provider refresh into cache and no-provider behavior."
+  deferred_test: "Scan -> Recommendation -> Handoff full UI instrumentation until UI reconciliation is complete."
 
 work_queue:
   NOW:
-    - "Payment Handoff visual/state reconciliation."
-    - "Verify handoff state, external UPI launch/return handling and explicit confirmation behavior against the approved reference."
-    - "Add/strengthen focused Handoff unit/instrumentation coverage without destabilizing existing flows."
+    - "Run and verify CI for the Card Catalog slice."
+    - "Complete APK/manual Card Catalog validation in Obsidian Dark and Pearl Bright."
+    - "Replace the transitional local seed with verified issuer/network/partner provider(s) when a real source is available."
+    - "Move catalog caching to durable local storage before claiming process-death/offline catalog support."
     - "Keep project memory synchronized with every meaningful implementation commit."
   NEXT:
-    - "Card Catalog provider/data contract and UI completion."
     - "Offer Engine contract/provider boundary and Offers UI."
     - "Insights/Milestones history contract and UI."
     - "Privacy Vault and onboarding/privacy oath."
