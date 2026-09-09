@@ -95,8 +95,8 @@ fun ScanScreen(
                 scanState is ScanState.Scanning -> CameraPreview { state = it }
                 scanState is ScanState.Detected -> DetectedContent(
                     payment = scanState.payment,
-                    onContinueToPayment = { onPaymentHandoffRequested(scanState.payment) },
-                    onFindBestCard = { onPaymentDetected(scanState.payment) },
+                    onContinueToPayment = onPaymentHandoffRequested,
+                    onFindBestCard = onPaymentDetected,
                     onScanAgain = { state = ScanState.Scanning }
                 )
                 scanState is ScanState.Invalid -> InvalidContent(
@@ -247,15 +247,11 @@ private fun DetectedContent(
             }
         }
         Button(
-            onClick = {
-                if (payment.amount == null) showAmountDialog = true else onFindBestCard(payment)
-            },
+            onClick = { if (payment.amount == null) showAmountDialog = true else onFindBestCard(payment) },
             modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.md)
         ) { Text("Find best card") }
         Button(
-            onClick = {
-                if (payment.amount == null) showAmountDialog = true else onContinueToPayment(payment)
-            },
+            onClick = { if (payment.amount == null) showAmountDialog = true else onContinueToPayment(payment) },
             modifier = Modifier.fillMaxWidth().padding(top = CardWiseSpacing.sm)
         ) { Text("Continue to payment") }
         Button(
