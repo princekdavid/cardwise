@@ -102,8 +102,6 @@ class CardWiseAppTest {
         val card = Card(1L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
         val payment = UpiPaymentRequest("merchant@upi", "CardWise Shop", BigDecimal("125.00"), "INR", "ref-123", "Order 42", merchantCategory = "5812")
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card)), recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))), paymentLauncher = launcher, initialPayment = payment) }
-        composeRule.onNodeWithText("CardWise Shop").assertExists()
-        composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.waitUntil(timeoutMillis = 15_000) {
             try {
                 composeRule.onNodeWithTag("continue_to_upi").assertExists()
@@ -112,6 +110,8 @@ class CardWiseAppTest {
                 false
             }
         }
+        composeRule.onNodeWithText("CardWise Shop").assertExists()
+        composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.onNodeWithText("Best match").assertExists()
         composeRule.onNodeWithTag("continue_to_upi").performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
