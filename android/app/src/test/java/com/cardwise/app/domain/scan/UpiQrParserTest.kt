@@ -11,7 +11,6 @@ class UpiQrParserTest {
         val result = UpiQrParser.parse(
             "upi://pay?pa=merchant%40upi&pn=Coffee%20House&am=125.50&cu=INR&tr=TX123&tn=Morning%20coffee"
         )
-
         assertTrue(result is UpiQrParseResult.Success)
         val payment = (result as UpiQrParseResult.Success).payment
         assertEquals("merchant@upi", payment.vpa)
@@ -23,9 +22,22 @@ class UpiQrParserTest {
     }
 
     @Test
+    fun parsesMerchantCategoryCodeWithoutExposingRawPayload() {
+        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&pn=Toit&am=2850&cu=INR&mc=5812")
+        assertTrue(result is UpiQrParseResult.Success)
+        assertEquals("5812", (result as UpiQrParseResult.Success).payment.merchantCategory)
+    }
+
+    @Test
+    fun ignoresMalformedMerchantCategoryCode() {
+        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&cu=INR&mc=dining")
+        assertTrue(result is UpiQrParseResult.Success)
+        assertEquals(null, (result as UpiQrParseResult.Success).payment.merchantCategory)
+    }
+
+    @Test
     fun parsesPaymentWithoutAmount() {
         val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&pn=Shop&cu=INR")
-
         assertTrue(result is UpiQrParseResult.Success)
         assertEquals(null, (result as UpiQrParseResult.Success).payment.amount)
     }
@@ -33,7 +45,6 @@ class UpiQrParserTest {
     @Test
     fun decodesEncodedValues() {
         val result = UpiQrParser.parse("upi://pay?pa=merchant%40upi&pn=Tea%2B%20Snacks&cu=INR&tn=A%26B")
-
         assertTrue(result is UpiQrParseResult.Success)
         val payment = (result as UpiQrParseResult.Success).payment
         assertEquals("Tea+ Snacks", payment.merchantName)
@@ -42,14 +53,12 @@ class UpiQrParserTest {
 
     @Test
     fun rejectsMissingVpa() {
-        val result = UpiQrParser.parse("upi://pay?pn=Shop&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_VPA), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_VPA), UpiQrParser.parse("upi://pay?pn=Shop&cu=INR"))
     }
 
     @Test
     fun rejectsInvalidVpa() {
-        val result = UpiQrParser.parse("upi://pay?pa=not-a-vpa&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_VPA), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_VPA), UpiQrParser.parse("upi://pay?pa=not-a-vpa&cu=INR"))
     }
 
     @Test
@@ -59,50 +68,42 @@ class UpiQrParserTest {
 
     @Test
     fun rejectsMalformedQuery() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&broken&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MALFORMED_URI), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MALFORMED_URI), UpiQrParser.parse("upi://pay?pa=merchant@upi&broken&cu=INR"))
     }
 
     @Test
     fun rejectsDuplicateParameters() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&pa=other@upi&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.DUPLICATE_PARAMETER), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.DUPLICATE_PARAMETER), UpiQrParser.parse("upi://pay?pa=merchant@upi&pa=other@upi&cu=INR"))
     }
 
     @Test
     fun rejectsZeroAmount() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&am=0&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), UpiQrParser.parse("upi://pay?pa=merchant@upi&am=0&cu=INR"))
     }
 
     @Test
     fun rejectsNegativeAmount() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&am=-10&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), UpiQrParser.parse("upi://pay?pa=merchant@upi&am=-10&cu=INR"))
     }
 
     @Test
     fun rejectsInvalidAmount() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&am=abc&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), UpiQrParser.parse("upi://pay?pa=merchant@upi&am=abc&cu=INR"))
     }
 
     @Test
     fun rejectsMoreThanTwoDecimalPlaces() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&am=10.123&cu=INR")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.INVALID_AMOUNT), UpiQrParser.parse("upi://pay?pa=merchant@upi&am=10.123&cu=INR"))
     }
 
     @Test
     fun rejectsMissingCurrency() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_CURRENCY), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.MISSING_CURRENCY), UpiQrParser.parse("upi://pay?pa=merchant@upi"))
     }
 
     @Test
     fun rejectsUnsupportedCurrency() {
-        val result = UpiQrParser.parse("upi://pay?pa=merchant@upi&cu=USD")
-        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.UNSUPPORTED_CURRENCY), result)
+        assertEquals(UpiQrParseResult.Invalid(UpiQrParseResult.Reason.UNSUPPORTED_CURRENCY), UpiQrParser.parse("upi://pay?pa=merchant@upi&cu=USD"))
     }
 
     @Test
