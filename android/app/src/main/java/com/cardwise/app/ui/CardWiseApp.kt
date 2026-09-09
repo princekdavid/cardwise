@@ -148,7 +148,13 @@ fun CardWiseApp(
                     )
                     AppDestination.Reasoning -> ReasoningScreen(viewModel = recommendationViewModel, payment = pendingPayment, onComplete = { destination = AppDestination.Recommendation })
                     AppDestination.Offers -> OffersScreen()
-                    AppDestination.Recommendation -> RecommendationScreen(viewModel = recommendationViewModel, payment = pendingPayment, onContinueToPayment = pendingPayment?.let { { requestHandoff(it) } })
+                    AppDestination.Recommendation -> RecommendationScreen(
+                        viewModel = recommendationViewModel,
+                        payment = pendingPayment,
+                        onContinueToPayment = pendingPayment?.let { { requestHandoff(it) } },
+                        onRescan = pendingPayment?.let { { destination = AppDestination.Scan } },
+                        onAdjustDetails = { destination = AppDestination.Cockpit }
+                    )
                 }
             }
         }
