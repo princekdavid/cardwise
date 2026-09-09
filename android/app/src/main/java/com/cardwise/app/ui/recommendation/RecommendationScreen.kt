@@ -28,6 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -64,7 +67,7 @@ fun RecommendationScreen(
         is RecommendationUiState.Empty -> (state as RecommendationUiState.Empty).input
         is RecommendationUiState.Error -> (state as RecommendationUiState.Error).input
     }
-    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(CardWiseSpacing.lg), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
+    LazyColumn(modifier.fillMaxSize().testTag("recommendation_content"), contentPadding = PaddingValues(CardWiseSpacing.lg), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.sm + CardWiseSpacing.xs)) {
         item { SectionTitle("The best way to pay", "CardWise decision engine", Modifier.semantics { heading() }) }
         payment?.let { item { PaymentSummary(it) } }
         item { InputSection(input, viewModel::setAmount, viewModel::setCategory) }
