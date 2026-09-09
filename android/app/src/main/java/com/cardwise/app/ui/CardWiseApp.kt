@@ -29,12 +29,18 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
+import com.cardwise.app.data.catalog.CuratedCardCatalogProvider
+import com.cardwise.app.data.catalog.InMemoryCardCatalogStore
+import com.cardwise.app.domain.catalog.CardCatalogueEngine
+import com.cardwise.app.domain.catalog.DefaultCardCatalogRepository
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
 import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.navigation.AppDestination
 import com.cardwise.app.ui.catalog.CardCatalogScreen
+import com.cardwise.app.ui.catalog.CardCatalogViewModel
+import com.cardwise.app.ui.catalog.CardCatalogViewModelFactory
 import com.cardwise.app.ui.cockpit.CockpitScreen
 import com.cardwise.app.ui.cockpit.CockpitViewModel
 import com.cardwise.app.ui.offers.OffersScreen
@@ -73,6 +79,14 @@ fun CardWiseApp(
         val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) application.container.rewardRuleRepository else null
         val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) { AndroidUpiPaymentLauncher(context.applicationContext) }
         val snackbarHostState = remember { SnackbarHostState() }
+        val catalogRepository = remember {
+            DefaultCardCatalogRepository(
+                CardCatalogueEngine(
+                    providers = listOf(CuratedCardCatalogProvider()),
+                    store = InMemoryCardCatalogStore()
+                )
+            )
+        }
 
         var destination by rememberSaveable { mutableStateOf(if (initialPayment != null) AppDestination.Reasoning else AppDestination.Cockpit) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
@@ -84,6 +98,7 @@ fun CardWiseApp(
 
         val cockpitViewModel: CockpitViewModel = viewModel(key = "cockpit")
         val walletViewModel: CardWalletViewModel = viewModel(factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) })
+        val catalogViewModel: CardCatalogViewModel = viewModel(key = "catalog", factory = remember(catalogRepository) { CardCatalogViewModelFactory(catalogRepository) })
         val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
         val selectedCard = (walletState as? WalletUiState.Success)?.cards?.firstOrNull { it.id == selectedCardId }
         val recommendationViewModel: RecommendationViewModel = viewModel(
@@ -138,7 +153,7 @@ fun CardWiseApp(
                     )
                     AppDestination.Wallet -> when (currentWalletScreen) {
                         WalletScreen.List -> CardWalletScreen(viewModel = walletViewModel, onAddCard = { walletScreen = WalletScreen.Add }, onOpenCard = { card -> selectedCardId = card.id; walletScreen = WalletScreen.Detail })
-                        WalletScreen.Add -> CardCatalogScreen(viewModel = walletViewModel, onBack = { walletScreen = WalletScreen.List })
+                        WalletScreen.Add -> CardCatalogScreen(viewModel = catalogViewModel, walletViewModel = walletViewModel, onBack = { walletScreen = WalletScreen.List })
                         WalletScreen.Detail -> CardWalletScreen(viewModel = walletViewModel, onAddCard = { walletScreen = WalletScreen.Add }, onOpenCard = { card -> selectedCardId = card.id })
                         WalletScreen.Edit -> if (selectedCard != null) CardFormScreen(viewModel = walletViewModel, existingCard = selectedCard, onDone = { walletScreen = WalletScreen.Detail }) else Text("Card not found", modifier = Modifier.padding(CardWiseSpacing.lg))
                     }
