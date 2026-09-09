@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -15,7 +14,6 @@ import com.cardwise.app.domain.rewards.RewardRule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.math.BigDecimal
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -99,15 +97,13 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("The QR payload is processed locally and is not stored.", substring = true).assertExists()
     }
 
-    @Ignore("Deferred until full UI is implemented and validated against the running APK")
     @Test fun scannedPayment_flowsThroughRecommendationToHandoff() {
         val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
         val card = Card(1L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
-        val payment = UpiPaymentRequest("merchant@upi", "CardWise Shop", BigDecimal("125.00"), "INR", "ref-123", "Order 42")
+        val payment = UpiPaymentRequest("merchant@upi", "CardWise Shop", BigDecimal("125.00"), "INR", "ref-123", "Order 42", merchantCategory = "5812")
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card)), recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))), paymentLauncher = launcher, initialPayment = payment) }
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
-        composeRule.onNodeWithTag("recommendation_category").performTextInput("dining")
         composeRule.waitUntil(timeoutMillis = 15_000) {
             try {
                 composeRule.onNodeWithTag("continue_to_upi").assertExists()
@@ -119,7 +115,7 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("Best match").assertExists()
         composeRule.onNodeWithTag("continue_to_upi").performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
-        composeRule.onNodeWithText("Continue").performClick()
+        composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(launcher.launchCount == 1)
     }
 }
@@ -137,10 +133,19 @@ class PaymentHandoffDialogTest {
         assert(launcher.launchCount == 0)
     }
 
+    @Test fun confirmation_showsPaymentSummary() {
+        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
+        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }
+        composeRule.onNodeWithText("CardWise Shop").assertExists()
+        composeRule.onNodeWithText("merchant@upi").assertExists()
+        composeRule.onNodeWithText("₹125.00").assertExists()
+        composeRule.onNodeWithText("No PIN or banking credentials are shared by CardWise.").assertExists()
+    }
+
     @Test fun continue_launchesExactlyOnce() {
         val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
         composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }
-        composeRule.onNodeWithText("Continue").performClick()
+        composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(launcher.launchCount == 1)
     }
 
@@ -148,7 +153,7 @@ class PaymentHandoffDialogTest {
         val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
         var result: UpiPaymentLaunchResult? = null
         composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }
-        composeRule.onNodeWithText("Continue").performClick()
+        composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(result == UpiPaymentLaunchResult.Launched)
     }
 
@@ -156,7 +161,7 @@ class PaymentHandoffDialogTest {
         val launcher = RecordingLauncher(UpiPaymentLaunchResult.NoUpiApp)
         var result: UpiPaymentLaunchResult? = null
         composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }
-        composeRule.onNodeWithText("Continue").performClick()
+        composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(result == UpiPaymentLaunchResult.NoUpiApp)
     }
 }
