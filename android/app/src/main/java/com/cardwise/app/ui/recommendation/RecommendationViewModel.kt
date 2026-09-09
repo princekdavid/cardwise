@@ -84,10 +84,10 @@ class RecommendationViewModel(
             return
         }
         runCatching {
-            RecommendationEngine.recommend(PaymentContext(category = category, amount = amount), latestCards, latestRules)
-        }.onSuccess { recommendations ->
-            _uiState.value = if (recommendations.isEmpty()) RecommendationUiState.Empty(input)
-            else RecommendationUiState.Ready(input, recommendations)
+            RecommendationEngine.evaluate(PaymentContext(category = category, amount = amount), latestCards, latestRules)
+        }.onSuccess { evaluation ->
+            _uiState.value = if (evaluation.recommendations.isEmpty()) RecommendationUiState.Empty(input)
+            else RecommendationUiState.Ready(input, evaluation.recommendations, evaluation.trace)
         }.onFailure { error ->
             _uiState.value = RecommendationUiState.Error(input, error.message ?: "We couldn't calculate a recommendation.")
         }
