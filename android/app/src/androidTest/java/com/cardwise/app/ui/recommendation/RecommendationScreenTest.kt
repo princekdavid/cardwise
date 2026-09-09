@@ -39,11 +39,11 @@ class RecommendationScreenTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("Recommended for this payment").fetchSemanticsNodes().isNotEmpty() &&
                 composeRule.onAllNodesWithText("Dining Card").fetchSemanticsNodes().isNotEmpty() &&
-                composeRule.onAllNodesWithText("₹50.00").fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodesWithText("₹50.00 expected reward").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Recommended for this payment").assertExists()
         composeRule.onNodeWithText("Dining Card").assertExists()
-        composeRule.onNodeWithText("₹50.00").assertExists()
+        composeRule.onNodeWithText("₹50.00 expected reward").assertExists()
     }
 }
 
