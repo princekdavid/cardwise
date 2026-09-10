@@ -76,4 +76,12 @@ jobs:
           disable-animations: true
           disable-linux-hw-accel: false
           script: |
-            gradle connectedDebugAndroidTest --no-daemon > instrumentation.log 2>&1 || status=$?; status=${status:-0}; cat instrumentation.log; if grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log; then echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; fi; exit "$status"
+            gradle connectedDebugAndroidTest --no-daemon > instrumentation.log 2>&1 || status=$?; status=${status:-0}; cat instrumentation.log; if grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log; then echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; fi; mkdir -p ../cardwise-ui-evidence; adb shell 'ls -la /sdcard/Android/data/com.cardwise.app/files/cardwise-evidence'; adb pull /sdcard/Android/data/com.cardwise.app/files/cardwise-evidence ../cardwise-ui-evidence/; test -f ../cardwise-ui-evidence/01-recommendation.png; test -f ../cardwise-ui-evidence/02-payment-handoff.png; test -f ../cardwise-ui-evidence/03-after-handoff-return.png; exit "$status"
+      - name: Publish UI screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cardwise-ui-screenshot-evidence
+          path: cardwise-ui-evidence/
+          if-no-files-found: error
+          retention-days: 14
