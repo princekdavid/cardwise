@@ -72,6 +72,7 @@ import com.cardwise.app.ui.wallet.CardWalletViewModel
 import com.cardwise.app.ui.wallet.CardWalletViewModelFactory
 import com.cardwise.app.ui.wallet.WalletUiState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 private enum class WalletScreen { List, Add, Detail, Edit }
 
