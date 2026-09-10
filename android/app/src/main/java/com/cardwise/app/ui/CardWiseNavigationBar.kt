@@ -23,7 +23,8 @@ fun CardWiseNavigationBar(
             AppDestination.Wallet,
             AppDestination.Scan,
             AppDestination.Offers,
-            AppDestination.Insights
+            AppDestination.Insights,
+            AppDestination.Vault
         ).forEach { item ->
             NavigationBarItem(
                 selected = destination == item,
