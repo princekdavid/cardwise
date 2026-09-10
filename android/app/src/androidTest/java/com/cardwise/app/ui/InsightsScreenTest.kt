@@ -1,9 +1,11 @@
 package com.cardwise.app.ui
 
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.PaymentHistoryEntry
 import com.cardwise.app.domain.model.PaymentHistoryOutcome
@@ -33,6 +35,8 @@ class InsightsScreenTest {
         composeRule.onNodeWithTag("insights_payment_count").assertExists()
         composeRule.onNodeWithText("DINING").assertExists()
         composeRule.onNodeWithText("TRAVEL").assertExists()
+        composeRule.onNodeWithTag("insights_content")
+            .performScrollToNode(hasTestTag("insights_milestones"))
         composeRule.onNodeWithText("₹100 rewards").assertExists()
     }
 
