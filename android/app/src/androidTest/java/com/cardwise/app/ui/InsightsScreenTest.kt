@@ -1,6 +1,6 @@
 package com.cardwise.app.ui
 
-import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -36,7 +36,7 @@ class InsightsScreenTest {
         composeRule.onNodeWithText("DINING").assertExists()
         composeRule.onNodeWithText("TRAVEL").assertExists()
         composeRule.onNodeWithTag("insights_content")
-            .performScrollToNode(hasTestTag("insights_milestones"))
+            .performScrollToNode(hasText("₹100 rewards"))
         composeRule.onNodeWithText("₹100 rewards").assertExists()
     }
 
