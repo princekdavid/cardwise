@@ -9,12 +9,14 @@ class AppDestinationTest {
     fun destinations_haveExpectedOrder() {
         assertEquals(
             listOf(
+                AppDestination.Onboarding,
                 AppDestination.Cockpit,
                 AppDestination.Wallet,
                 AppDestination.Scan,
                 AppDestination.Reasoning,
                 AppDestination.Offers,
                 AppDestination.Insights,
+                AppDestination.Vault,
                 AppDestination.Recommendation
             ),
             AppDestination.entries
@@ -23,12 +25,14 @@ class AppDestinationTest {
 
     @Test
     fun destinations_haveUserFacingLabels() {
+        assertEquals("Onboarding", AppDestination.Onboarding.label)
         assertEquals("Cockpit", AppDestination.Cockpit.label)
         assertEquals("Cards", AppDestination.Wallet.label)
         assertEquals("Scan", AppDestination.Scan.label)
         assertEquals("Reasoning", AppDestination.Reasoning.label)
         assertEquals("Offers", AppDestination.Offers.label)
         assertEquals("Insights", AppDestination.Insights.label)
+        assertEquals("Privacy", AppDestination.Vault.label)
         assertEquals("Best Way", AppDestination.Recommendation.label)
     }
 
@@ -39,6 +43,8 @@ class AppDestinationTest {
         assertTrue(AppDestination.Scan.showInBottomBar)
         assertTrue(AppDestination.Offers.showInBottomBar)
         assertTrue(AppDestination.Insights.showInBottomBar)
+        assertTrue(AppDestination.Vault.showInBottomBar)
+        assertTrue(!AppDestination.Onboarding.showInBottomBar)
         assertTrue(!AppDestination.Reasoning.showInBottomBar)
         assertTrue(!AppDestination.Recommendation.showInBottomBar)
     }
