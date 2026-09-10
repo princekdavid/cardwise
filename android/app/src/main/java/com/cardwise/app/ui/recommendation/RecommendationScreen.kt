@@ -53,6 +53,7 @@ fun RecommendationScreen(
     viewModel: RecommendationViewModel,
     payment: UpiPaymentRequest? = null,
     onContinueToPayment: (() -> Unit)? = null,
+    onPaymentInitiated: ((CardRecommendation) -> Unit)? = null,
     onRescan: (() -> Unit)? = null,
     onAdjustDetails: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -76,7 +77,7 @@ fun RecommendationScreen(
                 item { WinnerSpotlight(winner) }
                 item { Text("${ready.recommendations.size} ranked match${if (ready.recommendations.size == 1) "" else "es"}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
                 items(ready.recommendations.drop(1), key = { it.card.id }, contentType = { "recommendation_alternative" }) { RecommendationCard(it, winner) }
-                item { RecommendationActions(payment, onContinueToPayment, onRescan, onAdjustDetails) }
+                item { RecommendationActions(payment, winner, onContinueToPayment, onPaymentInitiated, onRescan, onAdjustDetails) }
             }
             is RecommendationUiState.Empty -> item { EmptyState((state as RecommendationUiState.Empty).input, onRescan, onAdjustDetails) }
             is RecommendationUiState.Error -> item { ErrorState((state as RecommendationUiState.Error).message, viewModel::retry) }
@@ -153,9 +154,9 @@ fun RecommendationScreen(
     }
 }
 
-@Composable private fun RecommendationActions(payment: UpiPaymentRequest?, onContinueToPayment: (() -> Unit)?, onRescan: (() -> Unit)?, onAdjustDetails: (() -> Unit)?) {
+@Composable private fun RecommendationActions(payment: UpiPaymentRequest?, winner: CardRecommendation, onContinueToPayment: (() -> Unit)?, onPaymentInitiated: ((CardRecommendation) -> Unit)?, onRescan: (() -> Unit)?, onAdjustDetails: (() -> Unit)?) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.xs)) {
-        if (payment != null && onContinueToPayment != null) Button(onClick = onContinueToPayment, modifier = Modifier.fillMaxWidth().testTag("continue_to_upi")) { Text("Continue to UPI app") }
+        if (payment != null && onContinueToPayment != null) Button(onClick = { onPaymentInitiated?.invoke(winner); onContinueToPayment() }, modifier = Modifier.fillMaxWidth().testTag("continue_to_upi")) { Text("Continue to UPI app") }
         if (payment != null && onRescan != null) OutlinedButton(onClick = onRescan, modifier = Modifier.fillMaxWidth().testTag("recommendation_rescan")) { Text("Scan another QR") }
         if (onAdjustDetails != null) TextButton(onClick = onAdjustDetails, modifier = Modifier.fillMaxWidth().testTag("recommendation_adjust")) { Text("Adjust amount or category") }
     }
