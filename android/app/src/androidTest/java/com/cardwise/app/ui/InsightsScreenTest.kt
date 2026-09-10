@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.PaymentHistoryEntry
 import com.cardwise.app.domain.model.PaymentHistoryOutcome
+import com.cardwise.app.domain.repository.OnboardingRepository
 import com.cardwise.app.domain.repository.PaymentHistoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,7 @@ class InsightsScreenTest {
                 entry(2, "Travel", 55.0)
             )
         )
-        composeRule.setContent { CardWiseApp(paymentHistoryRepository = history) }
+        composeRule.setContent { CardWiseApp(paymentHistoryRepository = history, onboardingRepository = CompletedOnboardingRepository()) }
         composeRule.onNodeWithText("Insights").performClick()
         composeRule.onNodeWithTag("insights_total_reward").assertExists()
         composeRule.onNodeWithText("₹115.00").assertExists()
@@ -42,7 +43,7 @@ class InsightsScreenTest {
 
     @Test
     fun insights_withoutHistory_showsEmptyState() {
-        composeRule.setContent { CardWiseApp(paymentHistoryRepository = FakePaymentHistoryRepository(emptyList())) }
+        composeRule.setContent { CardWiseApp(paymentHistoryRepository = FakePaymentHistoryRepository(emptyList()), onboardingRepository = CompletedOnboardingRepository()) }
         composeRule.onNodeWithText("Insights").performClick()
         composeRule.onNodeWithText("Build your history").assertExists()
     }
@@ -56,6 +57,12 @@ class InsightsScreenTest {
         rewardAmount = reward,
         outcome = PaymentHistoryOutcome.HANDOFF_STARTED
     )
+}
+
+private class CompletedOnboardingRepository : OnboardingRepository {
+    override fun isCompleted(): Boolean = true
+    override fun complete() = Unit
+    override fun reset() = Unit
 }
 
 private class FakePaymentHistoryRepository(initialEntries: List<PaymentHistoryEntry>) : PaymentHistoryRepository {
