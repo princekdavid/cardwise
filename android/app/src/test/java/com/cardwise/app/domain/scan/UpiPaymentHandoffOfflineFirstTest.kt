@@ -29,7 +29,9 @@ class UpiPaymentHandoffOfflineFirstTest {
             vpa = "merchant@upi",
             merchantName = "CardWise Shop",
             amount = null,
-            currency = "INR"
+            currency = "INR",
+            transactionReference = null,
+            note = null
         )
 
         assertEquals(
