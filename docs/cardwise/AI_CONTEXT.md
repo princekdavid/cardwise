@@ -9,12 +9,10 @@
 - Language/UI: Kotlin + Jetpack Compose + Material Design
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
-- Active design-integration branch: `feat/design-system-prototype-integration`
-- Current hardening branch: `feat/e2e-payment-hardening`
-- Current hardening HEAD: `3640a12e973944ce2dc3667c5bb4125a337530e7`
-- PR: #11, `feat: integrate prototype design system and key screens`
-- PR #11 is open and unmerged. Treat the active hardening branch as the implementation candidate until CI verifies it.
-- Last verified baseline before hardening: `d69b8b62664b0c5e984b182e47e6e5486970453f`, CI #507 green.
+- Active hardening branch: `feat/e2e-payment-hardening`
+- Current hardening HEAD at start of this synchronization: `6161c1c9ad05edcf9402a34bb398485bf10effca`
+- PR #11 design integration remains a separate, open/unmerged integration line; it is not the current hardening baseline.
+- Latest hardening implementation commit: `1a65bbf6a73af53f22043c839c5baed3fe0d3cab` (`test: expand critical payment handoff regression coverage`); CI verification was still pending at the last recorded check.
 
 ## Product promise
 
