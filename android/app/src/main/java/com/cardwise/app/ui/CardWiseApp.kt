@@ -20,11 +20,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -58,6 +58,7 @@ import com.cardwise.app.ui.offers.OffersScreen
 import com.cardwise.app.ui.offers.OffersViewModel
 import com.cardwise.app.ui.reasoning.ReasoningScreen
 import com.cardwise.app.ui.recommendation.RecommendationScreen
+import com.cardwise.app.ui.recommendation.RecommendationUiState
 import com.cardwise.app.ui.recommendation.RecommendationViewModel
 import com.cardwise.app.ui.recommendation.RecommendationViewModelFactory
 import com.cardwise.app.ui.scan.ScanScreen
@@ -70,6 +71,7 @@ import com.cardwise.app.ui.wallet.CardWalletScreen
 import com.cardwise.app.ui.wallet.CardWalletViewModel
 import com.cardwise.app.ui.wallet.CardWalletViewModelFactory
 import com.cardwise.app.ui.wallet.WalletUiState
+import kotlinx.coroutines.CoroutineScope
 
 private enum class WalletScreen { List, Add, Detail, Edit }
 
@@ -87,6 +89,7 @@ fun CardWiseApp(
     CardWiseTheme(darkTheme = darkTheme) {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
+        val coroutineScope = rememberCoroutineScope()
         val application = context.applicationContext as CardWiseApplication
         val resolvedRepository = repository ?: application.container.cardRepository
         val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) application.container.rewardRuleRepository else null
@@ -170,27 +173,10 @@ fun CardWiseApp(
                         payment = pendingPayment,
                         onContinueToPayment = pendingPayment?.let { { requestHandoff(it) } },
                         onPaymentInitiated = { recommendation ->
-                            val amount = recommendationViewModel.uiState.value.let { state ->
-                                when (state) {
-                                    is com.cardwise.app.ui.recommendation.RecommendationUiState.Ready -> state.input.amount.toDoubleOrNull()
-                                    else -> null
-                                }
-                            }
-                            if (amount != null) {
-                                kotlinx.coroutines.MainScope().launch {
-                                    resolvedPaymentHistoryRepository.record(
-                                        PaymentHistoryEntry(
-                                            occurredAtEpochMillis = System.currentTimeMillis(),
-                                            amount = amount,
-                                            category = recommendationViewModel.uiState.value.let { state -> (state as? com.cardwise.app.ui.recommendation.RecommendationUiState.Ready)?.input?.category ?: "Other" },
-                                            cardId = recommendation.card.id,
-                                            rewardAmount = recommendation.reward.estimatedReward,
-                                            outcome = PaymentHistoryOutcome.HANDOFF_STARTED,
-                                            id = 0L
-                                        )
-                                    )
-                                }
-                            }
+                            val ready = recommendationViewModel.uiState.value as? RecommendationUiState.Ready
+                            val amount = ready?.input?.amount?.toDoubleOrNull()
+                            val category = ready?.input?.category?.trim().orEmpty().ifBlank { "Other" }
+                            if (amount != null) coroutineScope.recordHistory(resolvedPaymentHistoryRepository, amount, category, recommendation.card.id, recommendation.reward.estimatedReward)
                         },
                         onRescan = pendingPayment?.let { { destination = AppDestination.Scan } },
                         onAdjustDetails = { destination = AppDestination.Cockpit }
@@ -216,5 +202,27 @@ fun CardWiseApp(
                 }
             })
         }
+    }
+}
+
+private fun CoroutineScope.recordHistory(
+    repository: PaymentHistoryRepository,
+    amount: Double,
+    category: String,
+    cardId: Long,
+    rewardAmount: Double
+) {
+    launch {
+        repository.record(
+            PaymentHistoryEntry(
+                id = 0L,
+                occurredAtEpochMillis = System.currentTimeMillis(),
+                amount = amount,
+                category = category,
+                cardId = cardId,
+                rewardAmount = rewardAmount,
+                outcome = PaymentHistoryOutcome.HANDOFF_STARTED
+            )
+        )
     }
 }
