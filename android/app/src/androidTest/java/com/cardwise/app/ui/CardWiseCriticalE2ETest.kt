@@ -35,15 +35,7 @@ class CardWiseCriticalE2ETest {
         val launcher = E2ERecordingLauncher(UpiPaymentLaunchResult.Launched)
         val history = E2EPaymentHistoryRepository()
         val card = Card(101L, "CardWise Bank", "Everyday Rewards", "1234", CardNetwork.VISA)
-        val payment = UpiPaymentRequest(
-            vpa = "merchant@upi",
-            merchantName = "CardWise Shop",
-            amount = BigDecimal("125.00"),
-            currency = "INR",
-            transactionReference = "ref-e2e",
-            note = "Order 42",
-            merchantCategory = "5812"
-        )
+        val payment = payment()
 
         composeRule.setContent {
             CardWiseApp(
@@ -56,19 +48,10 @@ class CardWiseCriticalE2ETest {
             )
         }
 
-        composeRule.waitUntil(timeoutMillis = 15_000) {
-            try {
-                composeRule.onNodeWithTag("recommendation_winner").assertExists()
-                true
-            } catch (_: AssertionError) {
-                false
-            }
-        }
+        waitForRecommendation()
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
-        composeRule.onNodeWithTag("recommendation_content").performScrollToNode(hasTestTag("continue_to_upi"))
-        composeRule.onNodeWithTag("continue_to_upi").performClick()
-        composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
+        openHandoffDialog()
         composeRule.onNodeWithText("Choose UPI app").performClick()
 
         assertEquals(1, launcher.launchCount)
@@ -79,6 +62,84 @@ class CardWiseCriticalE2ETest {
         assertEquals(card.id, entry.cardId)
         assertEquals(6.25, entry.rewardAmount, 0.001)
     }
+
+    @Test
+    fun scannedPayment_cancelHandoff_doesNotLaunchOrRecordHistory() {
+        val launcher = E2ERecordingLauncher(UpiPaymentLaunchResult.Launched)
+        val history = E2EPaymentHistoryRepository()
+        val card = Card(102L, "CardWise Bank", "Everyday Rewards", "5678", CardNetwork.VISA)
+
+        composeRule.setContent {
+            CardWiseApp(
+                repository = E2ECardRepository(listOf(card)),
+                recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))),
+                paymentLauncher = launcher,
+                paymentHistoryRepository = history,
+                initialPayment = payment(),
+                onboardingRepository = E2ECompletedOnboardingRepository()
+            )
+        }
+
+        waitForRecommendation()
+        openHandoffDialog()
+        composeRule.onNodeWithText("Cancel").performClick()
+        composeRule.onNodeWithText("Continue to your UPI app?").assertDoesNotExist()
+
+        assertEquals(0, launcher.launchCount)
+        assertTrue(history.entries.value.isEmpty())
+    }
+
+    @Test
+    fun scannedPayment_noUpiApp_doesNotRecordPaymentHistory() {
+        val launcher = E2ERecordingLauncher(UpiPaymentLaunchResult.NoUpiApp)
+        val history = E2EPaymentHistoryRepository()
+        val card = Card(103L, "CardWise Bank", "Everyday Rewards", "9012", CardNetwork.VISA)
+
+        composeRule.setContent {
+            CardWiseApp(
+                repository = E2ECardRepository(listOf(card)),
+                recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))),
+                paymentLauncher = launcher,
+                paymentHistoryRepository = history,
+                initialPayment = payment(),
+                onboardingRepository = E2ECompletedOnboardingRepository()
+            )
+        }
+
+        waitForRecommendation()
+        openHandoffDialog()
+        composeRule.onNodeWithText("Choose UPI app").performClick()
+
+        assertEquals(1, launcher.launchCount)
+        assertTrue(history.entries.value.isEmpty())
+    }
+
+    private fun waitForRecommendation() {
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            try {
+                composeRule.onNodeWithTag("recommendation_winner").assertExists()
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+    }
+
+    private fun openHandoffDialog() {
+        composeRule.onNodeWithTag("recommendation_content").performScrollToNode(hasTestTag("continue_to_upi"))
+        composeRule.onNodeWithTag("continue_to_upi").performClick()
+        composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
+    }
+
+    private fun payment() = UpiPaymentRequest(
+        vpa = "merchant@upi",
+        merchantName = "CardWise Shop",
+        amount = BigDecimal("125.00"),
+        currency = "INR",
+        transactionReference = "ref-e2e",
+        note = "Order 42",
+        merchantCategory = "5812"
+    )
 }
 
 private class E2ECardRepository(initialCards: List<Card>) : CardRepository {
