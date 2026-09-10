@@ -31,8 +31,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardwise.app.CardWiseApplication
 import com.cardwise.app.data.catalog.CuratedCardCatalogProvider
 import com.cardwise.app.data.catalog.InMemoryCardCatalogStore
+import com.cardwise.app.data.offers.CuratedOfferProvider
+import com.cardwise.app.data.offers.InMemoryOfferStore
 import com.cardwise.app.domain.catalog.CardCatalogueEngine
 import com.cardwise.app.domain.catalog.DefaultCardCatalogRepository
+import com.cardwise.app.domain.offers.DefaultOfferCatalogRepository
+import com.cardwise.app.domain.offers.OfferEngine
 import com.cardwise.app.domain.repository.CardRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
@@ -44,6 +48,7 @@ import com.cardwise.app.ui.catalog.CardCatalogViewModelFactory
 import com.cardwise.app.ui.cockpit.CockpitScreen
 import com.cardwise.app.ui.cockpit.CockpitViewModel
 import com.cardwise.app.ui.offers.OffersScreen
+import com.cardwise.app.ui.offers.OffersViewModel
 import com.cardwise.app.ui.reasoning.ReasoningScreen
 import com.cardwise.app.ui.recommendation.RecommendationScreen
 import com.cardwise.app.ui.recommendation.RecommendationViewModel
@@ -87,6 +92,14 @@ fun CardWiseApp(
                 )
             )
         }
+        val offerRepository = remember {
+            DefaultOfferCatalogRepository(
+                OfferEngine(
+                    providers = listOf(CuratedOfferProvider()),
+                    store = InMemoryOfferStore()
+                )
+            )
+        }
 
         var destination by rememberSaveable { mutableStateOf(if (initialPayment != null) AppDestination.Reasoning else AppDestination.Cockpit) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
@@ -99,6 +112,7 @@ fun CardWiseApp(
         val cockpitViewModel: CockpitViewModel = viewModel(key = "cockpit")
         val walletViewModel: CardWalletViewModel = viewModel(factory = remember(resolvedRepository) { CardWalletViewModelFactory(resolvedRepository) })
         val catalogViewModel: CardCatalogViewModel = viewModel(key = "catalog", factory = remember(catalogRepository) { CardCatalogViewModelFactory(catalogRepository) })
+        val offersViewModel: OffersViewModel = viewModel(key = "offers", factory = remember(offerRepository) { OffersViewModel.factory(offerRepository) })
         val walletState by walletViewModel.uiState.collectAsStateWithLifecycle()
         val selectedCard = (walletState as? WalletUiState.Success)?.cards?.firstOrNull { it.id == selectedCardId }
         val recommendationViewModel: RecommendationViewModel = viewModel(
@@ -162,7 +176,7 @@ fun CardWiseApp(
                         onPaymentHandoffRequested = ::requestHandoff
                     )
                     AppDestination.Reasoning -> ReasoningScreen(viewModel = recommendationViewModel, payment = pendingPayment, onComplete = { destination = AppDestination.Recommendation })
-                    AppDestination.Offers -> OffersScreen()
+                    AppDestination.Offers -> OffersScreen(viewModel = offersViewModel)
                     AppDestination.Recommendation -> RecommendationScreen(
                         viewModel = recommendationViewModel,
                         payment = pendingPayment,

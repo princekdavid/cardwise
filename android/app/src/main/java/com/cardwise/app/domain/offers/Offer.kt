@@ -2,11 +2,15 @@ package com.cardwise.app.domain.offers
 
 import com.cardwise.app.domain.resource.ResourceMetadata
 
-/** Structured merchant/card offer received from a resource provider. */
+/** Structured merchant/card promotion received from a resource provider. */
 data class Offer(
     val offerId: String,
     val merchantId: String,
-    val applicableProductIds: Set<String>,
+    val merchantName: String,
+    val title: String,
+    val description: String,
+    val category: String? = null,
+    val applicableProductIds: Set<String> = emptySet(),
     val benefit: OfferBenefit,
     val minimumSpend: Double? = null,
     val maximumBenefit: Double? = null,
