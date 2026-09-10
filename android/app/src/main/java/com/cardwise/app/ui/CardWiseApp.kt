@@ -173,12 +173,6 @@ fun CardWiseApp(
                         viewModel = recommendationViewModel,
                         payment = pendingPayment,
                         onContinueToPayment = pendingPayment?.let { { requestHandoff(it) } },
-                        onPaymentInitiated = { recommendation ->
-                            val ready = recommendationViewModel.uiState.value as? RecommendationUiState.Ready
-                            val amount = ready?.input?.amount?.toDoubleOrNull()
-                            val category = ready?.input?.category?.trim().orEmpty().ifBlank { "Other" }
-                            if (amount != null) coroutineScope.recordHistory(resolvedPaymentHistoryRepository, amount, category, recommendation.card.id, recommendation.reward.estimatedReward)
-                        },
                         onRescan = pendingPayment?.let { { destination = AppDestination.Scan } },
                         onAdjustDetails = { destination = AppDestination.Cockpit }
                     )
@@ -198,7 +192,17 @@ fun CardWiseApp(
         if (showHandoffConfirmation && payment != null && !awaitingPaymentReturn) {
             PaymentHandoffDialog(payment = payment, launcher = resolvedPaymentLauncher, onDismiss = { showHandoffConfirmation = false }, onHandoffCompleted = { result ->
                 when (result) {
-                    UpiPaymentLaunchResult.Launched -> { pendingPayment = null; awaitingPaymentReturn = true }
+                    UpiPaymentLaunchResult.Launched -> {
+                        val ready = recommendationViewModel.uiState.value as? RecommendationUiState.Ready
+                        val amount = ready?.input?.amount?.toDoubleOrNull()
+                        val category = ready?.input?.category?.trim().orEmpty().ifBlank { "Other" }
+                        val recommendation = ready?.recommendations?.firstOrNull()
+                        if (amount != null && recommendation != null) {
+                            coroutineScope.recordHistory(resolvedPaymentHistoryRepository, amount, category, recommendation.card.id, recommendation.reward.estimatedReward)
+                        }
+                        pendingPayment = null
+                        awaitingPaymentReturn = true
+                    }
                     UpiPaymentLaunchResult.NoUpiApp, UpiPaymentLaunchResult.UnsafePayment -> showHandoffConfirmation = false
                 }
             })
