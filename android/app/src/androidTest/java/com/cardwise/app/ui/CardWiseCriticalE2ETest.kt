@@ -1,6 +1,5 @@
 package com.cardwise.app.ui
 
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -58,12 +57,7 @@ class CardWiseCriticalE2ETest {
         }
 
         composeRule.waitUntil(timeoutMillis = 15_000) {
-            try {
-                composeRule.onNodeWithTag("recommendation_winner").assertExists()
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            composeRule.onNodeWithTag("recommendation_winner").isDisplayed()
         }
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
