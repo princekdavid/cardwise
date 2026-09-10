@@ -79,10 +79,7 @@ jobs:
             gradle connectedDebugAndroidTest --no-daemon > instrumentation.log 2>&1 || status=$?
             status=${status:-0}
             cat instrumentation.log
-            if grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log; then
-              echo 'ERROR: instrumentation completed without executing any Android tests.'
-              exit 1
-            fi
+            grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log && { echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; } || true
             mkdir -p ../cardwise-ui-evidence
             echo 'Collecting screenshot evidence from app-private storage via adb run-as...'
             for name in 01-recommendation 02-payment-handoff 03-after-handoff-return; do
