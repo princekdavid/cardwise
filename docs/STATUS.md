@@ -8,11 +8,13 @@ Updated: 2026-09-10
 
 Current working branch: `feat/e2e-payment-hardening`.
 
-Current HEAD: `ce85fe1158893af941fdd52a4f062aa784f356e7`.
+Current HEAD: `0355dc73a857ea1d5440ac973bc15a8b70d64b27`.
 
-Latest implementation slice: `1a65bbf6a73af53f22043c839c5baed3fe0d3cab` (`test: expand critical payment handoff regression coverage`).
+Latest UI implementation slice: `0355dc73a857ea1d5440ac973bc15a8b70d64b27` (`feat(ui): align recommendation route with CardWise prototype`), preceded by reasoning-screen prototype alignment at `2a34a28daaae7c0497434d2fff844f6af70a3fd7`.
 
-CI verification for the implementation slice was not available from the connected GitHub workflow-run endpoint at the last check; therefore the slice remains **not verified**. Documentation commits after it do not constitute implementation verification.
+The latest UI slice is **awaiting CI verification**. Do not mark it VERIFIED until the exact implementation commit has a successful GitHub Actions run.
+
+The uploaded CardWise Interactive Experience Prototype is now the visual reference for UI implementation. Its dark/light glass surfaces, emerald decision-engine treatment, physical-card identity, reasoning/synthesis motion, payment-route bridge and handoff presentation should guide all UI reconciliation. Prototype data remains visual fixture data, not production truth.
 
 PR #11 remains open and unmerged. The design-integration branch is a separate integration line and must not be treated as the current hardening baseline.
 
@@ -22,12 +24,15 @@ After every meaningful implementation change, update the affected status/project
 
 ## Current hardening work
 
-The latest hardening slice expands critical payment regression coverage for:
-- successful recommendation → explicit handoff → successful launcher result → payment-history recording;
-- explicit handoff cancellation with no launcher invocation or history record;
-- no available UPI app with no payment-history record.
+Completed in this slice:
+- Reasoning screen now follows the prototype's centered synthesis composition, animated orbital core, staged decision pipeline and local-processing disclosure.
+- Recommendation screen now follows the prototype's decision-engine hierarchy with payee summary, Optimal Choice winner treatment, net-reward emphasis, physical-card identity, payment-route bridge and calculation provenance.
+- Existing payment E2E regression coverage remains intact for successful handoff, cancellation and no-UPI-app behavior.
 
-These tests are committed but awaiting CI verification.
+Still pending:
+- CI verification of the exact latest UI implementation commit.
+- Device/APK visual validation and screenshot evidence when device tooling is available.
+- Accessibility, security/privacy, persistence and performance M7 closure.
 
 ## Product capabilities
 
@@ -43,8 +48,8 @@ These tests are committed but awaiting CI verification.
 
 ### Partial / integration / hardening
 - Critical Scan → Recommendation → Handoff → Return flow: implementation present; final beta verification pending.
+- Prototype-aligned Reasoning and Recommendation visual reconciliation: implementation present; CI/device verification pending.
 - Accessibility and font-scale validation.
-- Visual/state/lifecycle validation.
 - Security/privacy audit.
 - Performance/release validation.
 - Cockpit, My Deck and remaining visual reconciliation.
@@ -53,7 +58,7 @@ These tests are committed but awaiting CI verification.
 
 ## Next execution order
 
-1. Verify the critical payment E2E regression slice against its exact implementation commit.
+1. Verify the latest prototype-aligned UI implementation against its exact CI run.
 2. Run device/APK validation and capture evidence for Scan → Reasoning → Recommendation → Handoff → Return when device tooling is available.
 3. Close accessibility, security/privacy, persistence and performance M7 checks.
 4. Reconcile remaining UI surfaces: Cockpit → My Deck → Scan/Reasoning/Recommendation/Handoff.
