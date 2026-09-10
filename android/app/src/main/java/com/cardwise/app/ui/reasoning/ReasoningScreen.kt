@@ -18,13 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -150,7 +145,7 @@ private fun ReasoningCore(modifier: Modifier = Modifier) {
             shadowElevation = 10.dp
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CardWisePalette.Emerald, modifier = Modifier.size(24.dp))
+                Text("✦", style = MaterialTheme.typography.headlineSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
                 Text("SYNTHESIZING", style = MaterialTheme.typography.labelSmall, color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
             }
         }
@@ -183,7 +178,7 @@ private fun ReasoningStep(step: RecommendationTraceStep) {
                 color = if (step.status == RecommendationTraceStatus.CURRENT) CardWisePalette.Emerald.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surfaceContainerLow
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Check, contentDescription = "Complete", tint = CardWisePalette.Emerald, modifier = Modifier.size(14.dp))
+                    Text("✓", color = CardWisePalette.Emerald, fontWeight = FontWeight.Bold)
                 }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
