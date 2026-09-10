@@ -8,9 +8,11 @@ Updated: 2026-09-10
 
 Current working branch: `feat/e2e-payment-hardening`.
 
-Current HEAD: `1a65bbf6a73af53f22043c839c5baed3fe0d3cab`.
+Current HEAD: `ce85fe1158893af941fdd52a4f062aa784f356e7`.
 
-Current Android CI: run #540 is running for the current HEAD; this change is **not yet verified**.
+Latest implementation slice: `1a65bbf6a73af53f22043c839c5baed3fe0d3cab` (`test: expand critical payment handoff regression coverage`).
+
+CI verification for the implementation slice was not available from the connected GitHub workflow-run endpoint at the last check; therefore the slice remains **not verified**. Documentation commits after it do not constitute implementation verification.
 
 PR #11 remains open and unmerged. The design-integration branch is a separate integration line and must not be treated as the current hardening baseline.
 
@@ -51,8 +53,8 @@ These tests are committed but awaiting CI verification.
 
 ## Next execution order
 
-1. Finish critical payment E2E regression coverage and verify CI.
-2. Run device/APK validation and capture evidence for Scan → Reasoning → Recommendation → Handoff → Return.
+1. Verify the critical payment E2E regression slice against its exact implementation commit.
+2. Run device/APK validation and capture evidence for Scan → Reasoning → Recommendation → Handoff → Return when device tooling is available.
 3. Close accessibility, security/privacy, persistence and performance M7 checks.
 4. Reconcile remaining UI surfaces: Cockpit → My Deck → Scan/Reasoning/Recommendation/Handoff.
 5. Complete Card Catalog provider and durable cache boundary.
