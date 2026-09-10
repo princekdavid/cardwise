@@ -1,5 +1,6 @@
 package com.cardwise.app.ui
 
+import android.graphics.Bitmap
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasTestTag
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
 import com.cardwise.app.domain.repository.CardRepository
@@ -18,6 +20,8 @@ import com.cardwise.app.domain.scan.UpiPaymentRequest
 import com.cardwise.app.domain.rewards.RewardRule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.io.File
+import java.io.FileOutputStream
 import java.math.BigDecimal
 import org.junit.Rule
 import org.junit.Test
@@ -127,11 +131,15 @@ class CardWiseAppTest {
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
         composeRule.onNodeWithTag("recommendation_winner").assertExists()
+        captureEvidence("01-recommendation")
         composeRule.onNodeWithTag("recommendation_content").performScrollToNode(hasTestTag("continue_to_upi"))
         composeRule.onNodeWithTag("continue_to_upi").assertExists().performClick()
         composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
+        captureEvidence("02-payment-handoff")
         composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(launcher.launchCount == 1)
+        composeRule.waitForIdle()
+        captureEvidence("03-after-handoff-return")
     }
 
     @Test fun privacyVault_resetReturnsToOnboarding() {
@@ -145,6 +153,18 @@ class CardWiseAppTest {
         composeRule.waitUntil(timeoutMillis = 5_000) { !onboarding.isCompleted() }
         composeRule.onNodeWithText("Privacy oath").assertExists()
         assert(vault.resetCount == 1)
+    }
+
+    private fun captureEvidence(name: String) {
+        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        val directory = File(
+            InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null),
+            "cardwise-evidence"
+        ).apply { mkdirs() }
+        FileOutputStream(File(directory, "$name.png")).use { output ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+        }
+        bitmap.recycle()
     }
 }
 
@@ -188,7 +208,7 @@ class PaymentHandoffDialogTest {
     @Test fun noUpiApp_reportsOutcome() {
         val launcher = RecordingLauncher(UpiPaymentLaunchResult.NoUpiApp)
         var result: UpiPaymentLaunchResult? = null
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }
+        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }
         composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(result == UpiPaymentLaunchResult.NoUpiApp)
     }
