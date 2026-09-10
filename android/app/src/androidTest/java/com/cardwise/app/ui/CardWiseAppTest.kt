@@ -90,7 +90,7 @@ class CardWiseAppTest {
     @Test fun activeFilter_hidesInactiveCards() {
         val active = Card(1L, "CardWise Bank", "Active Card", "1111", CardNetwork.VISA, isActive = true)
         val inactive = Card(2L, "CardWise Bank", "Paused Card", "2222", CardNetwork.MASTERCARD, isActive = false)
-        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive)), onboardingRepository = CompletedOnboardingRepository()) }
+        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive)), onboardingRepository = CompletedOnboardingRepository() }
         composeRule.onNodeWithTag("nav_wallet").performClick()
         composeRule.onNodeWithText("Active").performClick()
         composeRule.onNodeWithTag("wallet_card_1").assertExists()
@@ -136,7 +136,7 @@ class CardWiseAppTest {
 
     @Test fun privacyVault_resetReturnsToOnboarding() {
         val onboarding = CompletedOnboardingRepository()
-        val vault = FakePrivacyVaultRepository()
+        val vault = FakePrivacyVaultRepository(onboarding)
         composeRule.setContent { CardWiseApp(onboardingRepository = onboarding, privacyVaultRepository = vault) }
         composeRule.onNodeWithText("Privacy").performClick()
         composeRule.onNodeWithText("Reset all data").performClick()
@@ -215,9 +215,12 @@ private class FakeOnboardingRepository(private var completed: Boolean) : Onboard
     override fun reset() { completed = false }
 }
 
-private class FakePrivacyVaultRepository : com.cardwise.app.domain.repository.PrivacyVaultRepository {
+private class FakePrivacyVaultRepository(private val onboardingRepository: OnboardingRepository) : com.cardwise.app.domain.repository.PrivacyVaultRepository {
     var resetCount = 0
-    override suspend fun resetAllData() { resetCount += 1 }
+    override suspend fun resetAllData() {
+        resetCount += 1
+        onboardingRepository.reset()
+    }
 }
 
 private class RecordingLauncher(private val result: UpiPaymentLaunchResult) : UpiPaymentLauncher {
