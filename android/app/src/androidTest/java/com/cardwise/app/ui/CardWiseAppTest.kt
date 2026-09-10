@@ -208,7 +208,7 @@ class PaymentHandoffDialogTest {
     @Test fun noUpiApp_reportsOutcome() {
         val launcher = RecordingLauncher(UpiPaymentLaunchResult.NoUpiApp)
         var result: UpiPaymentLaunchResult? = null
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }
+        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }
         composeRule.onNodeWithText("Choose UPI app").performClick()
         assert(result == UpiPaymentLaunchResult.NoUpiApp)
     }
