@@ -22,7 +22,7 @@ class OfferEngineTest {
     fun percentageBenefit_isCappedAndMinimumSpendIsEnforced() = runBlocking {
         val offer = offer(OfferBenefit.PercentageCashback(10.0), minimumSpend = 1000.0, maximumBenefit = 150.0)
         val engine = engine(offer)
-        engine.loadCached()
+        engine.refresh()
 
         val below = engine.evaluate(OfferEvaluationContext(amount = 999.0, now = Instant.parse("2026-09-10T00:00:00Z")))
         val eligible = engine.evaluate(OfferEvaluationContext(amount = 2000.0, now = Instant.parse("2026-09-10T00:00:00Z")))
@@ -35,7 +35,7 @@ class OfferEngineTest {
     fun expiredOffer_isNotEligible() = runBlocking {
         val expired = offer(OfferBenefit.FlatCashback(100.0), expiresAt = Instant.parse("2026-09-01T00:00:00Z"))
         val engine = engine(expired)
-        engine.loadCached()
+        engine.refresh()
 
         assertTrue(engine.evaluate(OfferEvaluationContext(amount = 5000.0, now = Instant.parse("2026-09-10T00:00:00Z"))).isEmpty())
         assertEquals("Offer has expired.", engine.evaluateAll(OfferEvaluationContext(amount = 5000.0, now = Instant.parse("2026-09-10T00:00:00Z"))).single().reason)
@@ -46,7 +46,7 @@ class OfferEngineTest {
         val low = offer(OfferBenefit.FlatCashback(50.0), id = "b")
         val high = offer(OfferBenefit.FlatCashback(100.0), id = "a")
         val engine = engine(low, high)
-        engine.loadCached()
+        engine.refresh()
 
         val result = engine.evaluate(OfferEvaluationContext(amount = 1000.0, now = Instant.parse("2026-09-10T00:00:00Z")))
 
