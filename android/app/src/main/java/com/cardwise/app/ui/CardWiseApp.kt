@@ -42,7 +42,9 @@ import com.cardwise.app.domain.model.PaymentHistoryOutcome
 import com.cardwise.app.domain.offers.DefaultOfferCatalogRepository
 import com.cardwise.app.domain.offers.OfferEngine
 import com.cardwise.app.domain.repository.CardRepository
+import com.cardwise.app.domain.repository.OnboardingRepository
 import com.cardwise.app.domain.repository.PaymentHistoryRepository
+import com.cardwise.app.domain.repository.PrivacyVaultRepository
 import com.cardwise.app.domain.repository.RewardRuleRepository
 import com.cardwise.app.domain.rewards.RewardRule
 import com.cardwise.app.domain.scan.UpiPaymentRequest
@@ -56,6 +58,7 @@ import com.cardwise.app.ui.insights.InsightsScreen
 import com.cardwise.app.ui.insights.InsightsViewModel
 import com.cardwise.app.ui.offers.OffersScreen
 import com.cardwise.app.ui.offers.OffersViewModel
+import com.cardwise.app.ui.onboarding.OnboardingScreen
 import com.cardwise.app.ui.reasoning.ReasoningScreen
 import com.cardwise.app.ui.recommendation.RecommendationScreen
 import com.cardwise.app.ui.recommendation.RecommendationUiState
@@ -65,6 +68,7 @@ import com.cardwise.app.ui.scan.ScanScreen
 import com.cardwise.app.ui.theme.CardWiseMotion
 import com.cardwise.app.ui.theme.CardWiseSpacing
 import com.cardwise.app.ui.theme.CardWiseTheme
+import com.cardwise.app.ui.vault.PrivacyVaultScreen
 import com.cardwise.app.ui.wallet.CardDetailScreen
 import com.cardwise.app.ui.wallet.CardFormScreen
 import com.cardwise.app.ui.wallet.CardWalletScreen
@@ -82,6 +86,8 @@ fun CardWiseApp(
     repository: CardRepository? = null,
     rewardRuleRepository: RewardRuleRepository? = null,
     paymentHistoryRepository: PaymentHistoryRepository? = null,
+    onboardingRepository: OnboardingRepository? = null,
+    privacyVaultRepository: PrivacyVaultRepository? = null,
     recommendationRules: Map<Long, List<RewardRule>> = emptyMap(),
     paymentLauncher: UpiPaymentLauncher? = null,
     initialPayment: UpiPaymentRequest? = null
@@ -95,12 +101,15 @@ fun CardWiseApp(
         val resolvedRepository = repository ?: application.container.cardRepository
         val resolvedRewardRuleRepository = rewardRuleRepository ?: if (recommendationRules.isEmpty()) application.container.rewardRuleRepository else null
         val resolvedPaymentHistoryRepository = paymentHistoryRepository ?: application.container.paymentHistoryRepository
+        val resolvedOnboardingRepository = onboardingRepository ?: application.container.onboardingRepository
+        val resolvedPrivacyVaultRepository = privacyVaultRepository ?: application.container.privacyVaultRepository
         val resolvedPaymentLauncher = paymentLauncher ?: remember(context.applicationContext) { AndroidUpiPaymentLauncher(context.applicationContext) }
         val snackbarHostState = remember { SnackbarHostState() }
         val catalogRepository = remember { DefaultCardCatalogRepository(CardCatalogueEngine(providers = listOf(CuratedCardCatalogProvider()), store = InMemoryCardCatalogStore())) }
         val offerRepository = remember { DefaultOfferCatalogRepository(OfferEngine(providers = listOf(CuratedOfferProvider()), store = InMemoryOfferStore())) }
 
-        var destination by rememberSaveable { mutableStateOf(if (initialPayment != null) AppDestination.Reasoning else AppDestination.Cockpit) }
+        var onboardingCompleted by remember { mutableStateOf(resolvedOnboardingRepository.isCompleted()) }
+        var destination by rememberSaveable { mutableStateOf(if (initialPayment != null) AppDestination.Reasoning else if (onboardingCompleted) AppDestination.Cockpit else AppDestination.Onboarding) }
         var walletScreen by rememberSaveable { mutableStateOf(WalletScreen.List) }
         var selectedCardId by rememberSaveable { mutableStateOf<Long?>(null) }
         var pendingPayment by remember { mutableStateOf(initialPayment) }
@@ -144,7 +153,7 @@ fun CardWiseApp(
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
-            bottomBar = { if (destination.showInBottomBar && walletScreen == WalletScreen.List) CardWiseNavigationBar(destination = destination, onDestinationSelected = { destination = it }) }
+            bottomBar = { if (onboardingCompleted && destination.showInBottomBar && walletScreen == WalletScreen.List) CardWiseNavigationBar(destination = destination, onDestinationSelected = { destination = it }) }
         ) { paddingValues ->
             AnimatedContent(
                 targetState = destination to walletScreen,
@@ -153,6 +162,13 @@ fun CardWiseApp(
                 label = "cardwise_screen_transition"
             ) { (currentDestination, currentWalletScreen) ->
                 when (currentDestination) {
+                    AppDestination.Onboarding -> OnboardingScreen(
+                        onContinue = {
+                            resolvedOnboardingRepository.complete()
+                            onboardingCompleted = true
+                            destination = AppDestination.Cockpit
+                        }
+                    )
                     AppDestination.Cockpit -> CockpitScreen(
                         cards = (walletState as? WalletUiState.Success)?.cards.orEmpty(), viewModel = cockpitViewModel,
                         onScan = { destination = AppDestination.Scan },
@@ -169,6 +185,13 @@ fun CardWiseApp(
                     AppDestination.Reasoning -> ReasoningScreen(viewModel = recommendationViewModel, payment = pendingPayment, onComplete = { destination = AppDestination.Recommendation })
                     AppDestination.Offers -> OffersScreen(viewModel = offersViewModel)
                     AppDestination.Insights -> InsightsScreen(viewModel = insightsViewModel)
+                    AppDestination.Vault -> PrivacyVaultScreen(vaultRepository = resolvedPrivacyVaultRepository, coroutineScope = coroutineScope, onResetComplete = {
+                        onboardingCompleted = false
+                        destination = AppDestination.Onboarding
+                        walletScreen = WalletScreen.List
+                        selectedCardId = null
+                        pendingPayment = null
+                    })
                     AppDestination.Recommendation -> RecommendationScreen(
                         viewModel = recommendationViewModel,
                         payment = pendingPayment,
