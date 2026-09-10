@@ -14,6 +14,7 @@ class AppDestinationTest {
                 AppDestination.Scan,
                 AppDestination.Reasoning,
                 AppDestination.Offers,
+                AppDestination.Insights,
                 AppDestination.Recommendation
             ),
             AppDestination.entries
@@ -27,6 +28,7 @@ class AppDestinationTest {
         assertEquals("Scan", AppDestination.Scan.label)
         assertEquals("Reasoning", AppDestination.Reasoning.label)
         assertEquals("Offers", AppDestination.Offers.label)
+        assertEquals("Insights", AppDestination.Insights.label)
         assertEquals("Best Way", AppDestination.Recommendation.label)
     }
 
@@ -36,6 +38,7 @@ class AppDestinationTest {
         assertTrue(AppDestination.Wallet.showInBottomBar)
         assertTrue(AppDestination.Scan.showInBottomBar)
         assertTrue(AppDestination.Offers.showInBottomBar)
+        assertTrue(AppDestination.Insights.showInBottomBar)
         assertTrue(!AppDestination.Reasoning.showInBottomBar)
         assertTrue(!AppDestination.Recommendation.showInBottomBar)
     }
