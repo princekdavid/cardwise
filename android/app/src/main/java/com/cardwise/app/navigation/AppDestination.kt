@@ -7,5 +7,6 @@ enum class AppDestination(val label: String, val showInBottomBar: Boolean = true
     Reasoning("Reasoning", showInBottomBar = false),
     Offers("Offers"),
     Insights("Insights"),
+    Vault("Privacy"),
     Recommendation("Best Way", showInBottomBar = false)
 }
