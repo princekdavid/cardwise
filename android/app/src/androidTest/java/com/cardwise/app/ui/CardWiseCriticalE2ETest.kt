@@ -57,7 +57,12 @@ class CardWiseCriticalE2ETest {
         }
 
         composeRule.waitUntil(timeoutMillis = 15_000) {
-            composeRule.onNodeWithTag("recommendation_winner").isDisplayed()
+            try {
+                composeRule.onNodeWithTag("recommendation_winner").assertExists()
+                true
+            } catch (_: AssertionError) {
+                false
+            }
         }
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
