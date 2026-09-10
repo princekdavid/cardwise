@@ -10,9 +10,9 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active hardening branch: `feat/e2e-payment-hardening`
-- Current hardening HEAD at start of this synchronization: `6161c1c9ad05edcf9402a34bb398485bf10effca`
+- Current hardening HEAD: `2d93dcc61dc94da50c4096ce4e69a2cd53095ecb` (status/documentation sync commit; the preceding UI implementation commit is `0355dc73a857ea1d5440ac973bc15a8b70d64b27`).
+- Latest UI implementation commit: `0355dc73a857ea1d5440ac973bc15a8b70d64b27` (`feat(ui): align recommendation route with CardWise prototype`); CI verification is pending.
 - PR #11 design integration remains a separate, open/unmerged integration line; it is not the current hardening baseline.
-- Latest hardening implementation commit: `1a65bbf6a73af53f22043c839c5baed3fe0d3cab` (`test: expand critical payment handoff regression coverage`); CI verification was still pending at the last recorded check.
 
 ## Product promise
 
@@ -38,6 +38,12 @@ Read these in order for a new session:
 4. Historical product/architecture/UX/roadmap documents.
 
 When sources conflict, record the discrepancy and resolve it explicitly; never silently guess.
+
+## Design source
+
+The uploaded `CardWise Interactive Experience Prototype.html` is the active visual reference for UI reconciliation. Use its established visual language rather than inventing a parallel UI system: dark/light ambient surfaces, glass cards, emerald decision-engine accents, compact uppercase/monospace metadata, physical-card identity, staged reasoning/synthesis motion, payment-route bridge and explicit handoff presentation.
+
+Prototype values, merchant names, provider names and reward figures are visual fixture data only. They must not be promoted to production truth without provider/engine provenance.
 
 ## Protected constraints
 
@@ -67,20 +73,26 @@ Implemented:
 - trace distinguishes matched/no-match outcomes;
 - `RecommendationUiState.Ready` carries the trace;
 - scanned payments now route Scan → Reasoning → Recommendation;
-- Reasoning UI progressively reveals actual trace steps with short presentation-only motion;
+- Reasoning UI progressively reveals actual trace steps with presentation-only motion;
+- current UI follows the uploaded prototype's centered synthesis composition, animated orbital core and decision-pipeline treatment;
 - loading, empty and error states do not fabricate latency, provenance or AI claims.
 
-Remaining follow-up: reconcile the visual reasoning core/current-step treatment and verify the complete payment journey in instrumentation.
+Remaining follow-up: verify the visual reasoning treatment in instrumentation/device validation.
 
 ### Recommendation
-Implemented and CI-verified on the preceding baseline:
+Implemented:
 - deterministic winner recommendation;
+- prototype-aligned decision-engine hierarchy and payee summary;
 - physical-card winner spotlight treatment;
+- optimal-choice/net-reward emphasis;
+- payment-route bridge between the selected card and UPI intent handoff;
 - transparent benefit math/provenance including eligible spend, rate and caps;
 - deterministic “Why not this card?” explanations for alternatives;
 - Rescan and Adjust amount/category recovery actions;
 - Continue to UPI handoff;
 - instrumentation stabilization for animated reward content.
+
+Current follow-up: CI and device/APK visual verification of the prototype-aligned slice.
 
 ### Card Catalog
 Implemented:
@@ -132,12 +144,13 @@ For every screen implement the user capability, reference visual language, state
 ## Current hardening queue
 
 NOW:
-1. Critical payment E2E instrumentation: scanned payment context → Reasoning → Recommendation → Handoff → successful UPI launcher → payment history/Insights update.
-2. Offline/network resilience and explicit provider degradation behavior.
-3. Accessibility, semantic coverage and font-scale validation.
-4. Visual/state hardening across loading/error/empty, dark/light themes and lifecycle return.
-5. Security/privacy audit of local data, logs and external payment intents.
-6. Performance and release validation.
+1. Verify the prototype-aligned Recommendation/Reasoning UI implementation with exact GitHub Actions CI.
+2. Device/APK validation and screenshot evidence for Scan → Reasoning → Recommendation → Handoff → Return when device tooling is available.
+3. Offline/network resilience and explicit provider degradation behavior.
+4. Accessibility, semantic coverage and font-scale validation.
+5. Visual/state hardening across loading/error/empty, dark/light themes and lifecycle return.
+6. Security/privacy audit of local data, logs and external payment intents.
+7. Performance and release validation.
 
 NEXT:
 - Replace transitional catalog/offer providers with verified external providers when sources/connections are available.
