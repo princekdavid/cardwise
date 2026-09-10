@@ -6,9 +6,9 @@ project:
   stack: Kotlin + Jetpack Compose + Material Design
   architecture: Presentation -> ViewModel/UI State -> Domain -> Repository -> Data
   promise: "Before I pay, CardWise tells me the smartest way to pay."
-  working_branch: feat/design-system-prototype-integration
-  current_head: 49bee415ea87462a4f2e368233d21585f0bf32f2
-  current_ci: "Pending CI verification for the Card Catalog slice on the current head."
+  working_branch: feat/e2e-payment-hardening
+  current_head: 72f1c3cc423f0e6ee66168e2c62245bb8ae91a96
+  current_ci: "Hardening E2E implementation was awaiting CI verification at the last recorded check; documentation synchronization commits are not evidence of implementation verification."
   design_plan: docs/cardwise/UI_BACKEND_PLAN.md
   design_source: docs/cardwise/DESIGN_SOURCE.md
 
@@ -83,24 +83,25 @@ flows:
 verification:
   historical_milestones: {M0: VERIFIED, M1: VERIFIED, M2: VERIFIED, M3: VERIFIED, M4: VERIFIED, M5: VERIFIED, M6: VERIFIED, M7: PARTIAL}
   last_verified_ci: {commit: e67a07db6af063a5d0297a7bf09c14b69a09b320, run: 34376876262, status: VERIFIED}
-  current_implementation_ci: {commit: 49bee415ea87462a4f2e368233d21585f0bf32f2, status: NEEDS_VERIFICATION}
+  current_implementation_ci: {commit: 1a65bbf6a73af53f22043c839c5baed3fe0d3cab, status: NEEDS_VERIFICATION, change: "Expanded critical payment handoff regression coverage."}
   catalog_unit_tests: "CardCatalogueEngineTest covers provider refresh into cache and no-provider behavior."
   deferred_test: "Scan -> Recommendation -> Handoff full UI instrumentation until UI reconciliation is complete."
 
 work_queue:
   NOW:
-    - "Run and verify CI for the Card Catalog slice."
-    - "Complete APK/manual Card Catalog validation in Obsidian Dark and Pearl Bright."
-    - "Replace the transitional local seed with verified issuer/network/partner provider(s) when a real source is available."
+    - "Verify the critical payment E2E regression coverage and its exact implementation commit in CI."
+    - "Run device/APK validation and capture evidence for Scan -> Reasoning -> Recommendation -> Handoff -> Return when device tooling is available."
+    - "Close accessibility, security/privacy, persistence and performance M7 checks."
+    - "Reconcile remaining UI surfaces: Cockpit -> My Deck -> Scan/Reasoning/Recommendation/Handoff."
     - "Move catalog caching to durable local storage before claiming process-death/offline catalog support."
-    - "Keep project memory synchronized with every meaningful implementation commit."
+    - "Keep project memory synchronized with every meaningful implementation commit and verified CI evidence."
   NEXT:
-    - "Offer Engine contract/provider boundary and Offers UI."
-    - "Insights/Milestones history contract and UI."
-    - "Privacy Vault and onboarding/privacy oath."
+    - "Complete Card Catalog provider and durable cache boundary."
+    - "Complete Offers, then Insights, then Privacy Vault/Onboarding."
+    - "Run release-candidate CI and physical-device smoke test."
   LATER: ["Merchant Intelligence Engine", "Additional reward/offer models", "Additional safe payment methods", "Release visual regression depth"]
   BLOCKED: []
-  DEFERRED: ["Full Scan -> Recommendation -> Handoff UI instrumentation until UI reconciliation is complete."]
+  DEFERRED: []
 
 maintenance:
   meaningful_change_rule: "Update affected feature/engine/screen/work-queue entries with meaningful implementation changes."
