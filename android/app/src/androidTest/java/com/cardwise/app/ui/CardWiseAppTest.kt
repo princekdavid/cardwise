@@ -91,7 +91,7 @@ class CardWiseAppTest {
         composeRule.setContent { CardWiseApp() }
         composeRule.onNodeWithText("Offers").performClick()
         composeRule.onNodeWithText("Offers").assertIsSelected()
-        composeRule.onNodeWithText("Active Offers").assertExists()
+        composeRule.onNodeWithText("Active Card Promos").assertExists()
     }
 
     @Test fun selectingScan_withoutPermission_showsPrivacyFirstCameraPrompt() {
