@@ -1,11 +1,12 @@
 package com.cardwise.app.ui
 
 import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.createComposeRule
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cardwise.app.domain.model.Card
 import com.cardwise.app.domain.model.CardNetwork
@@ -20,11 +21,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.math.BigDecimal
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class CardWiseCriticalE2ETest {
@@ -74,10 +75,10 @@ class CardWiseCriticalE2ETest {
         assertEquals(1, launcher.launchCount)
         assertTrue(history.awaitRecorded())
         val entry = history.entries.value.single()
-        assertEquals(125.0, entry.amount)
+        assertEquals(125.0, entry.amount, 0.001)
         assertEquals("dining", entry.category)
         assertEquals(card.id, entry.cardId)
-        assertEquals(6.25, entry.rewardAmount)
+        assertEquals(6.25, entry.rewardAmount, 0.001)
     }
 }
 
