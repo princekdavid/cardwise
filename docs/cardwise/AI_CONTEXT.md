@@ -10,10 +10,11 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active design-integration branch: `feat/design-system-prototype-integration`
-- Current branch HEAD at last implementation check: `c1069bb380ecea0c5300b541082a874eeaee8304`
+- Current hardening branch: `feat/e2e-payment-hardening`
+- Current hardening HEAD: `3640a12e973944ce2dc3667c5bb4125a337530e7`
 - PR: #11, `feat: integrate prototype design system and key screens`
-- PR #11 is open and unmerged. Treat the current branch HEAD as the implementation baseline.
-- CI was green on the preceding baseline; the catalog slice must be CI-verified before being marked verified.
+- PR #11 is open and unmerged. Treat the active hardening branch as the implementation candidate until CI verifies it.
+- Last verified baseline before hardening: `d69b8b62664b0c5e984b182e47e6e5486970453f`, CI #507 green.
 
 ## Product promise
 
@@ -71,7 +72,7 @@ Implemented:
 - Reasoning UI progressively reveals actual trace steps with short presentation-only motion;
 - loading, empty and error states do not fabricate latency, provenance or AI claims.
 
-Remaining design/verification follow-up is tracked for the visual reconciliation and critical-flow instrumentation.
+Remaining follow-up: reconcile the visual reasoning core/current-step treatment and verify the complete payment journey in instrumentation.
 
 ### Recommendation
 Implemented and CI-verified on the preceding baseline:
@@ -84,7 +85,7 @@ Implemented and CI-verified on the preceding baseline:
 - instrumentation stabilization for animated reward content.
 
 ### Card Catalog
-Implemented in the current development slice, pending CI verification and final APK/manual validation:
+Implemented:
 - `CardCatalogRepository` separates catalog consumers from provider/cache implementation;
 - `CardCatalogueEngine` owns provider refresh and local resource-store access;
 - `CardCatalogViewModel` owns query/filter/loading/empty/unavailable/cached-error state;
@@ -99,6 +100,30 @@ Known remaining catalog work:
 - move catalog caching from process-local memory to durable local storage for process-death/offline behavior;
 - complete provider-backed detail/terms reconciliation and APK visual validation.
 
+### Offer Engine
+Implemented:
+- provider-backed offer contract and curated transitional provider;
+- deterministic eligibility/benefit evaluation;
+- expiry and minimum-spend handling;
+- provenance/confidence metadata;
+- repository/ViewModel-backed Offers UI.
+
+### Insights / Milestones
+Implemented:
+- Room-backed payment history;
+- deterministic category/reward aggregation;
+- milestones and progress states;
+- payment history recording after successful UPI launcher result.
+
+### Privacy Vault / Onboarding
+Implemented:
+- first-run privacy oath;
+- persistent onboarding completion;
+- Privacy Vault navigation;
+- explicit destructive reset confirmation;
+- reset clears local data and returns to onboarding;
+- instrumentation coverage with isolated test fixtures.
+
 ## Finalized UI + backend direction
 
 The execution order is:
@@ -106,23 +131,20 @@ The execution order is:
 
 For every screen implement the user capability, reference visual language, state model, ViewModel/UI-state contract, domain/repository ownership, engine/provider boundaries, tests and APK/manual verification. Keep production architecture authoritative; the single-file Compose reference is not a replacement architecture.
 
-## Current work queue
+## Current hardening queue
 
 NOW:
-1. Verify the Card Catalog slice in CI and APK/manual validation.
-2. Replace the transitional local catalog seed with a verified provider when a real source/connection is available.
-3. Move catalog caching to durable local storage before claiming full offline/process-death support.
-4. Keep memory synchronized with meaningful commits.
+1. Critical payment E2E instrumentation: scanned payment context → Reasoning → Recommendation → Handoff → successful UPI launcher → payment history/Insights update.
+2. Offline/network resilience and explicit provider degradation behavior.
+3. Accessibility, semantic coverage and font-scale validation.
+4. Visual/state hardening across loading/error/empty, dark/light themes and lifecycle return.
+5. Security/privacy audit of local data, logs and external payment intents.
+6. Performance and release validation.
 
 NEXT:
-1. Offer Engine contract/provider boundary and Offers UI.
-2. Insights/Milestones history contract and UI.
-3. Privacy Vault and onboarding/privacy oath.
-
-LATER:
-- Merchant Intelligence Engine.
-- Additional reward/offer models and safe payment methods.
-- Release hardening and visual regression depth.
+- Replace transitional catalog/offer providers with verified external providers when sources/connections are available.
+- Durable provider caching and stronger process-death/offline coverage.
+- Merchant Intelligence Engine when independent merchant-resolution responsibility is justified.
 
 ## How to continue after a chat reset
 
