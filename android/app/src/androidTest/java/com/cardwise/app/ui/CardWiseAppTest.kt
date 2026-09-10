@@ -156,15 +156,19 @@ class CardWiseAppTest {
     }
 
     private fun captureEvidence(name: String) {
-        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
-        val directory = File(
-            InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null),
-            "cardwise-evidence"
-        ).apply { mkdirs() }
-        FileOutputStream(File(directory, "$name.png")).use { output ->
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val bitmap = instrumentation.uiAutomation.takeScreenshot()
+        val directory = File(context.filesDir, "cardwise-evidence").apply { mkdirs() }
+        val image = File(directory, "$name.png")
+        FileOutputStream(image).use { output ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
         }
         bitmap.recycle()
+        val process = instrumentation.uiAutomation.executeShellCommand(
+            "run-as ${context.packageName} sh -c 'mkdir -p /data/local/tmp/cardwise-evidence && cp ${image.absolutePath} /data/local/tmp/cardwise-evidence/$name.png'"
+        )
+        process.close()
     }
 }
 
