@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -178,7 +179,7 @@ private fun InputSection(
             OutlinedTextField(
                 value = input.category,
                 onValueChange = onCategoryChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("recommendation_category"),
                 label = { Text("Category") },
                 placeholder = { Text("Dining, travel, groceries…") },
                 singleLine = true
