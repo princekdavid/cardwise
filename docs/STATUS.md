@@ -1,64 +1,31 @@
 # CardWise Project Status
 
-Updated: 2026-09-08
+Updated: 2026-09-10
 
 ## Current state
 
-`main` contains the verified production foundation through Scan & Pay. The active design-integration branch reconciles the latest approved CardWise prototype/reference with the existing production Android architecture.
+`main` remains the stable production foundation through Scan & Pay. The current implementation candidate is the E2E payment-hardening branch.
 
-Current working branch: `feat/design-system-prototype-integration`.
+Current working branch: `feat/e2e-payment-hardening`.
 
-Current HEAD: `b147d65ecc187febf15ea1d426ccd4b2702b9e4a`.
+Current HEAD: `1a65bbf6a73af53f22043c839c5baed3fe0d3cab`.
 
-Current Android CI: run #378 passed for the current HEAD.
+Current Android CI: run #540 is running for the current HEAD; this change is **not yet verified**.
 
-PR #11 remains open and unmerged. Branch HEAD is the implementation source of truth.
+PR #11 remains open and unmerged. The design-integration branch is a separate integration line and must not be treated as the current hardening baseline.
 
-## Durable project memory
+## Status synchronization rule
 
-Start with:
-- `docs/cardwise/AI_CONTEXT.md`
-- `docs/cardwise/KNOWLEDGE_GRAPH.yaml`
-- `docs/cardwise/DESIGN_SOURCE.md`
-- `docs/cardwise/SCREEN_MATRIX.md`
-- `docs/cardwise/UI_BACKEND_PLAN.md`
-- `docs/cardwise/ENGINE_CATALOG.md`
+After every meaningful implementation change, update the affected status/project-memory documents. After GitHub Actions is green for the exact implementation commit, update those documents again with the verified commit/run evidence. Never mark implementation `VERIFIED` before that evidence exists. See `docs/cardwise/DEVELOPMENT_RULES.md`.
 
-## Latest design reference
+## Current hardening work
 
-The latest approved artifacts currently known are dated 2026-09-07:
-- `CardWise Interactive Experience Prototype.html`
-- `CardWise Jetpack Compose Android Application.kt.txt`
+The latest hardening slice expands critical payment regression coverage for:
+- successful recommendation → explicit handoff → successful launcher result → payment-history recording;
+- explicit handoff cancellation with no launcher invocation or history record;
+- no available UPI app with no payment-history record.
 
-They define the intended visual/interaction direction. They do **not** replace the production Android architecture or authorize hard-coded mock data.
-
-## Finalized implementation direction
-
-We will implement **UI + backend together** screen-by-screen. Each slice must define:
-- what the user capability should do;
-- reference visual requirements;
-- states and interactions;
-- ViewModel/UI-state contract;
-- domain/repository ownership;
-- engine/provider contract where justified;
-- tests and APK/manual verification.
-
-Detailed order is in `docs/cardwise/UI_BACKEND_PLAN.md`.
-
-## Planned execution order
-
-1. Shared UI primitives/design tokens.
-2. Cockpit UI + metrics/data-state boundary.
-3. My Deck/Wallet visual reconciliation + Room/repository preservation.
-4. Scan reconciliation.
-5. Reasoning screen + deterministic evaluation trace.
-6. Recommendation reconciliation.
-7. Payment Handoff reconciliation + lifecycle states.
-8. Card Catalog provider/data contract + UI.
-9. Offer Engine + Offers UI.
-10. Insights/Milestones history contract + UI.
-11. Privacy Vault + Onboarding/privacy oath.
-12. Full E2E flow and final accessibility/performance/security/release hardening.
+These tests are committed but awaiting CI verification.
 
 ## Product capabilities
 
@@ -72,17 +39,25 @@ Detailed order is in `docs/cardwise/UI_BACKEND_PLAN.md`.
 - Payment launcher seam and no-handler handling.
 - Shared theme/design tokens and navigation foundation.
 
-### Partial / integration
-- Cockpit.
-- Physical My Deck presentation.
-- Card Catalog.
-- Offers + Offer Engine.
-- Reasoning presentation.
-- Recommendation visual reconciliation.
-- Handoff visual/state reconciliation.
-- Onboarding/privacy oath.
-- Insights/Milestones.
-- Privacy Vault.
+### Partial / integration / hardening
+- Critical Scan → Recommendation → Handoff → Return flow: implementation present; final beta verification pending.
+- Accessibility and font-scale validation.
+- Visual/state/lifecycle validation.
+- Security/privacy audit.
+- Performance/release validation.
+- Cockpit, My Deck and remaining visual reconciliation.
+- Catalog provider/durable cache work.
+- Offers, Insights, Privacy Vault and Onboarding product completion.
+
+## Next execution order
+
+1. Finish critical payment E2E regression coverage and verify CI.
+2. Run device/APK validation and capture evidence for Scan → Reasoning → Recommendation → Handoff → Return.
+3. Close accessibility, security/privacy, persistence and performance M7 checks.
+4. Reconcile remaining UI surfaces: Cockpit → My Deck → Scan/Reasoning/Recommendation/Handoff.
+5. Complete Card Catalog provider and durable cache boundary.
+6. Complete Offers, then Insights, then Privacy Vault/Onboarding.
+7. Run release-candidate CI and physical-device smoke test.
 
 ## Non-negotiable rules
 
@@ -94,7 +69,3 @@ Detailed order is in `docs/cardwise/UI_BACKEND_PLAN.md`.
 - Dynamic card/offer/merchant data must be provider/engine backed.
 - Never mark a feature `VERIFIED` without evidence.
 - Prototype/reference data is visual fixture data, not production truth.
-
-## CI policy
-
-A milestone is not complete while required CI is red, blocked or unverified. Meaningful implementation changes should update the relevant project-memory documents in the same commit when practical. Trivial mechanical commits do not require semantic memory updates.
