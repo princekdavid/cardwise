@@ -24,7 +24,7 @@ class CardCatalogueEngineTest {
     fun refresh_mergesProviderProductsIntoLocalStore() = runTest {
         val product = CardProduct("test-card", "Test Bank", "Test Card", CardNetwork.VISA, CardType.CREDIT, metadata = metadata)
         val store = FakeStore<CardProduct>()
-        val provider = FakeProvider(listOf(product))
+        val provider = FakeProvider(listOf(product), metadata)
         val engine = CardCatalogueEngine(listOf(provider), store)
 
         engine.refresh()
@@ -43,7 +43,10 @@ class CardCatalogueEngineTest {
         assertTrue(store.read().isEmpty())
     }
 
-    private class FakeProvider(private val products: List<CardProduct>) : ResourceProvider<CardProduct> {
+    private class FakeProvider(
+        private val products: List<CardProduct>,
+        private val metadata: ResourceMetadata
+    ) : ResourceProvider<CardProduct> {
         override val providerId = "test-provider"
         override suspend fun fetch() = ResourceBatch(products, metadata, 1L)
     }
