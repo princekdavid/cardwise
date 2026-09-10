@@ -42,7 +42,8 @@ class RecommendationScreenTest {
                 composeRule.onAllNodesWithText("+₹50.00").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Optimal Choice", substring = true).assertExists()
-        composeRule.onNodeWithText("Dining Card").assertExists()
+        // The card name may intentionally appear in multiple prototype-aligned surfaces.
+        check(composeRule.onAllNodesWithText("Dining Card").fetchSemanticsNodes().isNotEmpty())
         composeRule.onNodeWithText("+₹50.00").assertExists()
         composeRule.onNodeWithText("Net Rewards Earned").assertExists()
         composeRule.onNodeWithText("CALCULATION PROVENANCE").assertExists()
