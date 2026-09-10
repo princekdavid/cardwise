@@ -11,7 +11,8 @@
 - Default branch: `main`
 - Active hardening branch: `feat/e2e-payment-hardening`
 - Current HEAD must be verified directly in GitHub before each work session; documentation SHAs are not verification evidence.
-- The latest checked hardening CI run built the app successfully but failed one Recommendation instrumentation assertion. Therefore the current hardening slice is **NEEDS_VERIFICATION**, not VERIFIED.
+- Latest checked CI run `34508654331` targeted `16e513d97b79cca83dd79af4f9c2e52d53b44e32`: build SUCCESS, instrumentation FAILURE with 30/31 tests passing. The failure was an obsolete Recommendation UI assertion. A follow-up test fix is now at `f1a40053be91a8b198dd372d909af6a8b5304825` and requires fresh exact-commit CI verification.
+- Current repository HEAD may be newer because status/context synchronization commits follow implementation commits; always verify it directly.
 - PR #11 design integration remains a separate, open/unmerged integration line; it is not the current hardening baseline.
 
 ## Product promise
@@ -93,7 +94,7 @@ Implemented:
 - Rescan and Adjust amount/category recovery actions;
 - Continue to UPI handoff.
 
-A previous instrumentation assertion expected obsolete pre-reconciliation copy. It has now been updated to the current prototype-aligned `Optimal Choice`, net-reward and calculation-provenance contract. The fix requires a fresh exact-commit CI pass.
+A previous instrumentation assertion expected obsolete pre-reconciliation copy. It has been updated to the current prototype-aligned `Optimal Choice`, net-reward and calculation-provenance contract. Fresh CI is required.
 
 ### Card Catalog
 Implemented:
@@ -142,9 +143,9 @@ Remaining: final product/visual/accessibility/security validation.
 ## Current hardening queue
 
 NOW:
-1. Verify the latest Recommendation instrumentation test fix with exact GitHub Actions CI; fix any remaining failures.
-2. Only after the exact implementation is green, synchronize status/context with the successful commit/run evidence.
-3. Verify whether an actual screenshot/device evidence path exists. If it does not, record the gap rather than inventing evidence and ask the user only if their action is required.
+1. Check exact CI for `f1a40053be91a8b198dd372d909af6a8b5304825` and fix any remaining failures before selecting a new feature.
+2. Synchronize status/context with exact successful CI evidence only after the exact implementation is green.
+3. Verify whether an actual screenshot/device evidence path exists. If it does not, record the gap rather than inventing evidence and ask the user only when their action is required.
 4. Close accessibility, semantic coverage and font-scale validation.
 5. Close security/privacy audit of local data, logs and external payment intents.
 6. Close persistence/offline/process-death validation.
