@@ -7,8 +7,8 @@ project:
   architecture: Presentation -> ViewModel/UI State -> Domain -> Repository -> Data
   promise: "Before I pay, CardWise tells me the smartest way to pay."
   working_branch: feat/e2e-payment-hardening
-  current_head: f1a40053be91a8b198dd372d909af6a8b5304825
-  current_ci: "Latest checked run 34508654331: build SUCCESS; instrumentation FAILURE with 30/31 tests passing. Failing RecommendationScreenTest assertion was updated in f1a40053; fresh CI verification is pending."
+  current_head: 2330b666aa7e3ea016498f9931b46ec07fabe36c
+  current_ci: "Latest checked run 34508654331 targeted 16e513d97b79cca83dd79af4f9c2e52d53b44e32: build SUCCESS; instrumentation FAILURE with 30/31 tests passing. Follow-up test fix f1a40053 was applied; fresh exact-commit CI verification is pending."
   design_plan: docs/cardwise/UI_BACKEND_PLAN.md
   design_source: docs/cardwise/DESIGN_SOURCE.md
 
@@ -45,14 +45,14 @@ features:
   F-002: {name: Rewards & Benefit Intelligence, status: VERIFIED, should_do: "Represent and calculate rewards/benefits using deterministic rules, categories, caps and thresholds."}
   F-003: {name: Recommendation, status: VERIFIED, should_do: "Given a transaction and eligible payment options, select the best expected value and explain why.", implementation: "RecommendationEngine exposes deterministic RecommendationTrace."}
   F-004: {name: QR Scan, status: VERIFIED, should_do: "Scan supported UPI QR codes, parse locally and recover safely from invalid/unsupported/repeated scans."}
-  F-005: {name: Scan & Pay, status: NEEDS_VERIFICATION, should_do: "Convert a supported scan into a recommendation and safely hand off to an external UPI app after confirmation.", note: "Core implementation and regression coverage exist; latest instrumentation run failed on a Recommendation UI assertion and must be reverified after the test fix."}
+  F-005: {name: Scan & Pay, status: NEEDS_VERIFICATION, should_do: "Convert a supported scan into a recommendation and safely hand off to an external UPI app after confirmation.", note: "Core implementation and regression coverage exist; latest checked instrumentation failed on an obsolete Recommendation UI assertion; the assertion was fixed and needs fresh CI."}
   F-006: {name: Cockpit, status: IN_PROGRESS, should_do: "Provide premium home surface with payment intelligence, deck status, useful metrics and a fast Scan action."}
   F-007: {name: My Deck / Wallet presentation, status: IN_PROGRESS, should_do: "Present enrolled physical cards as a tactile, manageable deck while preserving Room/repository behavior."}
   F-008: {name: Card Catalog, status: IN_PROGRESS, should_do: "Discover supported cards, filter/search them and add relevant cards to the deck.", implementation: "CardCatalogRepository + CardCatalogueEngine + CardCatalogViewModel; transitional local seed provider has explicit UNKNOWN provenance."}
   F-009: {name: Offers, status: PARTIAL, should_do: "Surface active relevant offers and determine whether they apply to cards, merchants and transactions."}
-  F-010: {name: Insights / Milestones, status: DESIGNED, should_do: "Explain historical savings, rewards, spend patterns and progress."}
-  F-011: {name: Privacy Vault / Settings, status: DESIGNED, should_do: "Give transparency and control over locally stored CardWise data, privacy behavior and reset."}
-  F-012: {name: Onboarding, status: DESIGNED, should_do: "Explain product promise/privacy and establish initial setup before Cockpit."}
+  F-010: {name: Insights / Milestones, status: IMPLEMENTED, should_do: "Explain historical savings, rewards, spend patterns and progress.", verification: NEEDS_VERIFICATION}
+  F-011: {name: Privacy Vault / Settings, status: IMPLEMENTED, should_do: "Give transparency and control over locally stored CardWise data, privacy behavior and reset.", verification: NEEDS_VERIFICATION}
+  F-012: {name: Onboarding, status: IMPLEMENTED, should_do: "Explain product promise/privacy and establish initial setup before Cockpit.", verification: NEEDS_VERIFICATION}
   F-013: {name: Theme System, status: IMPLEMENTED, should_do: "Provide theme-aware rendering using shared design tokens."}
 
 engines:
@@ -72,7 +72,7 @@ screens:
   S-002: {name: Cockpit, status: IN_PROGRESS}
   S-003: {name: QR Scan, status: IMPLEMENTED}
   S-004: {name: Reasoning, status: IN_PROGRESS, verification: NEEDS_VERIFICATION}
-  S-005: {name: Recommendation, status: IMPLEMENTED, verification: NEEDS_VERIFICATION, note: "Prototype-aligned UI is implemented; latest CI exposed an obsolete test assertion that has been fixed and needs fresh CI."}
+  S-005: {name: Recommendation, status: IMPLEMENTED, verification: NEEDS_VERIFICATION}
   S-006: {name: Payment Handoff, status: IMPLEMENTED, verification: NEEDS_VERIFICATION}
   S-007: {name: Wallet / My Deck, status: IN_PROGRESS}
   S-008: {name: Card Catalog, status: IN_PROGRESS, implementation_note: "Provider-backed state/UI contract is implemented; verified-source provider and durable cache remain pending."}
@@ -96,9 +96,9 @@ verification:
 
 work_queue:
   NOW:
-    - "Check exact CI for f1a40053 and fix any remaining failures before selecting a new feature."
-    - "Update status/context/knowledge graph with exact green CI evidence when available."
-    - "Verify whether a screenshot/device evidence path actually exists; if unavailable, record the gap and ask the user only when their action is required."
+    - "Check exact CI for the latest Recommendation test-fix HEAD and fix any remaining failures before selecting a new feature."
+    - "Synchronize status/context/knowledge graph with exact green CI evidence only after the exact implementation is green."
+    - "Verify whether an actual screenshot/device evidence path exists; if unavailable, record the gap and ask the user only when their action is required."
     - "Close accessibility, security/privacy, persistence/offline and performance M7 checks."
     - "Reconcile remaining UI surfaces: Cockpit -> My Deck -> Scan/Reasoning/Recommendation/Handoff."
   NEXT:
