@@ -18,8 +18,7 @@ abstract class CardDatabase : RoomDatabase() {
     companion object {
         val MIGRATION_1_2: Migration = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    """
+                database.execSQL("""
                     CREATE TABLE IF NOT EXISTS reward_rules (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         cardId INTEGER NOT NULL,
@@ -31,18 +30,14 @@ abstract class CardDatabase : RoomDatabase() {
                         enabled INTEGER NOT NULL,
                         FOREIGN KEY(cardId) REFERENCES cards(id) ON UPDATE NO ACTION ON DELETE CASCADE
                     )
-                    """.trimIndent()
-                )
-                database.execSQL(
-                    "CREATE INDEX IF NOT EXISTS index_reward_rules_cardId ON reward_rules(cardId)"
-                )
+                """.trimIndent())
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_reward_rules_cardId ON reward_rules(cardId)")
             }
         }
 
         val MIGRATION_2_3: Migration = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    """
+                database.execSQL("""
                     CREATE TABLE IF NOT EXISTS payment_history (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         occurredAtEpochMillis INTEGER NOT NULL,
@@ -52,12 +47,8 @@ abstract class CardDatabase : RoomDatabase() {
                         rewardAmount REAL NOT NULL,
                         outcome TEXT NOT NULL
                     )
-                    """.trimIndent()
-                )
-                database.execSQL(
-                    "CREATE INDEX IF NOT EXISTS index_payment_history_occurredAtEpochMillis ON payment_history(occurredAtEpochMillis)
-                    "
-                )
+                """.trimIndent())
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_payment_history_occurredAtEpochMillis ON payment_history(occurredAtEpochMillis)")
             }
         }
     }
