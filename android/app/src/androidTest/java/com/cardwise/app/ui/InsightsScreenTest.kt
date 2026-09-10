@@ -29,7 +29,7 @@ class InsightsScreenTest {
                 entry(2, "Travel", 55.0)
             )
         )
-        composeRule.setContent { CardWiseApp(paymentHistoryRepository = history, onboardingRepository = CompletedOnboardingRepository()) }
+        composeRule.setContent { CardWiseApp(paymentHistoryRepository = history, onboardingRepository = CompletedInsightsOnboardingRepository()) }
         composeRule.onNodeWithText("Insights").performClick()
         composeRule.onNodeWithTag("insights_total_reward").assertExists()
         composeRule.onNodeWithText("₹115.00").assertExists()
@@ -43,7 +43,7 @@ class InsightsScreenTest {
 
     @Test
     fun insights_withoutHistory_showsEmptyState() {
-        composeRule.setContent { CardWiseApp(paymentHistoryRepository = FakePaymentHistoryRepository(emptyList()), onboardingRepository = CompletedOnboardingRepository()) }
+        composeRule.setContent { CardWiseApp(paymentHistoryRepository = FakePaymentHistoryRepository(emptyList()), onboardingRepository = CompletedInsightsOnboardingRepository()) }
         composeRule.onNodeWithText("Insights").performClick()
         composeRule.onNodeWithText("Build your history").assertExists()
     }
@@ -59,7 +59,7 @@ class InsightsScreenTest {
     )
 }
 
-private class CompletedOnboardingRepository : OnboardingRepository {
+private class CompletedInsightsOnboardingRepository : OnboardingRepository {
     override fun isCompleted(): Boolean = true
     override fun complete() = Unit
     override fun reset() = Unit
