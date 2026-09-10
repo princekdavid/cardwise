@@ -10,8 +10,8 @@
 - Architecture direction: Presentation → ViewModel/UI State → Domain → Repository → Local/Remote data
 - Default branch: `main`
 - Active hardening branch: `feat/e2e-payment-hardening`
-- Current hardening HEAD: `2d93dcc61dc94da50c4096ce4e69a2cd53095ecb` (status/documentation sync commit; the preceding UI implementation commit is `0355dc73a857ea1d5440ac973bc15a8b70d64b27`).
-- Latest UI implementation commit: `0355dc73a857ea1d5440ac973bc15a8b70d64b27` (`feat(ui): align recommendation route with CardWise prototype`); CI verification is pending.
+- Current HEAD must be verified directly in GitHub before each work session; documentation SHAs are not verification evidence.
+- The latest checked hardening CI run built the app successfully but failed one Recommendation instrumentation assertion. Therefore the current hardening slice is **NEEDS_VERIFICATION**, not VERIFIED.
 - PR #11 design integration remains a separate, open/unmerged integration line; it is not the current hardening baseline.
 
 ## Product promise
@@ -29,6 +29,7 @@ Read these in order for a new session:
 4. `docs/cardwise/SCREEN_MATRIX.md`
 5. `docs/cardwise/UI_BACKEND_PLAN.md`
 6. `docs/cardwise/ENGINE_CATALOG.md`
+7. `docs/cardwise/DEVELOPMENT_RULES.md`
 
 ## Source-of-truth hierarchy
 
@@ -38,6 +39,10 @@ Read these in order for a new session:
 4. Historical product/architecture/UX/roadmap documents.
 
 When sources conflict, record the discrepancy and resolve it explicitly; never silently guess.
+
+## Non-assumption rule
+
+A plan, roadmap, prior chat, status document, dependency, integration, test, environment or tool is not evidence that a capability exists or works. Verify the actual repository/tool/environment/design/CI state before relying on it. If a required capability is missing or ambiguous, stop and surface the blocker. Never fabricate screenshots, device results, CI results, test results, integrations, design details or provider data. `IMPLEMENTED` and `VERIFIED` remain separate states.
 
 ## Design source
 
@@ -68,16 +73,13 @@ Implemented:
 
 ### Reasoning
 Implemented:
-- `RecommendationEngine.evaluate()` returns the normal recommendations plus a deterministic `RecommendationTrace`;
+- `RecommendationEngine.evaluate()` returns normal recommendations plus deterministic `RecommendationTrace`;
 - trace stages cover payment-context normalization, eligible-card evaluation, benefit calculation and ranking;
-- trace distinguishes matched/no-match outcomes;
-- `RecommendationUiState.Ready` carries the trace;
-- scanned payments now route Scan → Reasoning → Recommendation;
-- Reasoning UI progressively reveals actual trace steps with presentation-only motion;
-- current UI follows the uploaded prototype's centered synthesis composition, animated orbital core and decision-pipeline treatment;
+- scanned payments route Scan → Reasoning → Recommendation;
+- Reasoning UI follows the uploaded prototype's centered synthesis composition, animated orbital core and decision-pipeline treatment;
 - loading, empty and error states do not fabricate latency, provenance or AI claims.
 
-Remaining follow-up: verify the visual reasoning treatment in instrumentation/device validation.
+Remaining follow-up: CI/device visual verification.
 
 ### Recommendation
 Implemented:
@@ -86,28 +88,25 @@ Implemented:
 - physical-card winner spotlight treatment;
 - optimal-choice/net-reward emphasis;
 - payment-route bridge between the selected card and UPI intent handoff;
-- transparent benefit math/provenance including eligible spend, rate and caps;
-- deterministic “Why not this card?” explanations for alternatives;
+- transparent benefit math/provenance;
+- deterministic “Why not this card?” explanations;
 - Rescan and Adjust amount/category recovery actions;
-- Continue to UPI handoff;
-- instrumentation stabilization for animated reward content.
+- Continue to UPI handoff.
 
-Current follow-up: CI and device/APK visual verification of the prototype-aligned slice.
+A previous instrumentation assertion expected obsolete pre-reconciliation copy. It has now been updated to the current prototype-aligned `Optimal Choice`, net-reward and calculation-provenance contract. The fix requires a fresh exact-commit CI pass.
 
 ### Card Catalog
 Implemented:
-- `CardCatalogRepository` separates catalog consumers from provider/cache implementation;
+- `CardCatalogRepository` separates consumers from provider/cache implementation;
 - `CardCatalogueEngine` owns provider refresh and local resource-store access;
 - `CardCatalogViewModel` owns query/filter/loading/empty/unavailable/cached-error state;
-- catalog products use stable string `productId` identities;
-- product metadata includes card type, network, annual fee, reward program, benefits and provenance/freshness metadata;
-- a replaceable built-in local seed provider exists only as transitional data and explicitly uses UNKNOWN provenance;
-- catalog UI no longer owns the catalogue list and routes add-to-deck through the existing wallet ViewModel/repository;
-- no sensitive payment credentials are introduced by catalog enrollment.
+- stable string `productId` identities and provenance/freshness metadata;
+- transitional local seed provider explicitly uses UNKNOWN provenance;
+- catalog UI routes add-to-deck through the existing wallet ViewModel/repository.
 
 Known remaining catalog work:
-- replace the transitional local seed with verified issuer/network/partner providers;
-- move catalog caching from process-local memory to durable local storage for process-death/offline behavior;
+- replace transitional local seed with verified issuer/network/partner providers;
+- move catalog caching from process-local memory to durable local storage;
 - complete provider-backed detail/terms reconciliation and APK visual validation.
 
 ### Offer Engine
@@ -118,12 +117,16 @@ Implemented:
 - provenance/confidence metadata;
 - repository/ViewModel-backed Offers UI.
 
+Remaining: production verified providers and durable cache boundary.
+
 ### Insights / Milestones
 Implemented:
 - Room-backed payment history;
 - deterministic category/reward aggregation;
 - milestones and progress states;
 - payment history recording after successful UPI launcher result.
+
+Remaining: final product/visual/accessibility/security validation.
 
 ### Privacy Vault / Onboarding
 Implemented:
@@ -134,36 +137,35 @@ Implemented:
 - reset clears local data and returns to onboarding;
 - instrumentation coverage with isolated test fixtures.
 
-## Finalized UI + backend direction
-
-The execution order is:
-`Baseline/CI → Shared UI primitives → Cockpit → My Deck → Scan reconciliation → Reasoning → Recommendation → Handoff → Catalog → Offer Engine + Offers → Insights → Vault/Onboarding → E2E + hardening`
-
-For every screen implement the user capability, reference visual language, state model, ViewModel/UI-state contract, domain/repository ownership, engine/provider boundaries, tests and APK/manual verification. Keep production architecture authoritative; the single-file Compose reference is not a replacement architecture.
+Remaining: final product/visual/accessibility/security validation.
 
 ## Current hardening queue
 
 NOW:
-1. Verify the prototype-aligned Recommendation/Reasoning UI implementation with exact GitHub Actions CI.
-2. Device/APK validation and screenshot evidence for Scan → Reasoning → Recommendation → Handoff → Return when device tooling is available.
-3. Offline/network resilience and explicit provider degradation behavior.
-4. Accessibility, semantic coverage and font-scale validation.
-5. Visual/state hardening across loading/error/empty, dark/light themes and lifecycle return.
-6. Security/privacy audit of local data, logs and external payment intents.
-7. Performance and release validation.
+1. Verify the latest Recommendation instrumentation test fix with exact GitHub Actions CI; fix any remaining failures.
+2. Only after the exact implementation is green, synchronize status/context with the successful commit/run evidence.
+3. Verify whether an actual screenshot/device evidence path exists. If it does not, record the gap rather than inventing evidence and ask the user only if their action is required.
+4. Close accessibility, semantic coverage and font-scale validation.
+5. Close security/privacy audit of local data, logs and external payment intents.
+6. Close persistence/offline/process-death validation.
+7. Close performance and release validation.
+8. Reconcile remaining UI surfaces: Cockpit → My Deck → Scan/Reasoning/Recommendation/Handoff.
 
 NEXT:
-- Replace transitional catalog/offer providers with verified external providers when sources/connections are available.
+- Replace transitional catalog/offer providers with verified external providers when sources/connections are actually available.
 - Durable provider caching and stronger process-death/offline coverage.
-- Merchant Intelligence Engine when independent merchant-resolution responsibility is justified.
+- Merchant Intelligence Engine only when an independent merchant-resolution responsibility is justified.
 
-## How to continue after a chat reset
+## Execution discipline
 
-1. Read this file.
-2. Read `KNOWLEDGE_GRAPH.yaml`.
-3. Read `DESIGN_SOURCE.md` and `UI_BACKEND_PLAN.md` for active design/implementation work.
-4. Read `SCREEN_MATRIX.md` for the specific screen.
-5. Verify current branch and HEAD in GitHub.
-6. Check CI for that exact HEAD.
-7. Pick the first `NOW` item unless the user changes priority.
-8. Update affected memory documents in the same meaningful implementation slice.
+For every session:
+1. Read this file and canonical docs.
+2. Verify current branch/HEAD in GitHub.
+3. Check CI for that exact HEAD before selecting work.
+4. Verify prerequisites/capabilities needed for the next item.
+5. Implement only against evidence-backed requirements.
+6. Test the exact change.
+7. Update affected status/context documents.
+8. Inspect the resulting exact CI run.
+9. Do not call work VERIFIED until all required evidence exists.
+10. Select the next item from the latest verified repository state and current queue.
