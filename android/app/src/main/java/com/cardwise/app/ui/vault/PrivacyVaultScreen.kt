@@ -35,7 +35,7 @@ fun PrivacyVaultScreen(
         verticalArrangement = Arrangement.spacedBy(CardWiseSpacing.md)
     ) {
         Text("PRIVACY VAULT")
-        Text("Your data stays yours.", color = CardWisePalette.QuantumEmerald)
+        Text("Your data stays yours.", color = CardWisePalette.Emerald)
         Text("CardWise stores the card deck, reward rules, and payment insights locally. Payment handoff sends only the sanitized payment details required to open your selected UPI app.")
         Text("Never stored by CardWise: UPI PINs, banking passwords, OTPs, or account credentials.")
         Text("Resetting the vault permanently clears locally stored CardWise data and returns the app to onboarding.")
