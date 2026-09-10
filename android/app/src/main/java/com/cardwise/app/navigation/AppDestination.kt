@@ -1,6 +1,7 @@
 package com.cardwise.app.navigation
 
 enum class AppDestination(val label: String, val showInBottomBar: Boolean = true) {
+    Onboarding("Onboarding", showInBottomBar = false),
     Cockpit("Cockpit"),
     Wallet("Cards"),
     Scan("Scan"),
