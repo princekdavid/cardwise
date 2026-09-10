@@ -1,6 +1,7 @@
 package com.cardwise.app.ui.recommendation
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -36,7 +37,7 @@ class RecommendationScreenTest {
         composeRule.onNodeWithText("Category").performTextInput("Dining")
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Optimal Choice").fetchSemanticsNodes().isNotEmpty() &&
+            composeRule.onAllNodesWithText("Optimal Choice", substring = true).fetchSemanticsNodes().isNotEmpty() &&
                 composeRule.onAllNodesWithText("Dining Card").fetchSemanticsNodes().isNotEmpty() &&
                 composeRule.onAllNodesWithText("+₹50.00").fetchSemanticsNodes().isNotEmpty()
         }
