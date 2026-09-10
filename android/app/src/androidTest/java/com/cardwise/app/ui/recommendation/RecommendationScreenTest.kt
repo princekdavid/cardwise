@@ -1,7 +1,6 @@
 package com.cardwise.app.ui.recommendation
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -37,13 +36,15 @@ class RecommendationScreenTest {
         composeRule.onNodeWithText("Category").performTextInput("Dining")
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Recommended for this payment").fetchSemanticsNodes().isNotEmpty() &&
+            composeRule.onAllNodesWithText("Optimal Choice").fetchSemanticsNodes().isNotEmpty() &&
                 composeRule.onAllNodesWithText("Dining Card").fetchSemanticsNodes().isNotEmpty() &&
-                composeRule.onAllNodesWithText("₹50.00 expected reward").fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodesWithText("+₹50.00").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Recommended for this payment").assertExists()
+        composeRule.onNodeWithText("Optimal Choice", substring = true).assertExists()
         composeRule.onNodeWithText("Dining Card").assertExists()
-        composeRule.onNodeWithText("₹50.00 expected reward").assertExists()
+        composeRule.onNodeWithText("+₹50.00").assertExists()
+        composeRule.onNodeWithText("Net Rewards Earned").assertExists()
+        composeRule.onNodeWithText("CALCULATION PROVENANCE").assertExists()
     }
 }
 
