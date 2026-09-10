@@ -90,7 +90,7 @@ class CardWiseAppTest {
     @Test fun activeFilter_hidesInactiveCards() {
         val active = Card(1L, "CardWise Bank", "Active Card", "1111", CardNetwork.VISA, isActive = true)
         val inactive = Card(2L, "CardWise Bank", "Paused Card", "2222", CardNetwork.MASTERCARD, isActive = false)
-        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive)), onboardingRepository = CompletedOnboardingRepository() }
+        composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(active, inactive)), onboardingRepository = CompletedOnboardingRepository()) }
         composeRule.onNodeWithTag("nav_wallet").performClick()
         composeRule.onNodeWithText("Active").performClick()
         composeRule.onNodeWithTag("wallet_card_1").assertExists()
