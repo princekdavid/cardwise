@@ -32,7 +32,7 @@ fun OnboardingScreen(
         )
         Text(
             "Privacy oath",
-            color = CardWisePalette.QuantumEmerald,
+            color = CardWisePalette.Emerald,
             modifier = Modifier.padding(top = CardWiseSpacing.lg)
         )
         Text(
