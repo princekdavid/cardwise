@@ -82,9 +82,10 @@ jobs:
             grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log && { echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; } || true
             mkdir -p ../cardwise-ui-evidence
             echo 'Collecting UI screenshot evidence from the installed CardWise app...'
-            apk_path="app/build/outputs/apk/debug/app-debug.apk"
+            apk_path=$(find . -type f -path '*/build/outputs/apk/debug/*.apk' -print | sort | head -n 1)
+            test -n "$apk_path"
             test -s "$apk_path"
-            build_tools_dir=$(dirname "$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)")
+            echo "Built debug APK: $apk_path"
             build_tools_version=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
             aapt="$build_tools_version/aapt"
             test -x "$aapt"
