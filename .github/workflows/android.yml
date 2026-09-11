@@ -83,12 +83,10 @@ jobs:
             mkdir -p ../cardwise-ui-evidence
             echo 'Resolving installed CardWise package for screenshot evidence...'
             package=$(adb shell pm list packages | tr -d '\r' | sed -n 's/^package:\(.*cardwise[^[:space:]]*\)$/\1/p' | head -n 1)
-            if [ -z "$package" ]; then
-              echo 'ERROR: no installed CardWise package was found on the emulator.'
-              adb shell pm list packages | grep -i cardwise || true
-              exit 1
-            fi
-            echo "Using installed package: $package"
+            echo "Using installed package: ${package:-<none>}"
+            test -n "$package" || echo 'ERROR: no installed CardWise package was found on the emulator.'
+            test -n "$package" || adb shell pm list packages | grep -i cardwise || true
+            test -n "$package" || exit 1
             adb shell "run-as $package test -f files/cardwise-evidence/01-recommendation.png"
             adb exec-out "run-as $package cat files/cardwise-evidence/01-recommendation.png" > ../cardwise-ui-evidence/01-recommendation.png
             adb shell "run-as $package test -f files/cardwise-evidence/02-payment-handoff.png"
