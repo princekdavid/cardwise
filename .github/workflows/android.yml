@@ -81,13 +81,20 @@ jobs:
             cat instrumentation.log
             grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log && { echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; } || true
             mkdir -p ../cardwise-ui-evidence
-            echo 'Collecting screenshot evidence from app-private storage via adb run-as...'
-            adb shell "run-as com.cardwise.app test -f files/cardwise-evidence/01-recommendation.png"
-            adb exec-out "run-as com.cardwise.app cat files/cardwise-evidence/01-recommendation.png" > ../cardwise-ui-evidence/01-recommendation.png
-            adb shell "run-as com.cardwise.app test -f files/cardwise-evidence/02-payment-handoff.png"
-            adb exec-out "run-as com.cardwise.app cat files/cardwise-evidence/02-payment-handoff.png" > ../cardwise-ui-evidence/02-payment-handoff.png
-            adb shell "run-as com.cardwise.app test -f files/cardwise-evidence/03-after-handoff-return.png"
-            adb exec-out "run-as com.cardwise.app cat files/cardwise-evidence/03-after-handoff-return.png" > ../cardwise-ui-evidence/03-after-handoff-return.png
+            echo 'Resolving installed CardWise package for screenshot evidence...'
+            package=$(adb shell pm list packages | tr -d '\r' | sed -n 's/^package:\(.*cardwise[^[:space:]]*\)$/\1/p' | head -n 1)
+            if [ -z "$package" ]; then
+              echo 'ERROR: no installed CardWise package was found on the emulator.'
+              adb shell pm list packages | grep -i cardwise || true
+              exit 1
+            fi
+            echo "Using installed package: $package"
+            adb shell "run-as $package test -f files/cardwise-evidence/01-recommendation.png"
+            adb exec-out "run-as $package cat files/cardwise-evidence/01-recommendation.png" > ../cardwise-ui-evidence/01-recommendation.png
+            adb shell "run-as $package test -f files/cardwise-evidence/02-payment-handoff.png"
+            adb exec-out "run-as $package cat files/cardwise-evidence/02-payment-handoff.png" > ../cardwise-ui-evidence/02-payment-handoff.png
+            adb shell "run-as $package test -f files/cardwise-evidence/03-after-handoff-return.png"
+            adb exec-out "run-as $package cat files/cardwise-evidence/03-after-handoff-return.png" > ../cardwise-ui-evidence/03-after-handoff-return.png
             ls -lh ../cardwise-ui-evidence
             test -s ../cardwise-ui-evidence/01-recommendation.png
             test -s ../cardwise-ui-evidence/02-payment-handoff.png
