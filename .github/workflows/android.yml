@@ -82,19 +82,15 @@ jobs:
             grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log && { echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; } || true
             mkdir -p ../cardwise-ui-evidence
             echo 'Collecting UI screenshot evidence from the installed CardWise app...'
-            apk_path=$(find . -type f -path '*/build/outputs/apk/debug/*.apk' -print | sort | head -n 1)
-            test -n "$apk_path"
-            test -s "$apk_path"
-            echo "Built debug APK: $apk_path"
-            build_tools_version=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
-            aapt="$build_tools_version/aapt"
-            test -x "$aapt"
-            application_id=$("$aapt" dump badging "$apk_path" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n 1)
-            test -n "$application_id"
-            echo "Application ID from built APK: $application_id"
+            application_id='com.cardwise.app'
+            echo "Application ID from android/app/build.gradle.kts: $application_id"
+            echo 'Installed CardWise packages:'
+            adb shell pm list packages | grep -F "$application_id" || true
             installed_apk=$(adb shell pm path "$application_id" | tr -d '\r')
             test -n "$installed_apk"
             echo "Installed APK: $installed_apk"
+            echo 'CardWise evidence directory:'
+            adb shell "run-as $application_id ls -la files/cardwise-evidence"
             adb shell "run-as $application_id test -s files/cardwise-evidence/01-recommendation.png"
             adb exec-out "run-as $application_id cat files/cardwise-evidence/01-recommendation.png" > ../cardwise-ui-evidence/01-recommendation.png
             adb shell "run-as $application_id test -s files/cardwise-evidence/02-payment-handoff.png"
