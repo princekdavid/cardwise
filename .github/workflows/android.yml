@@ -82,15 +82,24 @@ jobs:
             grep -Eq 'Starting 0 tests|Finished 0 tests' instrumentation.log && { echo 'ERROR: instrumentation completed without executing any Android tests.'; exit 1; } || true
             mkdir -p ../cardwise-ui-evidence
             echo 'Collecting UI screenshot evidence from the installed CardWise app...'
-            package=$(adb shell pm list packages | tr -d '\r' | sed -n 's/^package:\(.*cardwise[^[:space:]]*\)$/\1/p' | head -n 1)
-            test -n "$package"
-            echo "Resolved CardWise package: $package"
-            adb shell "run-as $package test -s files/cardwise-evidence/01-recommendation.png"
-            adb exec-out "run-as $package cat files/cardwise-evidence/01-recommendation.png" > ../cardwise-ui-evidence/01-recommendation.png
-            adb shell "run-as $package test -s files/cardwise-evidence/02-payment-handoff.png"
-            adb exec-out "run-as $package cat files/cardwise-evidence/02-payment-handoff.png" > ../cardwise-ui-evidence/02-payment-handoff.png
-            adb shell "run-as $package test -s files/cardwise-evidence/03-after-handoff-return.png"
-            adb exec-out "run-as $package cat files/cardwise-evidence/03-after-handoff-return.png" > ../cardwise-ui-evidence/03-after-handoff-return.png
+            apk_path="app/build/outputs/apk/debug/app-debug.apk"
+            test -s "$apk_path"
+            build_tools_dir=$(dirname "$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)")
+            build_tools_version=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+            aapt="$build_tools_version/aapt"
+            test -x "$aapt"
+            application_id=$("$aapt" dump badging "$apk_path" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n 1)
+            test -n "$application_id"
+            echo "Application ID from built APK: $application_id"
+            installed_apk=$(adb shell pm path "$application_id" | tr -d '\r')
+            test -n "$installed_apk"
+            echo "Installed APK: $installed_apk"
+            adb shell "run-as $application_id test -s files/cardwise-evidence/01-recommendation.png"
+            adb exec-out "run-as $application_id cat files/cardwise-evidence/01-recommendation.png" > ../cardwise-ui-evidence/01-recommendation.png
+            adb shell "run-as $application_id test -s files/cardwise-evidence/02-payment-handoff.png"
+            adb exec-out "run-as $application_id cat files/cardwise-evidence/02-payment-handoff.png" > ../cardwise-ui-evidence/02-payment-handoff.png
+            adb shell "run-as $application_id test -s files/cardwise-evidence/03-after-handoff-return.png"
+            adb exec-out "run-as $application_id cat files/cardwise-evidence/03-after-handoff-return.png" > ../cardwise-ui-evidence/03-after-handoff-return.png
             ls -lh ../cardwise-ui-evidence
             test -s ../cardwise-ui-evidence/01-recommendation.png
             test -s ../cardwise-ui-evidence/02-payment-handoff.png
