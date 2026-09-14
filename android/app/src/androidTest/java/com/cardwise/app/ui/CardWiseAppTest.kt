@@ -159,16 +159,26 @@ class CardWiseAppTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
-        val directory = File(context.filesDir, "cardwise-evidence").apply { mkdirs() }
+        val directory = File(context.filesDir, "cardwise-evidence")
+        check(directory.mkdirs() || directory.isDirectory) { "Unable to create screenshot directory: ${directory.absolutePath}" }
         val image = File(directory, "$name.png")
         FileOutputStream(image).use { output ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)) { "Unable to encode screenshot: ${image.absolutePath}" }
         }
         bitmap.recycle()
+        check(image.isFile && image.length() > 0L) { "Screenshot was not written: ${image.absolutePath}" }
+
+        // The shell running executeShellCommand owns /data/local/tmp. Do the
+        // redirection outside run-as so the app UID is only used to read its
+        // private evidence file; the shell UID performs the export.
+        val destination = "/data/local/tmp/cardwise-evidence/$name.png"
         val process = instrumentation.uiAutomation.executeShellCommand(
-            "run-as ${context.packageName} sh -c 'mkdir -p /data/local/tmp/cardwise-evidence && cp ${image.absolutePath} /data/local/tmp/cardwise-evidence/$name.png'"
+            "mkdir -p /data/local/tmp/cardwise-evidence && run-as ${context.packageName} cat '${image.absolutePath}' > '$destination'"
         )
         process.close()
+
+        val verify = instrumentation.uiAutomation.executeShellCommand("test -s '$destination'")
+        verify.close()
     }
 }
 
