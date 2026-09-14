@@ -73,12 +73,7 @@ class CardWiseAppTest {
         composeRule.onNodeWithTag("wallet_tactile_deck").assertExists()
         composeRule.onNodeWithTag("wallet_spotlight_card_7").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            try {
-                composeRule.onNodeWithTag("card_detail_name").assertExists()
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            try { composeRule.onNodeWithTag("card_detail_name").assertExists(); true } catch (_: AssertionError) { false }
         }
         composeRule.onNodeWithTag("card_detail_name").assertExists()
     }
@@ -121,12 +116,7 @@ class CardWiseAppTest {
         val payment = UpiPaymentRequest("merchant@upi", "CardWise Shop", BigDecimal("125.00"), "INR", "ref-123", "Order 42", merchantCategory = "5812")
         composeRule.setContent { CardWiseApp(repository = FakeCardRepository(listOf(card)), recommendationRules = mapOf(card.id to listOf(RewardRule("dining", rewardRatePercent = 5.0))), paymentLauncher = launcher, initialPayment = payment, onboardingRepository = CompletedOnboardingRepository()) }
         composeRule.waitUntil(timeoutMillis = 15_000) {
-            try {
-                composeRule.onNodeWithTag("recommendation_winner").assertExists()
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            try { composeRule.onNodeWithTag("recommendation_winner").assertExists(); true } catch (_: AssertionError) { false }
         }
         composeRule.onNodeWithText("CardWise Shop").assertExists()
         composeRule.onNodeWithText("₹125.00").assertExists()
@@ -168,17 +158,13 @@ class CardWiseAppTest {
         bitmap.recycle()
         check(image.isFile && image.length() > 0L) { "Screenshot was not written: ${image.absolutePath}" }
 
-        // The shell running executeShellCommand owns /data/local/tmp. Do the
-        // redirection outside run-as so the app UID is only used to read its
-        // private evidence file; the shell UID performs the export.
         val destination = "/data/local/tmp/cardwise-evidence/$name.png"
-        val process = instrumentation.uiAutomation.executeShellCommand(
-            "mkdir -p /data/local/tmp/cardwise-evidence && run-as ${context.packageName} cat '${image.absolutePath}' > '$destination'"
-        )
-        process.close()
-
+        val command = "mkdir -p /data/local/tmp/cardwise-evidence && run-as ${context.packageName} cat '${image.absolutePath}' > '$destination'"
+        val process = instrumentation.uiAutomation.executeShellCommand(command)
+        process.use { it.inputStream.bufferedReader().readText() }
         val verify = instrumentation.uiAutomation.executeShellCommand("test -s '$destination'")
-        verify.close()
+        verify.use { it.inputStream.bufferedReader().readText() }
+        check(instrumentation.uiAutomation.executeShellCommand("test -s '$destination'").use { it.inputStream.bufferedReader().readText(); true }) { "Screenshot export failed: $destination" }
     }
 }
 
@@ -187,45 +173,11 @@ class PaymentHandoffDialogTest {
     @get:Rule val composeRule = createComposeRule()
     private val payment = UpiPaymentRequest("merchant@upi", "CardWise Shop", BigDecimal("125.00"), "INR", "ref-123", "Order 42")
 
-    @Test fun cancel_doesNotLaunchPayment() {
-        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }
-        composeRule.onNodeWithText("Continue to your UPI app?").assertExists()
-        composeRule.onNodeWithText("Cancel").performClick()
-        assert(launcher.launchCount == 0)
-    }
-
-    @Test fun confirmation_showsPaymentSummary() {
-        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }
-        composeRule.onNodeWithText("CardWise Shop").assertExists()
-        composeRule.onNodeWithText("merchant@upi").assertExists()
-        composeRule.onNodeWithText("₹125.00").assertExists()
-        composeRule.onNodeWithText("No PIN or banking credentials are shared by CardWise.").assertExists()
-    }
-
-    @Test fun continue_launchesExactlyOnce() {
-        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }
-        composeRule.onNodeWithText("Choose UPI app").performClick()
-        assert(launcher.launchCount == 1)
-    }
-
-    @Test fun launched_reportsOutcome() {
-        val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched)
-        var result: UpiPaymentLaunchResult? = null
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }
-        composeRule.onNodeWithText("Choose UPI app").performClick()
-        assert(result == UpiPaymentLaunchResult.Launched)
-    }
-
-    @Test fun noUpiApp_reportsOutcome() {
-        val launcher = RecordingLauncher(UpiPaymentLaunchResult.NoUpiApp)
-        var result: UpiPaymentLaunchResult? = null
-        composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }
-        composeRule.onNodeWithText("Choose UPI app").performClick()
-        assert(result == UpiPaymentLaunchResult.NoUpiApp)
-    }
+    @Test fun cancel_doesNotLaunchPayment() { val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched); composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }; composeRule.onNodeWithText("Continue to your UPI app?").assertExists(); composeRule.onNodeWithText("Cancel").performClick(); assert(launcher.launchCount == 0) }
+    @Test fun confirmation_showsPaymentSummary() { val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched); composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }; composeRule.onNodeWithText("CardWise Shop").assertExists(); composeRule.onNodeWithText("merchant@upi").assertExists(); composeRule.onNodeWithText("₹125.00").assertExists(); composeRule.onNodeWithText("No PIN or banking credentials are shared by CardWise.").assertExists() }
+    @Test fun continue_launchesExactlyOnce() { val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched); composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = {}) }; composeRule.onNodeWithText("Choose UPI app").performClick(); assert(launcher.launchCount == 1) }
+    @Test fun launched_reportsOutcome() { val launcher = RecordingLauncher(UpiPaymentLaunchResult.Launched); var result: UpiPaymentLaunchResult? = null; composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }; composeRule.onNodeWithText("Choose UPI app").performClick(); assert(result == UpiPaymentLaunchResult.Launched) }
+    @Test fun noUpiApp_reportsOutcome() { val launcher = RecordingLauncher(UpiPaymentLaunchResult.NoUpiApp); var result: UpiPaymentLaunchResult? = null; composeRule.setContent { PaymentHandoffDialog(payment, launcher, onDismiss = {}, onHandoffCompleted = { result = it }) }; composeRule.onNodeWithText("Choose UPI app").performClick(); assert(result == UpiPaymentLaunchResult.NoUpiApp) }
 }
 
 private class FakeCardRepository(initialCards: List<Card>) : CardRepository {
@@ -235,30 +187,7 @@ private class FakeCardRepository(initialCards: List<Card>) : CardRepository {
     override suspend fun updateCard(card: Card) { cards.value = cards.value.map { if (it.id == card.id) card else it } }
     override suspend fun deleteCard(cardId: Long) { cards.value = cards.value.filterNot { it.id == cardId } }
 }
-
-private class CompletedOnboardingRepository : OnboardingRepository {
-    private var completed = true
-    override fun isCompleted(): Boolean = completed
-    override fun complete() { completed = true }
-    override fun reset() { completed = false }
-}
-
-private class FakeOnboardingRepository(private var completed: Boolean) : OnboardingRepository {
-    override fun isCompleted(): Boolean = completed
-    override fun complete() { completed = true }
-    override fun reset() { completed = false }
-}
-
-private class FakePrivacyVaultRepository(private val onboardingRepository: OnboardingRepository) : com.cardwise.app.domain.repository.PrivacyVaultRepository {
-    var resetCount = 0
-    override suspend fun resetAllData() {
-        resetCount += 1
-        onboardingRepository.reset()
-    }
-}
-
-private class RecordingLauncher(private val result: UpiPaymentLaunchResult) : UpiPaymentLauncher {
-    var launchCount = 0
-        private set
-    override fun launch(payment: UpiPaymentRequest): UpiPaymentLaunchResult { launchCount += 1; return result }
-}
+private class CompletedOnboardingRepository : OnboardingRepository { private var completed = true; override fun isCompleted() = completed; override fun complete() { completed = true }; override fun reset() { completed = false } }
+private class FakeOnboardingRepository(private var completed: Boolean) : OnboardingRepository { override fun isCompleted() = completed; override fun complete() { completed = true }; override fun reset() { completed = false } }
+private class FakePrivacyVaultRepository(private val onboardingRepository: OnboardingRepository) : com.cardwise.app.domain.repository.PrivacyVaultRepository { var resetCount = 0; override suspend fun resetAllData() { resetCount += 1; onboardingRepository.reset() } }
+private class RecordingLauncher(private val result: UpiPaymentLaunchResult) : UpiPaymentLauncher { var launchCount = 0; private set; override fun launch(payment: UpiPaymentRequest): UpiPaymentLaunchResult { launchCount += 1; return result } }
